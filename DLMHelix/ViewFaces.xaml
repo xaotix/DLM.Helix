@@ -1,0 +1,32 @@
+﻿<Window x:Class="DLMHelix.ViewFaces"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:DLMHelix"
+              xmlns:HelixToolkit="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800" WindowStartupLocation="CenterScreen">
+    <TabControl>
+        <TabItem Header="3D">
+            <HelixToolkit:HelixViewport3D  Grid.Row="1" ZoomExtentsWhenLoaded="True" Name="v3d" Background="Transparent" IsHeadLightEnabled="True" ZoomAroundMouseDownPoint="True" RotateAroundMouseDownPoint="True">
+                <ModelVisual3D>
+                    <ModelVisual3D.Content>
+                        <AmbientLight Color="White"/>
+                    </ModelVisual3D.Content>
+                </ModelVisual3D>
+            </HelixToolkit:HelixViewport3D>
+
+        </TabItem>
+        <TabItem Header="2D">
+            <HelixToolkit:HelixViewport3D  Grid.Row="1" ZoomExtentsWhenLoaded="True" Name="v2d" Background="Transparent" IsHeadLightEnabled="True" ZoomAroundMouseDownPoint="True" RotateAroundMouseDownPoint="True">
+                <ModelVisual3D>
+                    <ModelVisual3D.Content>
+                        <AmbientLight Color="White"/>
+                    </ModelVisual3D.Content>
+                </ModelVisual3D>
+            </HelixToolkit:HelixViewport3D>
+
+        </TabItem>
+    </TabControl>
+</Window>

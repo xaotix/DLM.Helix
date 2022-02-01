@@ -11,13 +11,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using DLMCam;
+using DLMcam;
+using DLMenum;
 
 namespace DLMHelix
 {
     public class Gera3D
     {
-        public static List<Chapa3D> Desenho(List<DLMCam.Face> Faces, HelixViewport3D viewPort)
+        public static List<Chapa3D> Desenho(List<DLMcam.Face> Faces, HelixViewport3D viewPort)
         {
             viewPort.Children.Clear();
             viewPort.Children.Add(Gera3D.Luz());
@@ -44,7 +45,7 @@ namespace DLMHelix
 
         }
 
-        private static Chapa3D NovaChapa(DLMCam.Face s)
+        private static Chapa3D NovaChapa(DLMcam.Face s)
         {
             var z3 = new Chapa3D();
             z3.Espessura = s.Espessura;
@@ -75,13 +76,13 @@ namespace DLMHelix
 
             var chliv1 = cam.Formato.LIV1.FaceSemBordas;
             var liv1 = NovaChapa(chliv1);
-            if (readcam.TipoPerfil == TipoPerfil.Tubo_Redondo)
+            if (readcam.TipoPerfil == CAM_PERFIL_TIPO.Tubo_Redondo)
             {
                 /*não pega recortes*/
                 var ms = new Tubo3D(perfil.Diametro, perfil.Espessura, readcam.Comprimento);
                 desenho.AddRange(ms.getContorno());
             }
-            else if (readcam.TipoPerfil == TipoPerfil.Barra_Redonda)
+            else if (readcam.TipoPerfil == CAM_PERFIL_TIPO.Barra_Redonda)
             {
                 var ms = new Tubo3D(perfil.Diametro, 0.001, readcam.Comprimento);
                 desenho.AddRange(ms.getContorno());
@@ -95,7 +96,7 @@ namespace DLMHelix
             //desloca a LIV1
            
 
-            if (cam.Perfil.Familia != Familia.Chapa)
+            if (cam.Perfil.Familia != CAM_FAMILIA.Chapa)
             {
                 var chliv2 = cam.Formato.LIV2.MesaParaChapa();
                 var liv2 = NovaChapa(chliv2);
@@ -121,20 +122,20 @@ namespace DLMHelix
                 desenho.Add(liv2);
 
 
-                if (cam.Perfil.Tipo == TipoPerfil.Caixao)
+                if (cam.Perfil.Tipo == CAM_PERFIL_TIPO.Caixao)
                 {
                     var liv11 = liv1.Clonar();
                     liv11.Origem.Z = perfil.EntreAlmas / 2 - liv11.Espessura / 2;
                     liv1.Origem.Z = -perfil.EntreAlmas / 2 + liv11.Espessura / 2;
                     desenho.Add(liv11);
                 }
-                else if(cam.Perfil.Tipo == TipoPerfil.Tubo_Quadrado)
+                else if(cam.Perfil.Tipo == CAM_PERFIL_TIPO.Tubo_Quadrado)
                 {
                     var liv11 = liv1.Clonar();
                     liv11.Origem.Z = -liv2.Largura + liv1.Espessura;
                     desenho.Add(liv11);
                 }
-                else if(cam.Perfil.Tipo == TipoPerfil.Cartola)
+                else if(cam.Perfil.Tipo == CAM_PERFIL_TIPO.Cartola)
                 {
                     var liv11 = liv1.Clonar();
                     liv11.Origem.Z = -liv2.Largura/2 + liv1.Espessura/2;
@@ -164,11 +165,11 @@ namespace DLMHelix
                     {
                         liv3.Origem.Z = liv3.Espessura / 2 + chliv2.Largura;
                     }
-                    if(cam.Perfil.Tipo ==  TipoPerfil.Z_Dobrado)
+                    if(cam.Perfil.Tipo ==  CAM_PERFIL_TIPO.Z_Dobrado)
                     {
                         liv3.Origem.Z = liv3.Largura - (liv1.Espessura/2);
                     }
-                    if (cam.Perfil.Tipo == TipoPerfil.C_Enrigecido | cam.Perfil.Tipo == TipoPerfil.Z_Purlin)
+                    if (cam.Perfil.Tipo == CAM_PERFIL_TIPO.C_Enrigecido | cam.Perfil.Tipo == CAM_PERFIL_TIPO.Z_Purlin)
                     {
                         var aba1 = cam.Formato.LIV2_Aba_Menor(false);
                         var aba2 = cam.Formato.LIV3_Aba_Menor(false);
@@ -179,12 +180,12 @@ namespace DLMHelix
                         ab1.Origem.Y = -liv3.Espessura- folga;
                         ab2.Origem.Y = -liv1.Largura + ab2.Largura-liv3.Espessura-folga;
 
-                        if(cam.Perfil.Tipo == TipoPerfil.C_Enrigecido)
+                        if(cam.Perfil.Tipo == CAM_PERFIL_TIPO.C_Enrigecido)
                         {
                             ab1.Origem.Z = -liv3.Largura + liv3.Espessura;
                             ab2.Origem.Z = -liv3.Largura + liv3.Espessura;
                         }
-                        else if(cam.Perfil.Tipo == TipoPerfil.Z_Purlin)
+                        else if(cam.Perfil.Tipo == CAM_PERFIL_TIPO.Z_Purlin)
                         {
                         ab1.Origem.Z = -liv3.Largura + liv3.Espessura;
                         ab2.Origem.Z = +liv3.Largura - liv3.Espessura;
@@ -194,7 +195,7 @@ namespace DLMHelix
                         desenho.Add(ab1);
                         desenho.Add(ab2);
                     }
-                    if(cam.Perfil.Tipo!= TipoPerfil.Cartola)
+                    if(cam.Perfil.Tipo!= CAM_PERFIL_TIPO.Cartola)
                     {
                     desenho.Add(liv3);
                      
@@ -250,7 +251,7 @@ namespace DLMHelix
             double descontar = 0.3;
             var alma = new Chapa3D();
             #region CHAPAS
-            if (cam.TipoPerfil == TipoPerfil.Barra_Chata | cam.TipoPerfil == TipoPerfil.Chapa | cam.TipoPerfil == TipoPerfil.Chapa_Xadrez)
+            if (cam.TipoPerfil == CAM_PERFIL_TIPO.Barra_Chata | cam.TipoPerfil == CAM_PERFIL_TIPO.Chapa | cam.TipoPerfil == CAM_PERFIL_TIPO.Chapa_Xadrez)
             {
                 if (cam.ContraFlecha == 0)
                 {
@@ -259,7 +260,7 @@ namespace DLMHelix
                 }
                 else
                 {
-                    var segs = DLMCam.DLMCamFuncoes.Poligonos.ArcoParaSegmento(cam.GetShapeLIV1(), cam.ContraFlecha);
+                    var segs = DLMcam.FuncoesDLMCam.Poligonos.ArcoParaSegmento(cam.GetShapeLIV1(), cam.ContraFlecha);
                     alma.Pontos.AddRange(segs.Select(x => new DLMHelix.Util.Ponto3D(x.X, x.Y, 0)));
 
                 }
@@ -270,14 +271,14 @@ namespace DLMHelix
             }
             #endregion
             #region DOBRADOS
-            else if (cam.TipoPerfil == TipoPerfil.Z_Purlin)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Z_Purlin)
             {
                 //*falta adicionar a aba menor*/
                 alma.Espessura = ps.Espessura;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
-                DLMCamFuncoes.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10,
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10,
                     ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar), new System.Windows.Point(cam.Comprimento * 10,
                     ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar), out l1, out l2, true, false);
 
@@ -334,14 +335,14 @@ namespace DLMHelix
                 //z3.cor = Brushes.Red;
                 desenho.Add(z3);
             }
-            else if (cam.TipoPerfil == TipoPerfil.Z_Dobrado)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Z_Dobrado)
             {
                 alma.Espessura = ps.Espessura;
 
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
-                DLMCamFuncoes.Poligonos.Quebrar(l2,
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
                     new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
                     out l1, out l2, true, false);
@@ -380,13 +381,13 @@ namespace DLMHelix
                 //z3.cor = Brushes.Red;
                 desenho.Add(z3);
             }
-            else if (cam.TipoPerfil == TipoPerfil.U_Dobrado)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.U_Dobrado)
             {
                 alma.Espessura = ps.Espessura;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
-                DLMCamFuncoes.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - descontar), out l1, out l2, true, false);
 
                 if (l1.Count > 3)
                 {
@@ -420,14 +421,14 @@ namespace DLMHelix
                 //z3.cor = Brushes.Red;
                 desenho.Add(z3);
             }
-            else if (cam.TipoPerfil == TipoPerfil.C_Enrigecido)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.C_Enrigecido)
             {
                 /*falta fazer a aba menor*/
                 alma.Espessura = ps.Espessura;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
-                DLMCamFuncoes.Poligonos.Quebrar(l2,
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
                     new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
                     out l1, out l2, true, false);
@@ -483,12 +484,12 @@ namespace DLMHelix
                 abaz3.Origem.X = z3.OrigemInf.X;
                 desenho.Add(abaz3);
             }
-            else if (cam.TipoPerfil == TipoPerfil.L_Dobrado)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.L_Dobrado)
             {
                 alma.Espessura = ps.Espessura;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
 
 
                 if (l2.Count > 3)
@@ -515,12 +516,12 @@ namespace DLMHelix
 
 
             }
-            else if (cam.TipoPerfil == TipoPerfil.L_Laminado)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.L_Laminado)
             {
                 alma.Espessura = ps.Espessura;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
 
 
 
@@ -550,7 +551,7 @@ namespace DLMHelix
 
 
             }
-            else if (cam.TipoPerfil == TipoPerfil.Cartola)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Cartola)
             {
                 /*cams com recortes ainda não ta bom, precisa ver melhor oq ta acontecendo.*/
                 alma.Espessura = ps.Espessura;
@@ -577,7 +578,7 @@ namespace DLMHelix
                 var mi = new Chapa3D();
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV3().Select(x => x.GetLivY()).ToList(), new System.Windows.Point(-cam.Comprimento * 10, ps.AbaS), new System.Windows.Point(cam.Comprimento * 10, ps.AbaS), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV3().Select(x => x.GetLivY()).ToList(), new System.Windows.Point(-cam.Comprimento * 10, ps.AbaS), new System.Windows.Point(cam.Comprimento * 10, ps.AbaS), out l1, out l2, true, false);
 
                 mi.Pontos.AddRange(l1.Select(x => new DLMHelix.Util.Ponto3D(x.X, x.Y, 0)));
                 mi.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLMHelix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
@@ -587,7 +588,7 @@ namespace DLMHelix
                 mi.Origem.Y = ps.AbaS + (ps.Largura / 2) - ps.Espessura;
 
                 var mi2 = new Chapa3D();
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV3().Select(x => x.GetLivY()).ToList(), new System.Windows.Point(-cam.Comprimento * 10, ps.AbaI + ps.Espessura), new System.Windows.Point(cam.Comprimento * 10, ps.AbaI), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV3().Select(x => x.GetLivY()).ToList(), new System.Windows.Point(-cam.Comprimento * 10, ps.AbaI + ps.Espessura), new System.Windows.Point(cam.Comprimento * 10, ps.AbaI), out l1, out l2, true, false);
 
                 mi2.Origem.Z = -ps.Altura + ps.Espessura;
                 mi2.Espessura = ps.Espessura;
@@ -598,14 +599,14 @@ namespace DLMHelix
             }
             #endregion
             #region SOLDADOS
-            else if (cam.TipoPerfil == TipoPerfil.I_Soldado)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.I_Soldado)
             {
                 alma.Espessura = ps.EspAlma;
 
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspI + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspI + descontar), out l1, out l2, true, false);
-                DLMCamFuncoes.Poligonos.Quebrar(l2,
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspI + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspI + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.EspS - ps.EspI - 2 * descontar),
                     new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.EspS - ps.EspI - 2 * descontar), out l1, out l2, true, false);
 
@@ -646,13 +647,13 @@ namespace DLMHelix
                 mi.Espessura = ps.EspS;
                 desenho.Add(mi);
             }
-            else if (cam.TipoPerfil == TipoPerfil.Caixao)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Caixao)
             {
                 alma.Espessura = ps.EspAlma;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspI + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspI + descontar), out l1, out l2, true, false);
-                DLMCamFuncoes.Poligonos.Quebrar(l2,
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspI + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspI + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.EspS - ps.EspI - 2 * descontar),
                     new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.EspS - ps.EspI - 2 * descontar),
                     out l1, out l2, true, false);
@@ -696,12 +697,12 @@ namespace DLMHelix
                 mi.Espessura = ps.EspS;
                 desenho.Add(mi);
             }
-            else if (cam.TipoPerfil == TipoPerfil.T_Soldado)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.T_Soldado)
             {
                 alma.Espessura = ps.EspAlma;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspMesa + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspMesa + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspMesa + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspMesa + descontar), out l1, out l2, true, false);
                 //Funcoes.Poligonos.Quebrar(cam.ShapeLIV1, new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - descontar), out l1, out l2, true, false);
 
 
@@ -730,14 +731,14 @@ namespace DLMHelix
             }
             #endregion
             #region LAMINADOS
-            else if (cam.TipoPerfil == TipoPerfil.WLam)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.WLam)
             {
                 alma.Espessura = ps.EspAlma;
 
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspMesa + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspMesa + descontar), out l1, out l2, true, false);
-                DLMCamFuncoes.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.EspMesa - ps.EspMesa - 2 * descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.EspMesa - ps.EspMesa - 2 * descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspMesa + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspMesa + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.EspMesa - ps.EspMesa - 2 * descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.EspMesa - ps.EspMesa - 2 * descontar), out l1, out l2, true, false);
 
 
                 if (l1.Count > 3)
@@ -772,13 +773,13 @@ namespace DLMHelix
                 mi.Espessura = ps.EspMesa;
                 desenho.Add(mi);
             }
-            else if (cam.TipoPerfil == TipoPerfil.UNP)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.UNP)
             {
                 alma.Espessura = ps.Espessura;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
-                DLMCamFuncoes.Poligonos.Quebrar(l2,
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
                     new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar), out l1, out l2, true, false);
 
@@ -814,13 +815,13 @@ namespace DLMHelix
                 //z3.cor = Brushes.Red;
                 desenho.Add(z3);
             }
-            else if (cam.TipoPerfil == TipoPerfil.UAP)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.UAP)
             {
                 alma.Espessura = ps.Espessura;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
-                DLMCamFuncoes.Poligonos.Quebrar(l2,
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
                     new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar), out l1, out l2, true, false);
 
@@ -858,13 +859,13 @@ namespace DLMHelix
                 //z3.cor = Brushes.Red;
                 desenho.Add(z3);
             }
-            else if (cam.TipoPerfil == TipoPerfil.INP)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.INP)
             {
                 alma.Espessura = ps.EspAlma;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspMesa + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspMesa + descontar), out l1, out l2, true, false);
-                DLMCamFuncoes.Poligonos.Quebrar(l2,
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspMesa + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspMesa + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.EspMesa - ps.EspMesa - 2 * descontar),
                     new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.EspMesa - ps.EspMesa - 2 * descontar),
                     out l1, out l2, true, false);
@@ -900,14 +901,14 @@ namespace DLMHelix
                 mi.Espessura = ps.EspMesa;
                 desenho.Add(mi);
             }
-            else if (cam.TipoPerfil == TipoPerfil.Tubo_Quadrado)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Tubo_Quadrado)
             {
                 alma.Espessura = ps.Espessura;
 
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLMCamFuncoes.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
-                DLMCamFuncoes.Poligonos.Quebrar(l2,
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLMcam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
                     new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar), out l1, out l2, true, false);
 
@@ -950,13 +951,13 @@ namespace DLMHelix
                 mi.Origem.Y = -(ps.Espessura / 2);
                 desenho.Add(mi);
             }
-            else if (cam.TipoPerfil == TipoPerfil.Tubo_Redondo)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Tubo_Redondo)
             {
                 /*não pega recortes*/
                 var ms = new Tubo3D(ps.Largura, ps.Espessura, cam.Comprimento);
                 desenho.AddRange(ms.getContorno());
             }
-            else if (cam.TipoPerfil == TipoPerfil.Barra_Redonda)
+            else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Barra_Redonda)
             {
                 var ms = new Tubo3D(ps.Diametro, 0.001, cam.Comprimento);
                 desenho.AddRange(ms.getContorno());

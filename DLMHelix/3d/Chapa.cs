@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using HelixToolkit;
 using System.Management.Instrumentation;
-using DLMCam;
+using DLMcam;
 using System.Runtime.Remoting;
 using NXOpen.CAM;
 

@@ -21,8 +21,8 @@ namespace DLMHelix
     /// </summary>
     public partial class ViewFaces : Window
     {
-        public List<DLMCam.Face> faces { get; set; } = new List<DLMCam.Face>();
-        public ViewFaces(List<DLMCam.Face> faces)
+        public List<DLMcam.Face> faces { get; set; } = new List<DLMcam.Face>();
+        public ViewFaces(List<DLMcam.Face> faces)
         {
             this.faces = faces;
             InitializeComponent();
@@ -46,7 +46,7 @@ namespace DLMHelix
             this.v3d.ZoomExtents();
             this.v2d.ZoomExtents();
         }
-        public ViewFaces(DLMCam.ReadCam cam)
+        public ViewFaces(DLMcam.ReadCam cam)
         {
             InitializeComponent();
             DLMHelix.Gera2D.Desenho(cam, v2d);

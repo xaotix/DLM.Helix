@@ -9,7 +9,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using DLMCam;
+using DLMcam;
+using DLMenum;
 
 namespace DLMHelix
 {
@@ -44,7 +45,7 @@ namespace DLMHelix
 
 
             #region CHAPAS
-            if (cam.TipoPerfil == TipoPerfil.Barra_Chata | cam.TipoPerfil == TipoPerfil.Chapa | cam.TipoPerfil == TipoPerfil.Chapa_Xadrez)
+            if (cam.TipoPerfil == CAM_PERFIL_TIPO.Barra_Chata | cam.TipoPerfil == CAM_PERFIL_TIPO.Chapa | cam.TipoPerfil == CAM_PERFIL_TIPO.Chapa_Xadrez)
             {
                 linhas.AddRange(Contorno(espessura, shape, origem, cor, ctf));
             }
@@ -113,7 +114,7 @@ namespace DLMHelix
             viewPort.ZoomExtents();
 
         }
-        public static void Desenho(List<DLMCam.Face> cam, HelixViewport3D viewPort)
+        public static void Desenho(List<DLMcam.Face> cam, HelixViewport3D viewPort)
         {
 
 
@@ -196,7 +197,7 @@ namespace DLMHelix
             }
             else
             {
-                var segs = DLMCam.DLMCamFuncoes.Poligonos.ArcoParaSegmento(pts, ctf);
+                var segs = DLMcam.FuncoesDLMCam.Poligonos.ArcoParaSegmento(pts, ctf);
                 liv1pts.AddRange(segs.Select(x => new DLMHelix.Util.Ponto3D(x.X, x.Y, 0)));
 
             }

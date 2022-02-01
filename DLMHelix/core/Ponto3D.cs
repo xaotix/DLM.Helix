@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Windows.Media.Media3D;
-using DLMCam;
+using DLMcam;
 using w = System.Windows;
 
 namespace DLMHelix.Util

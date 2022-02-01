@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DLMHelix.Util
+namespace DLM.helix.Util
 {
     internal class SLista<T> : List<T>
     {

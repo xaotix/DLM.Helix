@@ -1,5 +1,5 @@
-﻿using DLMHelix._3d;
-using DLMHelix.Util;
+﻿using DLM.helix._3d;
+using DLM.helix.Util;
 using HelixToolkit.Wpf;
 using System;
 using System.Collections.Generic;
@@ -9,11 +9,11 @@ using System.Threading.Tasks;
 using System.Windows.Media;
 using HelixToolkit;
 using System.Management.Instrumentation;
-using DLMcam;
+using DLM.cam;
 using System.Runtime.Remoting;
 using NXOpen.CAM;
 
-namespace DLMHelix
+namespace DLM.helix
 {
    public class Chapa3D
     {
@@ -145,7 +145,7 @@ namespace DLMHelix
 
                 pts.Add(b1);
             }
-            DLMHelix._3d.Objeto3D ch = new DLMHelix._3d.Objeto3D(origem, matriz, pts,this.Espessura) { corChapa3D = cor.Clone() };
+            DLM.helix._3d.Objeto3D ch = new DLM.helix._3d.Objeto3D(origem, matriz, pts,this.Espessura) { corChapa3D = cor.Clone() };
             ch.corChapa3D = this.cor.Clone();
             foreach (var s in this.Furos)
             {

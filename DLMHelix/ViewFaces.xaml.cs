@@ -14,20 +14,20 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace DLMHelix
+namespace DLM.helix
 {
     /// <summary>
     /// Interação lógica para ViewFaces.xam
     /// </summary>
     public partial class ViewFaces : Window
     {
-        public List<DLMcam.Face> faces { get; set; } = new List<DLMcam.Face>();
-        public ViewFaces(List<DLMcam.Face> faces)
+        public List<DLM.cam.Face> faces { get; set; } = new List<DLM.cam.Face>();
+        public ViewFaces(List<DLM.cam.Face> faces)
         {
             this.faces = faces;
             InitializeComponent();
-            DLMHelix.Gera2D.Desenho(faces, v2d);
-            DLMHelix.Gera3D.Desenho(faces, v3d);
+            DLM.helix.Gera2D.Desenho(faces, v2d);
+            DLM.helix.Gera3D.Desenho(faces, v3d);
             ControleCamera.Setar(v2d, ControleCamera.eCameraViews.Top, 0);
             this.v3d.ShowCoordinateSystem = true;
             this.v3d.ShowFieldOfView = false;
@@ -46,11 +46,11 @@ namespace DLMHelix
             this.v3d.ZoomExtents();
             this.v2d.ZoomExtents();
         }
-        public ViewFaces(DLMcam.ReadCam cam)
+        public ViewFaces(DLM.cam.ReadCam cam)
         {
             InitializeComponent();
-            DLMHelix.Gera2D.Desenho(cam, v2d);
-            DLMHelix.Gera3D.Desenho(cam, v3d);
+            DLM.helix.Gera2D.Desenho(cam, v2d);
+            DLM.helix.Gera3D.Desenho(cam, v3d);
             ControleCamera.Setar(v2d, ControleCamera.eCameraViews.Top, 0);
             this.v3d.ShowCoordinateSystem = true;
             this.v3d.ShowFieldOfView = false;

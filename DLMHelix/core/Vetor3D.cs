@@ -1,4 +1,4 @@
-﻿using DLMHelix.Util;
+﻿using DLM.helix.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Media.Media3D;
 
-namespace DLMHelix
+namespace DLM.helix
 {
     internal class Vetor3D
     {

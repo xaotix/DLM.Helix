@@ -1,11 +1,11 @@
-﻿using DLMHelix.Util;
+﻿using DLM.helix.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DLMHelix
+namespace DLM.helix
 {
     public class Banzo3D
     {
@@ -30,7 +30,7 @@ namespace DLMHelix
             //ch3.cor = System.Windows.Media.Brushes.Cyan;
             //ch4.cor = System.Windows.Media.Brushes.Blue;
 
-            var p0 = Trigonometria.MoverXY(new DLMHelix.Util.Ponto3D(), 0, this.Aba1);
+            var p0 = Trigonometria.MoverXY(new DLM.helix.Util.Ponto3D(), 0, this.Aba1);
             p0 = Trigonometria.MoverXY(p0, 90, this.Aba2);
             p0 = Trigonometria.MoverXY(p0, 135, this.Aba3);
             ch4.Origem.Z = p0.Y;

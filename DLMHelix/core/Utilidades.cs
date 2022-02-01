@@ -1,11 +1,11 @@
-﻿using DLMHelix.Util;
+﻿using DLM.helix.Util;
 using Poly2Tri.Triangulation.Polygon;
 using System;
 using System.Windows.Media.Media3D;
 using w = System.Windows;
 
 
-namespace DLMHelix
+namespace DLM.helix
 {
 
 

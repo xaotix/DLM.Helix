@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Windows.Media.Media3D;
-using DLMcam;
+using DLM.cam;
 using w = System.Windows;
 
-namespace DLMHelix.Util
+namespace DLM.helix.Util
 {
     public class Ponto3D
     {

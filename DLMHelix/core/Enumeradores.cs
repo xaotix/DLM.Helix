@@ -1,4 +1,4 @@
-﻿using DLMHelix.Util;
+﻿using DLM.helix.Util;
 using HelixToolkit.Wpf;
 
 using System;
@@ -9,7 +9,7 @@ using System.Text;
 using System.Windows;
 using System.Windows.Media.Media3D;
 
-namespace DLMHelix
+namespace DLM.helix
 {
     internal static class Enumeradores
     {

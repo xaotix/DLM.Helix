@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.28307.1684
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DLMHelix", "DLMHelix\DLMHelix.csproj", "{8CF2C852-67F6-4494-B4D0-AAC6562756A8}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DLM.helix", "DLMHelix\DLM.helix.csproj", "{8CF2C852-67F6-4494-B4D0-AAC6562756A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

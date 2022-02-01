@@ -1,4 +1,4 @@
-﻿using DLMHelix._3d;
+﻿using DLM.helix._3d;
 using HelixToolkit.Wpf;
 using NXOpen.CAE;
 using System;
@@ -17,9 +17,9 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using DLMcam;
+using DLM.cam;
 
-namespace DLMHelix
+namespace DLM.helix
 {
     /// <summary>
     /// Interação lógica para CAMViewer.xam
@@ -98,7 +98,7 @@ namespace DLMHelix
 
         private void Ajustes()
         {
-            this.viewport.Children.Add(DLMHelix.Gera3D.Luz());
+            this.viewport.Children.Add(DLM.helix.Gera3D.Luz());
 
             //this.viewport.ZoomExtents();
 

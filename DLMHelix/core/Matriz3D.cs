@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Media.Media3D;
 
-namespace DLMHelix
+namespace DLM.helix
 {
     internal class Matriz3D
     {

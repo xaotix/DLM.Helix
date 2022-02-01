@@ -1,4 +1,4 @@
-﻿using DLMHelix.Util;
+﻿using DLM.helix.Util;
 using HelixToolkit.Wpf;
 using Poly2Tri.Triangulation.Polygon;
 using System;
@@ -8,7 +8,7 @@ using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
 
-namespace DLMHelix._3d
+namespace DLM.helix._3d
 {
     internal class Objeto3D
     {

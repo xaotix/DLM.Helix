@@ -35,15 +35,14 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Conexoes, Version=5.1.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
+    <Reference Include="Conexoes">
       <HintPath>..\..\DLLS\Conexoes.dll</HintPath>
     </Reference>
     <Reference Include="HelixToolkit">
-      <HintPath>..\..\..\DLLS\HelixToolkit.dll</HintPath>
+      <HintPath>..\..\DLLS\HelixToolkit.dll</HintPath>
     </Reference>
     <Reference Include="HelixToolkit.Wpf">
-      <HintPath>..\..\..\DLLS\HelixToolkit.Wpf.dll</HintPath>
+      <HintPath>..\..\DLLS\HelixToolkit.Wpf.dll</HintPath>
     </Reference>
     <Reference Include="NXOpen, Version=9.0.3.4, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -60,12 +59,12 @@
       <HintPath>..\..\DLLS\NXOpenUI.dll</HintPath>
     </Reference>
     <Reference Include="Poly2Tri">
-      <HintPath>..\..\..\DLLS\Poly2Tri.dll</HintPath>
+      <HintPath>..\..\DLLS\Poly2Tri.dll</HintPath>
     </Reference>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="Snap">
-      <HintPath>..\..\..\DLLS\Snap.dll</HintPath>
+      <HintPath>..\..\DLLS\Snap.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

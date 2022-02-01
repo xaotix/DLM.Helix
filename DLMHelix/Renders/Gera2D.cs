@@ -1,5 +1,5 @@
-﻿using DLMHelix._3d;
-using DLMHelix.Util;
+﻿using DLM.helix._3d;
+using DLM.helix.Util;
 using HelixToolkit.Wpf;
 using Poly2Tri.Triangulation;
 using System;
@@ -9,10 +9,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using DLMcam;
-using DLMenum;
+using DLM.cam;
+using DLM.vars;
 
-namespace DLMHelix
+namespace DLM.helix
 {
     public class Gera2D
     {
@@ -27,7 +27,7 @@ namespace DLMHelix
          */
         public static void Desenho(ReadCam cam, HelixViewport3D viewPort)
         {
-
+            
             double espessura = 1;
             List<LinesVisual3D> linhas = new List<LinesVisual3D>();
             viewPort.Children.Clear();
@@ -114,7 +114,7 @@ namespace DLMHelix
             viewPort.ZoomExtents();
 
         }
-        public static void Desenho(List<DLMcam.Face> cam, HelixViewport3D viewPort)
+        public static void Desenho(List<DLM.cam.Face> cam, HelixViewport3D viewPort)
         {
 
 
@@ -193,12 +193,12 @@ namespace DLMHelix
             if (ctf == 0)
             {
 
-                liv1pts.AddRange(pts.Select(x => new DLMHelix.Util.Ponto3D(x.X, x.Y, 0)));
+                liv1pts.AddRange(pts.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
             }
             else
             {
-                var segs = DLMcam.FuncoesDLMCam.Poligonos.ArcoParaSegmento(pts, ctf);
-                liv1pts.AddRange(segs.Select(x => new DLMHelix.Util.Ponto3D(x.X, x.Y, 0)));
+                var segs = DLM.cam.FuncoesDLMCam.Poligonos.ArcoParaSegmento(pts, ctf);
+                liv1pts.AddRange(segs.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
 
             }
             for (int i = 1; i < liv1pts.Count; i++)

@@ -1,4 +1,4 @@
-﻿using DLMHelix.Util;
+﻿using DLM.helix.Util;
 using NXOpen.CAM;
 using Poly2Tri.Triangulation.Polygon;
 using System;
@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DLMHelix
+namespace DLM.helix
 {
     public class Furo
     {

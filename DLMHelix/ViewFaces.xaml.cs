@@ -46,7 +46,7 @@ namespace DLM.helix
             this.v3d.ZoomExtents();
             this.v2d.ZoomExtents();
         }
-        public ViewFaces(DLM.cam.ReadCam cam)
+        public ViewFaces(DLM.cam.ReadCAM cam)
         {
             InitializeComponent();
             DLM.helix.Gera2D.Desenho(cam, v2d);

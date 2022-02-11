@@ -55,7 +55,7 @@ namespace DLM.helix
             return z3;
         }
 
-        public static List<Chapa3D> Desenho(ReadCam readcam, HelixViewport3D viewPort)
+        public static List<Chapa3D> Desenho(ReadCAM readcam, HelixViewport3D viewPort)
         {
             /*a fazer:
              1) resolver bug do perfil cartola
@@ -232,7 +232,7 @@ namespace DLM.helix
             return desenho;
 
         }
-        public static List<Chapa3D> DesenhoOld(DLM.cam.ReadCam cam, HelixViewport3D viewPort, bool old)
+        public static List<Chapa3D> DesenhoOld(DLM.cam.ReadCAM cam, HelixViewport3D viewPort, bool old)
         {
             /*a fazer:
              1) resolver bug do perfil cartola

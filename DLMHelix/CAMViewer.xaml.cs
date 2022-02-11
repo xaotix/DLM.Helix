@@ -26,7 +26,7 @@ namespace DLM.helix
     /// </summary>
     public partial class CAMViewer : UserControl
     {
-        public ReadCam Cam { get; set; } = new ReadCam();
+        public ReadCAM Cam { get; set; } = new ReadCAM();
 
         public CAMViewer()
         {
@@ -47,7 +47,7 @@ namespace DLM.helix
             List<MeshGeometryVisual3D> desenho = new List<MeshGeometryVisual3D>();
             if(arq.ToUpper().EndsWith(".CAM"))
             {
-            this.Cam = new ReadCam(arq);
+            this.Cam = new ReadCAM(arq);
             Recarregar();
             Front();
 
@@ -55,7 +55,7 @@ namespace DLM.helix
 
 
         }
-        public void Abrir(ReadCam arq)
+        public void Abrir(ReadCAM arq)
         {
             this.viewport.Children.Clear();
             this.viewport2D.Children.Clear();

@@ -9,7 +9,7 @@ namespace DLM.helix.Renders
             ViewFaces pp = new ViewFaces(faces);
             pp.Show();
         }
-        public static void Cam(DLM.cam.ReadCam cam)
+        public static void Cam(DLM.cam.ReadCAM cam)
         {
             ViewFaces pp = new ViewFaces(cam);
             pp.Show();

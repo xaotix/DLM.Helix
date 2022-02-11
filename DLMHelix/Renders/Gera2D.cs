@@ -25,7 +25,7 @@ namespace DLM.helix
                 
 
          */
-        public static void Desenho(ReadCam cam, HelixViewport3D viewPort)
+        public static void Desenho(ReadCAM cam, HelixViewport3D viewPort)
         {
             
             double espessura = 1;

@@ -79,12 +79,12 @@ namespace DLM.helix
             if (readcam.TipoPerfil == CAM_PERFIL_TIPO.Tubo_Redondo)
             {
                 /*não pega recortes*/
-                var ms = new Tubo3D(perfil.Diametro, perfil.Espessura, readcam.Comprimento);
+                var ms = new Tubo3D(perfil.H, perfil.ESP, readcam.Comprimento);
                 desenho.AddRange(ms.getContorno());
             }
             else if (readcam.TipoPerfil == CAM_PERFIL_TIPO.Barra_Redonda)
             {
-                var ms = new Tubo3D(perfil.Diametro, 0.001, readcam.Comprimento);
+                var ms = new Tubo3D(perfil.H, 0.001, readcam.Comprimento);
                 desenho.AddRange(ms.getContorno());
             }
             else
@@ -122,20 +122,20 @@ namespace DLM.helix
                 desenho.Add(liv2);
 
 
-                if (cam.Perfil.Tipo == CAM_PERFIL_TIPO.Caixao)
+                if (cam.Perfil.TipoCAM == CAM_PERFIL_TIPO.Caixao)
                 {
                     var liv11 = liv1.Clonar();
-                    liv11.Origem.Z = perfil.EntreAlmas / 2 - liv11.Espessura / 2;
-                    liv1.Origem.Z = -perfil.EntreAlmas / 2 + liv11.Espessura / 2;
+                    liv11.Origem.Z = perfil.ENTRE_ALMAS / 2 - liv11.Espessura / 2;
+                    liv1.Origem.Z = -perfil.ENTRE_ALMAS / 2 + liv11.Espessura / 2;
                     desenho.Add(liv11);
                 }
-                else if(cam.Perfil.Tipo == CAM_PERFIL_TIPO.Tubo_Quadrado)
+                else if(cam.Perfil.TipoCAM == CAM_PERFIL_TIPO.Tubo_Quadrado)
                 {
                     var liv11 = liv1.Clonar();
                     liv11.Origem.Z = -liv2.Largura + liv1.Espessura;
                     desenho.Add(liv11);
                 }
-                else if(cam.Perfil.Tipo == CAM_PERFIL_TIPO.Cartola)
+                else if(cam.Perfil.TipoCAM == CAM_PERFIL_TIPO.Cartola)
                 {
                     var liv11 = liv1.Clonar();
                     liv11.Origem.Z = -liv2.Largura/2 + liv1.Espessura/2;
@@ -165,11 +165,11 @@ namespace DLM.helix
                     {
                         liv3.Origem.Z = liv3.Espessura / 2 + chliv2.Largura;
                     }
-                    if(cam.Perfil.Tipo ==  CAM_PERFIL_TIPO.Z_Dobrado)
+                    if(cam.Perfil.TipoCAM ==  CAM_PERFIL_TIPO.Z_Dobrado)
                     {
                         liv3.Origem.Z = liv3.Largura - (liv1.Espessura/2);
                     }
-                    if (cam.Perfil.Tipo == CAM_PERFIL_TIPO.C_Enrigecido | cam.Perfil.Tipo == CAM_PERFIL_TIPO.Z_Purlin)
+                    if (cam.Perfil.TipoCAM == CAM_PERFIL_TIPO.C_Enrigecido | cam.Perfil.TipoCAM == CAM_PERFIL_TIPO.Z_Purlin)
                     {
                         var aba1 = cam.Formato.LIV2_Aba_Menor(false);
                         var aba2 = cam.Formato.LIV3_Aba_Menor(false);
@@ -180,12 +180,12 @@ namespace DLM.helix
                         ab1.Origem.Y = -liv3.Espessura- folga;
                         ab2.Origem.Y = -liv1.Largura + ab2.Largura-liv3.Espessura-folga;
 
-                        if(cam.Perfil.Tipo == CAM_PERFIL_TIPO.C_Enrigecido)
+                        if(cam.Perfil.TipoCAM == CAM_PERFIL_TIPO.C_Enrigecido)
                         {
                             ab1.Origem.Z = -liv3.Largura + liv3.Espessura;
                             ab2.Origem.Z = -liv3.Largura + liv3.Espessura;
                         }
-                        else if(cam.Perfil.Tipo == CAM_PERFIL_TIPO.Z_Purlin)
+                        else if(cam.Perfil.TipoCAM == CAM_PERFIL_TIPO.Z_Purlin)
                         {
                         ab1.Origem.Z = -liv3.Largura + liv3.Espessura;
                         ab2.Origem.Z = +liv3.Largura - liv3.Espessura;
@@ -195,7 +195,7 @@ namespace DLM.helix
                         desenho.Add(ab1);
                         desenho.Add(ab2);
                     }
-                    if(cam.Perfil.Tipo!= CAM_PERFIL_TIPO.Cartola)
+                    if(cam.Perfil.TipoCAM!= CAM_PERFIL_TIPO.Cartola)
                     {
                     desenho.Add(liv3);
                      
@@ -274,20 +274,20 @@ namespace DLM.helix
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Z_Purlin)
             {
                 //*falta adicionar a aba menor*/
-                alma.Espessura = ps.Espessura;
+                alma.Espessura = ps.ESP;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.ESP + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.ESP + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10,
-                    ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar), new System.Windows.Point(cam.Comprimento * 10,
-                    ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar), out l1, out l2, true, false);
+                    ps.H - ps.ESP - ps.ESP - 2 * descontar), new System.Windows.Point(cam.Comprimento * 10,
+                    ps.H - ps.ESP - ps.ESP - 2 * descontar), out l1, out l2, true, false);
 
 
 
 
                 if (l1.Count > 3)
                 {
-                    alma.Origem.Y = -ps.Espessura - descontar;
+                    alma.Origem.Y = -ps.ESP - descontar;
                     alma.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
                 }
                 else
@@ -301,35 +301,35 @@ namespace DLM.helix
 
 
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                alma.Origem.Z = -ps.Espessura;
+                alma.Origem.Z = -ps.ESP;
                 var z2 = new Chapa3D();
                 z2.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z2.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z2.AnguloX = 90;
-                z2.Origem.Y = -ps.Espessura / 2;
-                z2.Origem.Z = -ps.Espessura / 2;
+                z2.Origem.Y = -ps.ESP / 2;
+                z2.Origem.Z = -ps.ESP / 2;
                 //z2.cor = Brushes.Cyan;
-                z2.Espessura = ps.Espessura;
+                z2.Espessura = ps.ESP;
                 desenho.Add(z2);
 
                 var z3 = new Chapa3D();
                 z3.Pontos.AddRange(cam.GetShapeLIV3().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z3.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z3.AnguloX = 90;
-                z3.Origem.Y = -ps.Altura + (ps.Espessura / 2);
-                z3.Origem.Z = -ps.Espessura * 1.5;
-                z3.Espessura = ps.Espessura;
+                z3.Origem.Y = -ps.H + (ps.ESP / 2);
+                z3.Origem.Z = -ps.ESP * 1.5;
+                z3.Espessura = ps.ESP;
 
 
-                var abaz2 = new Chapa3D(z2.Comprimento, ps.AbaS - ps.Espessura - descontar, ps.Espessura);
-                abaz2.Origem.Z = -ps.LargS;
-                abaz2.Origem.Y = -ps.Espessura - abaz2.Largura - descontar;
+                var abaz2 = new Chapa3D(z2.Comprimento, ps.ABAS - ps.ESP - descontar, ps.ESP);
+                abaz2.Origem.Z = -ps.MSL;
+                abaz2.Origem.Y = -ps.ESP - abaz2.Largura - descontar;
                 abaz2.Origem.X = z2.OrigemInf.X;
                 desenho.Add(abaz2);
 
-                var abaz3 = new Chapa3D(z3.Comprimento, ps.AbaI - ps.Espessura - descontar, ps.Espessura);
-                abaz3.Origem.Z = ps.LargI - 2 * ps.Espessura;
-                abaz3.Origem.Y = -ps.Altura + ps.Espessura + descontar;
+                var abaz3 = new Chapa3D(z3.Comprimento, ps.ABAI - ps.ESP - descontar, ps.ESP);
+                abaz3.Origem.Z = ps.MIL - 2 * ps.ESP;
+                abaz3.Origem.Y = -ps.H + ps.ESP + descontar;
                 abaz3.Origem.X = z3.OrigemInf.X;
                 desenho.Add(abaz3);
                 //z3.cor = Brushes.Red;
@@ -337,19 +337,19 @@ namespace DLM.helix
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Z_Dobrado)
             {
-                alma.Espessura = ps.Espessura;
+                alma.Espessura = ps.ESP;
 
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.ESP + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.ESP + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
-                    new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
-                    new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
+                    new System.Windows.Point(-cam.Comprimento * 10, ps.H - ps.ESP - ps.ESP - 2 * descontar),
+                    new System.Windows.Point(cam.Comprimento * 10, ps.H - ps.ESP - ps.ESP - 2 * descontar),
                     out l1, out l2, true, false);
 
                 if (l1.Count > 3)
                 {
-                    alma.Origem.Y = -ps.Espessura - descontar;
+                    alma.Origem.Y = -ps.ESP - descontar;
                     alma.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
                 }
                 else
@@ -360,38 +360,38 @@ namespace DLM.helix
 
 
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                alma.Origem.Z = -(ps.Espessura);
+                alma.Origem.Z = -(ps.ESP);
                 var z2 = new Chapa3D();
                 z2.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z2.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z2.AnguloX = 90;
-                z2.Origem.Y = -ps.Espessura / 2;
-                z2.Origem.Z = -ps.Espessura / 2;
+                z2.Origem.Y = -ps.ESP / 2;
+                z2.Origem.Z = -ps.ESP / 2;
                 //z2.cor = Brushes.Cyan;
-                z2.Espessura = ps.Espessura;
+                z2.Espessura = ps.ESP;
                 desenho.Add(z2);
 
                 var z3 = new Chapa3D();
                 z3.Pontos.AddRange(cam.GetShapeLIV3().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z3.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z3.AnguloX = 90;
-                z3.Origem.Y = -ps.Altura + (ps.Espessura / 2);
-                z3.Origem.Z = -ps.Espessura * 1.5;
-                z3.Espessura = ps.Espessura;
+                z3.Origem.Y = -ps.H + (ps.ESP / 2);
+                z3.Origem.Z = -ps.ESP * 1.5;
+                z3.Espessura = ps.ESP;
                 //z3.cor = Brushes.Red;
                 desenho.Add(z3);
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.U_Dobrado)
             {
-                alma.Espessura = ps.Espessura;
+                alma.Espessura = ps.ESP;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.ESP + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.ESP + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10, ps.H - ps.ESP - ps.ESP - descontar), new System.Windows.Point(cam.Comprimento * 10, ps.H - ps.ESP - ps.ESP - descontar), out l1, out l2, true, false);
 
                 if (l1.Count > 3)
                 {
-                    alma.Origem.Y = -ps.Espessura - descontar;
+                    alma.Origem.Y = -ps.ESP - descontar;
                     alma.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
                 }
                 else
@@ -400,42 +400,42 @@ namespace DLM.helix
                 }
 
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                alma.Origem.Z = -(ps.Espessura);
+                alma.Origem.Z = -(ps.ESP);
                 var z2 = new Chapa3D();
                 z2.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z2.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z2.AnguloX = 90;
-                z2.Origem.Y = -ps.Espessura / 2;
-                z2.Origem.Z = -ps.Espessura / 2;
+                z2.Origem.Y = -ps.ESP / 2;
+                z2.Origem.Z = -ps.ESP / 2;
                 //z2.cor = Brushes.Cyan;
-                z2.Espessura = ps.Espessura;
+                z2.Espessura = ps.ESP;
                 desenho.Add(z2);
 
                 var z3 = new Chapa3D();
                 z3.Pontos.AddRange(cam.GetShapeLIV3().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z3.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z3.AnguloX = 90;
-                z3.Origem.Y = -ps.Altura + (ps.Espessura / 2);
-                z3.Origem.Z = -ps.Espessura / 2;
-                z3.Espessura = ps.Espessura;
+                z3.Origem.Y = -ps.H + (ps.ESP / 2);
+                z3.Origem.Z = -ps.ESP / 2;
+                z3.Espessura = ps.ESP;
                 //z3.cor = Brushes.Red;
                 desenho.Add(z3);
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.C_Enrigecido)
             {
                 /*falta fazer a aba menor*/
-                alma.Espessura = ps.Espessura;
+                alma.Espessura = ps.ESP;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.ESP + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.ESP + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
-                    new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
-                    new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
+                    new System.Windows.Point(-cam.Comprimento * 10, ps.H - ps.ESP - ps.ESP - 2 * descontar),
+                    new System.Windows.Point(cam.Comprimento * 10, ps.H - ps.ESP - ps.ESP - 2 * descontar),
                     out l1, out l2, true, false);
 
                 if (l1.Count > 3)
                 {
-                    alma.Origem.Y = -ps.Espessura - descontar;
+                    alma.Origem.Y = -ps.ESP - descontar;
                     alma.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
                 }
                 else
@@ -447,15 +447,15 @@ namespace DLM.helix
 
                 //alma.Pontos.AddRange(cam.GetShapeLIV1().Select(x => new BibliotecaHelix.Util.Ponto3D(x.X, x.Y, 0)));
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                alma.Origem.Z = -(ps.Espessura);
+                alma.Origem.Z = -(ps.ESP);
                 var z2 = new Chapa3D();
                 z2.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z2.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z2.AnguloX = 90;
-                z2.Origem.Y = -ps.Espessura / 2;
-                z2.Origem.Z = -ps.Espessura / 2;
+                z2.Origem.Y = -ps.ESP / 2;
+                z2.Origem.Z = -ps.ESP / 2;
                 //z2.cor = Brushes.Cyan;
-                z2.Espessura = ps.Espessura;
+                z2.Espessura = ps.ESP;
                 desenho.Add(z2);
 
 
@@ -464,32 +464,32 @@ namespace DLM.helix
                 z3.Pontos.AddRange(cam.GetShapeLIV3().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z3.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z3.AnguloX = 90;
-                z3.Origem.Y = -ps.Altura + (ps.Espessura / 2);
-                z3.Origem.Z = -ps.Espessura / 2;
-                z3.Espessura = ps.Espessura;
+                z3.Origem.Y = -ps.H + (ps.ESP / 2);
+                z3.Origem.Z = -ps.ESP / 2;
+                z3.Espessura = ps.ESP;
                 //z3.cor = Brushes.Red;
                 desenho.Add(z3);
 
 
 
-                var abaz2 = new Chapa3D(z2.Comprimento, ps.AbaS - ps.Espessura - descontar, ps.Espessura);
-                abaz2.Origem.Z = -ps.Largura;
-                abaz2.Origem.Y = -ps.Espessura - abaz2.Largura - descontar;
+                var abaz2 = new Chapa3D(z2.Comprimento, ps.ABAS - ps.ESP - descontar, ps.ESP);
+                abaz2.Origem.Z = -ps.ML;
+                abaz2.Origem.Y = -ps.ESP - abaz2.Largura - descontar;
                 abaz2.Origem.X = z2.OrigemInf.X;
                 desenho.Add(abaz2);
 
-                var abaz3 = new Chapa3D(z3.Comprimento, ps.AbaI - ps.Espessura - descontar, ps.Espessura);
-                abaz3.Origem.Z = -ps.Largura;
-                abaz3.Origem.Y = -ps.Altura + ps.Espessura + descontar;
+                var abaz3 = new Chapa3D(z3.Comprimento, ps.ABAI - ps.ESP - descontar, ps.ESP);
+                abaz3.Origem.Z = -ps.ML;
+                abaz3.Origem.Y = -ps.H + ps.ESP + descontar;
                 abaz3.Origem.X = z3.OrigemInf.X;
                 desenho.Add(abaz3);
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.L_Dobrado)
             {
-                alma.Espessura = ps.Espessura;
+                alma.Espessura = ps.ESP;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.ESP + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.ESP + descontar), out l1, out l2, true, false);
 
 
                 if (l2.Count > 3)
@@ -503,25 +503,25 @@ namespace DLM.helix
                 }
 
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                alma.Origem.Z = -(ps.Espessura);
+                alma.Origem.Z = -(ps.ESP);
                 var z2 = new Chapa3D();
                 z2.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z2.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z2.AnguloX = 90;
-                z2.Origem.Y = -ps.Espessura / 2;
-                z2.Origem.Z = -ps.Espessura / 2;
+                z2.Origem.Y = -ps.ESP / 2;
+                z2.Origem.Z = -ps.ESP / 2;
                 //z2.cor = Brushes.Cyan;
-                z2.Espessura = ps.Espessura;
+                z2.Espessura = ps.ESP;
                 desenho.Add(z2);
 
 
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.L_Laminado)
             {
-                alma.Espessura = ps.Espessura;
+                alma.Espessura = ps.ESP;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.ESP + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.ESP + descontar), out l1, out l2, true, false);
 
 
 
@@ -538,15 +538,15 @@ namespace DLM.helix
 
                 //alma.Pontos.AddRange(cam.GetShapeLIV1().Select(x => new BibliotecaHelix.Util.Ponto3D(x.X, x.Y, 0)));
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                alma.Origem.Z = -(ps.Espessura);
+                alma.Origem.Z = -(ps.ESP);
                 var z2 = new Chapa3D();
                 z2.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z2.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z2.AnguloX = 90;
-                z2.Origem.Y = -ps.Espessura / 2;
-                z2.Origem.Z = -ps.Espessura / 2;
+                z2.Origem.Y = -ps.ESP / 2;
+                z2.Origem.Z = -ps.ESP / 2;
                 //z2.cor = Brushes.Cyan;
-                z2.Espessura = ps.Espessura;
+                z2.Espessura = ps.ESP;
                 desenho.Add(z2);
 
 
@@ -554,14 +554,14 @@ namespace DLM.helix
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Cartola)
             {
                 /*cams com recortes ainda não ta bom, precisa ver melhor oq ta acontecendo.*/
-                alma.Espessura = ps.Espessura;
+                alma.Espessura = ps.ESP;
                 alma.Pontos.AddRange(cam.GetShapeLIV1().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 alma.AnguloX = 90;
-                alma.Origem.Y = ps.Largura / 2 - (ps.Espessura / 2);
-                alma.Origem.Z = ps.Espessura / 2;
+                alma.Origem.Y = ps.ML / 2 - (ps.ESP / 2);
+                alma.Origem.Z = ps.ESP / 2;
                 var ch2 = alma.Clonar();
-                ch2.Origem.Y = -ps.Largura / 2 + (ps.Espessura / 2);
+                ch2.Origem.Y = -ps.ML / 2 + (ps.ESP / 2);
                 desenho.Add(ch2);
 
 
@@ -570,7 +570,7 @@ namespace DLM.helix
                 ms.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
 
 
-                ms.Espessura = ps.Espessura;
+                ms.Espessura = ps.ESP;
                 //ms.cor = Brushes.Red;
                 desenho.Add(ms);
 
@@ -578,22 +578,22 @@ namespace DLM.helix
                 var mi = new Chapa3D();
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV3().Select(x => x.GetLivY()).ToList(), new System.Windows.Point(-cam.Comprimento * 10, ps.AbaS), new System.Windows.Point(cam.Comprimento * 10, ps.AbaS), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV3().Select(x => x.GetLivY()).ToList(), new System.Windows.Point(-cam.Comprimento * 10, ps.ABAS), new System.Windows.Point(cam.Comprimento * 10, ps.ABAS), out l1, out l2, true, false);
 
                 mi.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
                 mi.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                mi.Espessura = ps.Espessura;
+                mi.Espessura = ps.ESP;
                 //mi.cor = Brushes.Blue;
-                mi.Origem.Z = -ps.Altura + ps.Espessura;
-                mi.Origem.Y = ps.AbaS + (ps.Largura / 2) - ps.Espessura;
+                mi.Origem.Z = -ps.H + ps.ESP;
+                mi.Origem.Y = ps.ABAS + (ps.ML / 2) - ps.ESP;
 
                 var mi2 = new Chapa3D();
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV3().Select(x => x.GetLivY()).ToList(), new System.Windows.Point(-cam.Comprimento * 10, ps.AbaI + ps.Espessura), new System.Windows.Point(cam.Comprimento * 10, ps.AbaI), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV3().Select(x => x.GetLivY()).ToList(), new System.Windows.Point(-cam.Comprimento * 10, ps.ABAI + ps.ESP), new System.Windows.Point(cam.Comprimento * 10, ps.ABAI), out l1, out l2, true, false);
 
-                mi2.Origem.Z = -ps.Altura + ps.Espessura;
-                mi2.Espessura = ps.Espessura;
+                mi2.Origem.Z = -ps.H + ps.ESP;
+                mi2.Espessura = ps.ESP;
                 mi2.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
-                mi2.Origem.Y = -(ps.Largura / 2) + ps.Espessura;
+                mi2.Origem.Y = -(ps.ML / 2) + ps.ESP;
                 desenho.Add(mi2);
                 desenho.Add(mi);
             }
@@ -601,14 +601,14 @@ namespace DLM.helix
             #region SOLDADOS
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.I_Soldado)
             {
-                alma.Espessura = ps.EspAlma;
+                alma.Espessura = ps.ESP;
 
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspI + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspI + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.MSE + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.MSE + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
-                    new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.EspS - ps.EspI - 2 * descontar),
-                    new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.EspS - ps.EspI - 2 * descontar), out l1, out l2, true, false);
+                    new System.Windows.Point(-cam.Comprimento * 10, ps.H - ps.MIE - ps.MSE - 2 * descontar),
+                    new System.Windows.Point(cam.Comprimento * 10, ps.H - ps.MIE - ps.MSE - 2 * descontar), out l1, out l2, true, false);
 
 
 
@@ -616,7 +616,7 @@ namespace DLM.helix
                 if (l1.Count > 3)
                 {
 
-                    alma.Origem.Y = -ps.EspI - descontar;
+                    alma.Origem.Y = -ps.MSE - descontar;
                     alma.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
                 }
                 else
@@ -629,39 +629,39 @@ namespace DLM.helix
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y > 0 ? -y.Y : y.Y, y.Dist, y.Ang)));
 
 
-                alma.Origem.Z = -(ps.EspAlma / 2);
+                alma.Origem.Z = -(ps.ESP / 2);
 
                 var ms = new Chapa3D();
                 ms.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 ms.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 ms.AnguloX = 90;
-                ms.Origem.Y = -(ps.EspI / 2);
-                ms.Espessura = ps.EspI;
+                ms.Origem.Y = -(ps.MSE / 2);
+                ms.Espessura = ps.MSE;
                 desenho.Add(ms);
 
                 var mi = new Chapa3D();
                 mi.Pontos.AddRange(cam.GetShapeLIV3().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 mi.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 mi.AnguloX = 90;
-                mi.Origem.Y = -ps.Altura + (ps.EspS / 2);
-                mi.Espessura = ps.EspS;
+                mi.Origem.Y = -ps.H + (ps.MIE / 2);
+                mi.Espessura = ps.MIE;
                 desenho.Add(mi);
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Caixao)
             {
-                alma.Espessura = ps.EspAlma;
+                alma.Espessura = ps.ESP;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspI + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspI + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.MSE + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.MSE + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
-                    new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.EspS - ps.EspI - 2 * descontar),
-                    new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.EspS - ps.EspI - 2 * descontar),
+                    new System.Windows.Point(-cam.Comprimento * 10, ps.H - ps.MIE - ps.MSE - 2 * descontar),
+                    new System.Windows.Point(cam.Comprimento * 10, ps.H - ps.MIE - ps.MSE - 2 * descontar),
                     out l1, out l2, true, false);
 
 
                 if (l1.Count > 3)
                 {
-                    alma.Origem.Y = -ps.EspI - descontar;
+                    alma.Origem.Y = -ps.MSE - descontar;
                     alma.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
 
                 }
@@ -674,10 +674,10 @@ namespace DLM.helix
 
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
 
-                alma.Origem.Z = -(ps.EspAlma / 2) + (ps.EntreAlmas / 2);
+                alma.Origem.Z = -(ps.ESP / 2) + (ps.ENTRE_ALMAS / 2);
 
                 var ch2 = alma.Clonar();
-                ch2.Origem.Z = -(ps.EspAlma / 2) - (ps.EntreAlmas / 2);
+                ch2.Origem.Z = -(ps.ESP / 2) - (ps.ENTRE_ALMAS / 2);
                 desenho.Add(ch2);
 
 
@@ -685,24 +685,24 @@ namespace DLM.helix
                 ms.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 ms.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 ms.AnguloX = 90;
-                ms.Origem.Y = -(ps.EspI / 2);
-                ms.Espessura = ps.EspI;
+                ms.Origem.Y = -(ps.MSE / 2);
+                ms.Espessura = ps.MSE;
                 desenho.Add(ms);
 
                 var mi = new Chapa3D();
                 mi.Pontos.AddRange(cam.GetShapeLIV3().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 mi.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 mi.AnguloX = 90;
-                mi.Origem.Y = -ps.Altura + (ps.EspS / 2);
-                mi.Espessura = ps.EspS;
+                mi.Origem.Y = -ps.H + (ps.MIE / 2);
+                mi.Espessura = ps.MIE;
                 desenho.Add(mi);
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.T_Soldado)
             {
-                alma.Espessura = ps.EspAlma;
+                alma.Espessura = ps.ESP;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspMesa + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspMesa + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.ME + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.ME + descontar), out l1, out l2, true, false);
                 //Funcoes.Poligonos.Quebrar(cam.ShapeLIV1, new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - descontar), out l1, out l2, true, false);
 
 
@@ -720,30 +720,30 @@ namespace DLM.helix
 
                 //alma.Pontos.AddRange(cam.GetShapeLIV1().Select(x => new BibliotecaHelix.Util.Ponto3D(x.X, x.Y, 0)));
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                alma.Origem.Z = -(ps.EspAlma / 2);
+                alma.Origem.Z = -(ps.ESP / 2);
                 var ms = new Chapa3D();
                 ms.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 ms.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 ms.AnguloX = 90;
-                ms.Origem.Y = -(ps.EspMesa / 2);
-                ms.Espessura = ps.EspMesa;
+                ms.Origem.Y = -(ps.ME / 2);
+                ms.Espessura = ps.ME;
                 desenho.Add(ms);
             }
             #endregion
             #region LAMINADOS
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.WLam)
             {
-                alma.Espessura = ps.EspAlma;
+                alma.Espessura = ps.ESP;
 
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspMesa + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspMesa + descontar), out l1, out l2, true, false);
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.EspMesa - ps.EspMesa - 2 * descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.EspMesa - ps.EspMesa - 2 * descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.ME + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.ME + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10, ps.H - ps.ME - ps.ME - 2 * descontar), new System.Windows.Point(cam.Comprimento * 10, ps.H - ps.ME - ps.ME - 2 * descontar), out l1, out l2, true, false);
 
 
                 if (l1.Count > 3)
                 {
-                    alma.Origem.Y = -ps.EspMesa - descontar;
+                    alma.Origem.Y = -ps.ME - descontar;
                     alma.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
 
                 }
@@ -756,36 +756,36 @@ namespace DLM.helix
 
                 //alma.Pontos.AddRange(cam.GetShapeLIV1().Select(x => new BibliotecaHelix.Util.Ponto3D(x.X, x.Y, 0)));
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                alma.Origem.Z = -(ps.EspAlma / 2);
+                alma.Origem.Z = -(ps.ESP / 2);
                 var ms = new Chapa3D();
                 ms.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 ms.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 ms.AnguloX = 90;
-                ms.Origem.Y = -(ps.EspMesa / 2);
-                ms.Espessura = ps.EspMesa;
+                ms.Origem.Y = -(ps.ME / 2);
+                ms.Espessura = ps.ME;
                 desenho.Add(ms);
 
                 var mi = new Chapa3D();
                 mi.Pontos.AddRange(cam.GetShapeLIV3().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 mi.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 mi.AnguloX = 90;
-                mi.Origem.Y = -ps.Altura + (ps.EspMesa / 2);
-                mi.Espessura = ps.EspMesa;
+                mi.Origem.Y = -ps.H + (ps.ME / 2);
+                mi.Espessura = ps.ME;
                 desenho.Add(mi);
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.UNP)
             {
-                alma.Espessura = ps.Espessura;
+                alma.Espessura = ps.ESP;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.ESP + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.ESP + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
-                    new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
-                    new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar), out l1, out l2, true, false);
+                    new System.Windows.Point(-cam.Comprimento * 10, ps.H - ps.ESP - ps.ESP - 2 * descontar),
+                    new System.Windows.Point(cam.Comprimento * 10, ps.H - ps.ESP - ps.ESP - 2 * descontar), out l1, out l2, true, false);
 
                 if (l1.Count > 3)
                 {
-                    alma.Origem.Y = -ps.Espessura - descontar;
+                    alma.Origem.Y = -ps.ESP - descontar;
                     alma.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
                 }
                 else
@@ -794,42 +794,42 @@ namespace DLM.helix
                 }
                 //alma.Pontos.AddRange(cam.GetShapeLIV1().Select(x => new BibliotecaHelix.Util.Ponto3D(x.X, x.Y, 0)));
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                alma.Origem.Z = -(ps.Espessura);
+                alma.Origem.Z = -(ps.ESP);
                 var z2 = new Chapa3D();
                 z2.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z2.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z2.AnguloX = 90;
-                z2.Origem.Y = -ps.Espessura / 2;
-                z2.Origem.Z = -ps.Espessura / 2;
+                z2.Origem.Y = -ps.ESP / 2;
+                z2.Origem.Z = -ps.ESP / 2;
                 //z2.cor = Brushes.Cyan;
-                z2.Espessura = ps.Espessura;
+                z2.Espessura = ps.ESP;
                 desenho.Add(z2);
 
                 var z3 = new Chapa3D();
                 z3.Pontos.AddRange(cam.GetShapeLIV3().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z3.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z3.AnguloX = 90;
-                z3.Origem.Y = -ps.Altura + (ps.Espessura / 2);
-                z3.Origem.Z = -ps.Espessura / 2;
-                z3.Espessura = ps.Espessura;
+                z3.Origem.Y = -ps.H + (ps.ESP / 2);
+                z3.Origem.Z = -ps.ESP / 2;
+                z3.Espessura = ps.ESP;
                 //z3.cor = Brushes.Red;
                 desenho.Add(z3);
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.UAP)
             {
-                alma.Espessura = ps.Espessura;
+                alma.Espessura = ps.ESP;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.ESP + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.ESP + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
-                    new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
-                    new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar), out l1, out l2, true, false);
+                    new System.Windows.Point(-cam.Comprimento * 10, ps.H - ps.ESP - ps.ESP - 2 * descontar),
+                    new System.Windows.Point(cam.Comprimento * 10, ps.H - ps.ESP - ps.ESP - 2 * descontar), out l1, out l2, true, false);
 
 
                 if (l1.Count > 3)
                 {
 
-                    alma.Origem.Y = -ps.Espessura - descontar;
+                    alma.Origem.Y = -ps.ESP - descontar;
                     alma.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
 
                 }
@@ -838,42 +838,42 @@ namespace DLM.helix
                     alma.Pontos.AddRange(cam.GetShapeLIV1().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
                 }
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                alma.Origem.Z = -(ps.Espessura);
+                alma.Origem.Z = -(ps.ESP);
                 var z2 = new Chapa3D();
                 z2.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z2.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z2.AnguloX = 90;
-                z2.Origem.Y = -ps.Espessura / 2;
-                z2.Origem.Z = -ps.Espessura / 2;
+                z2.Origem.Y = -ps.ESP / 2;
+                z2.Origem.Z = -ps.ESP / 2;
                 //z2.cor = Brushes.Cyan;
-                z2.Espessura = ps.Espessura;
+                z2.Espessura = ps.ESP;
                 desenho.Add(z2);
 
                 var z3 = new Chapa3D();
                 z3.Pontos.AddRange(cam.GetShapeLIV3().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 z3.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 z3.AnguloX = 90;
-                z3.Origem.Y = -ps.Altura + (ps.Espessura / 2);
-                z3.Origem.Z = -ps.Espessura / 2;
-                z3.Espessura = ps.Espessura;
+                z3.Origem.Y = -ps.H + (ps.ESP / 2);
+                z3.Origem.Z = -ps.ESP / 2;
+                z3.Espessura = ps.ESP;
                 //z3.cor = Brushes.Red;
                 desenho.Add(z3);
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.INP)
             {
-                alma.Espessura = ps.EspAlma;
+                alma.Espessura = ps.ESP;
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.EspMesa + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.EspMesa + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.ME + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.ME + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
-                    new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.EspMesa - ps.EspMesa - 2 * descontar),
-                    new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.EspMesa - ps.EspMesa - 2 * descontar),
+                    new System.Windows.Point(-cam.Comprimento * 10, ps.H - ps.ME - ps.ME - 2 * descontar),
+                    new System.Windows.Point(cam.Comprimento * 10, ps.H - ps.ME - ps.ME - 2 * descontar),
                     out l1, out l2, true, false);
 
 
                 if (l1.Count > 3)
                 {
-                    alma.Origem.Y = -ps.EspMesa - descontar;
+                    alma.Origem.Y = -ps.ME - descontar;
                     alma.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
 
                 }
@@ -884,38 +884,38 @@ namespace DLM.helix
 
                 //alma.Pontos.AddRange(cam.GetShapeLIV1().Select(x => new BibliotecaHelix.Util.Ponto3D(x.X, x.Y, 0)));
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                alma.Origem.Z = -(ps.EspAlma / 2);
+                alma.Origem.Z = -(ps.ESP / 2);
                 var ms = new Chapa3D();
                 ms.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 ms.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 ms.AnguloX = 90;
-                ms.Origem.Y = -(ps.EspMesa / 2);
-                ms.Espessura = ps.EspMesa;
+                ms.Origem.Y = -(ps.ME / 2);
+                ms.Espessura = ps.ME;
                 desenho.Add(ms);
 
                 var mi = new Chapa3D();
                 mi.Pontos.AddRange(cam.GetShapeLIV3().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 mi.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 mi.AnguloX = 90;
-                mi.Origem.Y = -ps.Altura + (ps.EspMesa / 2);
-                mi.Espessura = ps.EspMesa;
+                mi.Origem.Y = -ps.H + (ps.ME / 2);
+                mi.Espessura = ps.ME;
                 desenho.Add(mi);
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Tubo_Quadrado)
             {
-                alma.Espessura = ps.Espessura;
+                alma.Espessura = ps.ESP;
 
                 List<Estrutura.Liv> l1;
                 List<Estrutura.Liv> l2;
-                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Espessura + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Espessura + descontar), out l1, out l2, true, false);
+                DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.ESP + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.ESP + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
-                    new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar),
-                    new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - 2 * descontar), out l1, out l2, true, false);
+                    new System.Windows.Point(-cam.Comprimento * 10, ps.H - ps.ESP - ps.ESP - 2 * descontar),
+                    new System.Windows.Point(cam.Comprimento * 10, ps.H - ps.ESP - ps.ESP - 2 * descontar), out l1, out l2, true, false);
 
 
                 if (l1.Count > 3)
                 {
-                    alma.Origem.Y = -ps.Espessura - descontar;
+                    alma.Origem.Y = -ps.ESP - descontar;
                     alma.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
 
                 }
@@ -926,10 +926,10 @@ namespace DLM.helix
 
                 //alma.Pontos.AddRange(cam.GetShapeLIV1().Select(x => new BibliotecaHelix.Util.Ponto3D(x.X, x.Y, 0)));
                 alma.Furos.AddRange(cam.GetFurosLIV1().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-                alma.Origem.Z = -(ps.Espessura / 2);
+                alma.Origem.Z = -(ps.ESP / 2);
 
                 var ch2 = alma.Clonar();
-                ch2.Origem.Z = (ps.Espessura / 2) - (ps.Largura);
+                ch2.Origem.Z = (ps.ESP / 2) - (ps.ML);
                 desenho.Add(ch2);
 
 
@@ -937,9 +937,9 @@ namespace DLM.helix
                 ms.Pontos.AddRange(cam.GetShapeLIV2().Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Z, 0)));
                 ms.Furos.AddRange(cam.GetFurosLIV2().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 ms.AnguloX = 90;
-                ms.Origem.Y = -ps.Altura + (ps.Espessura / 2);
+                ms.Origem.Y = -ps.H + (ps.ESP / 2);
 
-                ms.Espessura = ps.Espessura;
+                ms.Espessura = ps.ESP;
                 desenho.Add(ms);
 
                 var mi = new Chapa3D();
@@ -947,19 +947,19 @@ namespace DLM.helix
                 mi.Furos.AddRange(cam.GetFurosLIV3().Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
                 mi.AnguloX = 90;
                 mi.Origem.Y = 0;
-                mi.Espessura = ps.Espessura;
-                mi.Origem.Y = -(ps.Espessura / 2);
+                mi.Espessura = ps.ESP;
+                mi.Origem.Y = -(ps.ESP / 2);
                 desenho.Add(mi);
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Tubo_Redondo)
             {
                 /*não pega recortes*/
-                var ms = new Tubo3D(ps.Largura, ps.Espessura, cam.Comprimento);
+                var ms = new Tubo3D(ps.ML, ps.ESP, cam.Comprimento);
                 desenho.AddRange(ms.getContorno());
             }
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Barra_Redonda)
             {
-                var ms = new Tubo3D(ps.Diametro, 0.001, cam.Comprimento);
+                var ms = new Tubo3D(ps.H, 0.001, cam.Comprimento);
                 desenho.AddRange(ms.getContorno());
             }
             #endregion

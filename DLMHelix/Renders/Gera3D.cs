@@ -275,8 +275,8 @@ namespace DLM.helix
             {
                 //*falta adicionar a aba menor*/
                 alma.Espessura = ps.Esp;
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10,
                     ps.Altura - ps.Esp - ps.Esp - 2 * descontar), new System.Windows.Point(cam.Comprimento * 10,
@@ -339,8 +339,8 @@ namespace DLM.helix
             {
                 alma.Espessura = ps.Esp;
 
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Esp - ps.Esp - 2 * descontar),
@@ -384,8 +384,8 @@ namespace DLM.helix
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.U_Dobrado)
             {
                 alma.Espessura = ps.Esp;
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Esp - ps.Esp - descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Esp - ps.Esp - descontar), out l1, out l2, true, false);
 
@@ -425,8 +425,8 @@ namespace DLM.helix
             {
                 /*falta fazer a aba menor*/
                 alma.Espessura = ps.Esp;
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Esp - ps.Esp - 2 * descontar),
@@ -487,8 +487,8 @@ namespace DLM.helix
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.L_Dobrado)
             {
                 alma.Espessura = ps.Esp;
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp + descontar), out l1, out l2, true, false);
 
 
@@ -519,8 +519,8 @@ namespace DLM.helix
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.L_Laminado)
             {
                 alma.Espessura = ps.Esp;
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp + descontar), out l1, out l2, true, false);
 
 
@@ -576,8 +576,8 @@ namespace DLM.helix
 
 
                 var mi = new Chapa3D();
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV3().Select(x => x.GetLivY()).ToList(), new System.Windows.Point(-cam.Comprimento * 10, ps.Aba_S), new System.Windows.Point(cam.Comprimento * 10, ps.Aba_S), out l1, out l2, true, false);
 
                 mi.Pontos.AddRange(l1.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
@@ -603,8 +603,8 @@ namespace DLM.helix
             {
                 alma.Espessura = ps.Esp;
 
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp_MS + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp_MS + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Esp_MI - ps.Esp_MS - 2 * descontar),
@@ -650,8 +650,8 @@ namespace DLM.helix
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.Caixao)
             {
                 alma.Espessura = ps.Esp;
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp_MS + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp_MS + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Esp_MI - ps.Esp_MS - 2 * descontar),
@@ -700,8 +700,8 @@ namespace DLM.helix
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.T_Soldado)
             {
                 alma.Espessura = ps.Esp;
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp_M + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp_M + descontar), out l1, out l2, true, false);
                 //Funcoes.Poligonos.Quebrar(cam.ShapeLIV1, new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Espessura - ps.Espessura - descontar), out l1, out l2, true, false);
 
@@ -735,8 +735,8 @@ namespace DLM.helix
             {
                 alma.Espessura = ps.Esp;
 
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp_M + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp_M + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2, new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Esp_M - ps.Esp_M - 2 * descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Altura - ps.Esp_M - ps.Esp_M - 2 * descontar), out l1, out l2, true, false);
 
@@ -776,8 +776,8 @@ namespace DLM.helix
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.UNP)
             {
                 alma.Espessura = ps.Esp;
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Esp - ps.Esp - 2 * descontar),
@@ -818,8 +818,8 @@ namespace DLM.helix
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.UAP)
             {
                 alma.Espessura = ps.Esp;
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Esp - ps.Esp - 2 * descontar),
@@ -862,8 +862,8 @@ namespace DLM.helix
             else if (cam.TipoPerfil == CAM_PERFIL_TIPO.INP)
             {
                 alma.Espessura = ps.Esp;
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp_M + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp_M + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Esp_M - ps.Esp_M - 2 * descontar),
@@ -905,8 +905,8 @@ namespace DLM.helix
             {
                 alma.Espessura = ps.Esp;
 
-                List<Estrutura.Liv> l1;
-                List<Estrutura.Liv> l2;
+                List<Est.Liv> l1;
+                List<Est.Liv> l2;
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(cam.GetShapeLIV1(), new System.Windows.Point(-cam.Comprimento * 10, ps.Esp + descontar), new System.Windows.Point(cam.Comprimento * 10, ps.Esp + descontar), out l1, out l2, true, false);
                 DLM.cam.FuncoesDLMCam.Poligonos.Quebrar(l2,
                     new System.Windows.Point(-cam.Comprimento * 10, ps.Altura - ps.Esp - ps.Esp - 2 * descontar),

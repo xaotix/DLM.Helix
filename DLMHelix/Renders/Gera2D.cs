@@ -156,7 +156,7 @@ namespace DLM.helix
             viewPort.ZoomExtents();
 
         }
-        private static void AddDobra(HelixViewport3D viewPort, double espessura, Ponto3D origem, Estrutura.Dobra dob)
+        private static void AddDobra(HelixViewport3D viewPort, double espessura, Ponto3D origem, Est.Dobra dob)
         {
             var p1 = new Ponto3D(dob.X1, dob.Y1);
             var p2 = new Ponto3D(dob.X2, dob.Y2);
@@ -176,12 +176,12 @@ namespace DLM.helix
            
             return teste;
         }
-        public static List<LinesVisual3D> Contorno(double espessura, List<Estrutura.Liv> shape,  Ponto3D origem, Color cor,  double ctf)
+        public static List<LinesVisual3D> Contorno(double espessura, List<Est.Liv> shape,  Ponto3D origem, Color cor,  double ctf)
         {
             List<LinesVisual3D> linhas = new List<LinesVisual3D>();
 
             /*alguns cams não repetem a coordenada inicial no fim, essa correção adiciona o ponto para fechar o contorno*/
-            List<Estrutura.Liv> pts = new List<Estrutura.Liv>();
+            List<Est.Liv> pts = new List<Est.Liv>();
    
             if(shape.Count>0)
             {
@@ -210,7 +210,7 @@ namespace DLM.helix
             }
             return linhas;
         }
-        public static List<LinesVisual3D> Furo2D(double espessura, Estrutura.Furo fr0,Ponto3D origem, Color color)
+        public static List<LinesVisual3D> Furo2D(double espessura, Est.Furo fr0,Ponto3D origem, Color color)
         {
             List<LinesVisual3D> linhas = new List<LinesVisual3D>();
             Furo pp = new Furo(fr0.Diametro, fr0.X, fr0.Y, fr0.Dist, fr0.Ang);
@@ -239,7 +239,7 @@ namespace DLM.helix
         {
             return Linha(espessura,new Ponto3D(shp0.X,shp0.Y,0), new Ponto3D(shp.X, shp.Y, 0),origem, cor);
         }
-        public static LinesVisual3D Linha(double espessura, Estrutura.Liv shp0, Estrutura.Liv shp, Ponto3D origem, Color cor)
+        public static LinesVisual3D Linha(double espessura, Est.Liv shp0, Est.Liv shp, Ponto3D origem, Color cor)
         {
             return Linha(espessura, new Ponto3D(shp0.X, shp0.Y, 0), new Ponto3D(shp.X, shp.Y, 0), origem, cor);
         }

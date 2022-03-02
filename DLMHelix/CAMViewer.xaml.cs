@@ -48,6 +48,7 @@ namespace DLM.helix
             if(arq.ToUpper().EndsWith(".CAM"))
             {
             this.Cam = new ReadCAM(arq);
+
             Recarregar();
             Front();
 
@@ -61,7 +62,7 @@ namespace DLM.helix
             this.viewport2D.Children.Clear();
             this.Cam = arq;
             Recarregar();
-            Front();
+            //Front();
 
 
         }
@@ -76,11 +77,11 @@ namespace DLM.helix
                 List<MeshGeometryVisual3D> desenho = new List<MeshGeometryVisual3D>();
                 this.Cam = arq.GetReadCam();
                 Recarregar();
-                Front();
+                //Front();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                Conexoes.Utilz.Alerta(ex);
             }
 
 
@@ -92,6 +93,7 @@ namespace DLM.helix
         {
             Gera3D.Desenho(this.Cam,this.viewport);
             Gera2D.Desenho(this.Cam, this.viewport2D);
+            this.CamIcon.Source = this.Cam.GetPerfil().Imagem;
             Ajustes();
 
         }
@@ -120,7 +122,7 @@ namespace DLM.helix
 
             SetView2D();
 
-            ZoomExtend();
+            //ZoomExtend();
         }
 
         private void SetView2D()

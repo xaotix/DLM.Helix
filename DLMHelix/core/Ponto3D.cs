@@ -31,7 +31,7 @@ namespace DLM.helix.Util
             this.Z = 0;
         }
 
-        public Ponto3D(Est.Liv pt)
+        public Ponto3D(Liv pt)
         {
             this.X = pt.X;
             this.Y = pt.Y;

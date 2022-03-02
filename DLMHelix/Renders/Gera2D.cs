@@ -176,12 +176,12 @@ namespace DLM.helix
            
             return teste;
         }
-        public static List<LinesVisual3D> Contorno(double espessura, List<Est.Liv> shape,  Ponto3D origem, Color cor,  double ctf)
+        public static List<LinesVisual3D> Contorno(double espessura, List<Liv> shape,  Ponto3D origem, Color cor,  double ctf)
         {
             List<LinesVisual3D> linhas = new List<LinesVisual3D>();
 
             /*alguns cams não repetem a coordenada inicial no fim, essa correção adiciona o ponto para fechar o contorno*/
-            List<Est.Liv> pts = new List<Est.Liv>();
+            List<Liv> pts = new List<Liv>();
    
             if(shape.Count>0)
             {
@@ -239,7 +239,7 @@ namespace DLM.helix
         {
             return Linha(espessura,new Ponto3D(shp0.X,shp0.Y,0), new Ponto3D(shp.X, shp.Y, 0),origem, cor);
         }
-        public static LinesVisual3D Linha(double espessura, Est.Liv shp0, Est.Liv shp, Ponto3D origem, Color cor)
+        public static LinesVisual3D Linha(double espessura, Liv shp0, Liv shp, Ponto3D origem, Color cor)
         {
             return Linha(espessura, new Ponto3D(shp0.X, shp0.Y, 0), new Ponto3D(shp.X, shp.Y, 0), origem, cor);
         }

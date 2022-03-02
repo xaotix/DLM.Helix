@@ -20,6 +20,7 @@
                             </ModelVisual3D.Content>
                         </ModelVisual3D>
                     </HelixToolkit:HelixViewport3D>
+                    <Image Grid.Row="10" Name="CamIcon" HorizontalAlignment="Right" VerticalAlignment="Top" Height="64" Width="64"/>
                 </Grid>
             </TabItem>
             <TabItem Header="2d" Background="Transparent" FontSize="20">

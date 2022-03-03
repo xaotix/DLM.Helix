@@ -44,20 +44,6 @@
     <Reference Include="HelixToolkit.Wpf">
       <HintPath>..\..\DLLS\HelixToolkit.Wpf.dll</HintPath>
     </Reference>
-    <Reference Include="NXOpen, Version=9.0.3.4, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DLLS\NXOpen.dll</HintPath>
-    </Reference>
-    <Reference Include="NXOpen.UF">
-      <HintPath>..\..\DLLS\NXOpen.UF.dll</HintPath>
-    </Reference>
-    <Reference Include="NXOpen.Utilities, Version=4.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\DLLS\NXOpen.Utilities.dll</HintPath>
-    </Reference>
-    <Reference Include="NXOpenUI">
-      <HintPath>..\..\DLLS\NXOpenUI.dll</HintPath>
-    </Reference>
     <Reference Include="Poly2Tri">
       <HintPath>..\..\DLLS\Poly2Tri.dll</HintPath>
     </Reference>
@@ -99,7 +85,6 @@
     <Compile Include="core\Enumeradores.cs" />
     <Compile Include="core\Matriz3D.cs" />
     <Compile Include="core\Ponto3D.cs" />
-    <Compile Include="core\Program.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

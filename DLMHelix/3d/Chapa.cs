@@ -1,17 +1,9 @@
-﻿using DLM.helix._3d;
-using DLM.helix.Util;
+﻿using DLM.helix.Util;
 using HelixToolkit.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media;
-using HelixToolkit;
-using System.Management.Instrumentation;
-using DLM.cam;
-using System.Runtime.Remoting;
-using NXOpen.CAM;
 
 namespace DLM.helix
 {
@@ -81,8 +73,8 @@ namespace DLM.helix
             p.cor = this.cor.Clone();
             p.Espessura = this.Espessura;
             p.Furos = this.Furos.Select(x => new Furo(x.Diametro, x.Centro.X, x.Centro.Y,x.Offset,x.Angulo)).ToList();
-            p.Origem = new Ponto3D(this.Origem, 10);
-            p.Pontos = this.Pontos.Select(x => new Ponto3D(x)).ToList();
+            p.Origem = new Ponto3d(this.Origem, 10);
+            p.Pontos = this.Pontos.Select(x => new Ponto3d(x)).ToList();
             return p;
         }
         public void SomarAngulos(double X, double Y, double Z)
@@ -94,8 +86,8 @@ namespace DLM.helix
         public double AnguloX { get; set; } = 0;
         public double AnguloY { get; set; } = 0;
         public double AnguloZ { get; set; } = 0;
-        public Ponto3D Origem { get; set; } = new Ponto3D();
-        public List<Ponto3D> Pontos { get; set; } = new List<Ponto3D>();
+        public Ponto3d Origem { get; set; } = new Ponto3d();
+        public List<Ponto3d> Pontos { get; set; } = new List<Ponto3d>();
         public List<Furo> Furos { get; set; } = new List<Furo>();
         public double Espessura { get; set; } = 6.35;
 
@@ -106,8 +98,8 @@ namespace DLM.helix
             {
                 return new MeshGeometryVisual3D();
             }
-            SLista<Ponto3D> pts = new SLista<Ponto3D>();
-            Matriz3D orientacao = new Matriz3D();
+            SLista<Ponto3d> pontos = new SLista<Ponto3d>();
+            Matriz3d orientacao = new Matriz3d();
             orientacao = orientacao.Rotacionar(90, Eixo.Y);
             orientacao = orientacao.Rotacionar(90, Eixo.X);
 
@@ -127,26 +119,25 @@ namespace DLM.helix
             }
 
 
-            Matriz3D matriz = new Matriz3D(orientacao.vetorY, orientacao.vetorXNeg, orientacao.vetorZ);
-            Ponto3D origem = Trigonometria.Mover(Origem, orientacao.vetorYNeg, 0);
+            Matriz3d matriz = new Matriz3d(orientacao.VetorY, orientacao.VetorXNeg, orientacao.VetorZ);
+            Ponto3d origem = Origem.Mover(orientacao.VetorYNeg, 0);
 
 
 
 
-            var b1 = Trigonometria.Mover(origem, orientacao.vetorX, 0);
+            var b1 = origem.Mover(orientacao.VetorX, 0);
 
-            //pts.Add(A1);
             foreach (var s in this.Pontos)
             {
                 //Y
-                b1 = Trigonometria.Mover(origem, orientacao.vetorXNeg, -s.Y);
+                b1 = origem.Mover(orientacao.VetorXNeg, -s.Y);
                 //X
-                b1 = Trigonometria.Mover(b1, orientacao.vetorZ, s.X);
+                b1 = b1.Mover(orientacao.VetorZ, s.X);
 
-                pts.Add(b1);
+                pontos.Add(b1);
             }
-            DLM.helix._3d.Objeto3D ch = new DLM.helix._3d.Objeto3D(origem, matriz, pts,this.Espessura) { corChapa3D = cor.Clone() };
-            ch.corChapa3D = this.cor.Clone();
+            DLM.helix._3d.Objeto3D ch = new DLM.helix._3d.Objeto3D(origem, matriz, pontos,this.Espessura) { Cor = cor.Clone() };
+            ch.Cor = this.cor.Clone();
             foreach (var s in this.Furos)
             {
                 ch.AddFuro(s.Diametro, s.Centro.X, s.Centro.Y, s.Offset,s.Angulo);
@@ -160,7 +151,7 @@ namespace DLM.helix
         }
 
 
-        public Ponto3D Centro
+        public Ponto3d Centro
         {
             get
             {
@@ -169,86 +160,86 @@ namespace DLM.helix
  
 
                     double totalX = 0, totalY = 0;
-                    foreach (Ponto3D p in this.Contorno)
+                    foreach (Ponto3d p in this.Contorno)
                     {
                         totalX += p.X;
                         totalY += p.Y;
                     }
                     double centerX = totalX / Contorno.Count;
                     double centerY = totalY / Contorno.Count;
-                    return new Ponto3D(centerX, centerY);
+                    return new Ponto3d(centerX, centerY);
                 }
-                return new Ponto3D();
+                return new Ponto3d();
             }
         }
 
-        public List<Ponto3D> Contorno
+        public List<Ponto3d> Contorno
         {
             get
             {
-                List<Ponto3D> retorno = new List<Ponto3D>();
+                List<Ponto3d> retorno = new List<Ponto3d>();
                 if(this.Pontos.Count>0)
                 {
-                    retorno.Add(new Ponto3D(this.Pontos.Min(x => x.X), this.Pontos.Max(x => x.Y)));
-                    retorno.Add(new Ponto3D(this.Pontos.Max(x => x.X), this.Pontos.Max(x => x.Y)));
-                    retorno.Add(new Ponto3D(this.Pontos.Max(x => x.X), this.Pontos.Min(x => x.Y)));
-                    retorno.Add(new Ponto3D(this.Pontos.Min(x => x.X), this.Pontos.Min(x => x.Y)));
+                    retorno.Add(new Ponto3d(this.Pontos.Min(x => x.X), this.Pontos.Max(x => x.Y)));
+                    retorno.Add(new Ponto3d(this.Pontos.Max(x => x.X), this.Pontos.Max(x => x.Y)));
+                    retorno.Add(new Ponto3d(this.Pontos.Max(x => x.X), this.Pontos.Min(x => x.Y)));
+                    retorno.Add(new Ponto3d(this.Pontos.Min(x => x.X), this.Pontos.Min(x => x.Y)));
                 }
                 return retorno;
             }
         }
 
-        public Ponto3D OrigemSup
+        public Ponto3d OrigemSup
         {
             get
             {
                 if(this.Pontos.Count>0)
                 {
-                    return new Ponto3D(this.Pontos.Min(x => x.X), this.Pontos.Max(x => x.Y), this.Pontos.Min(x => x.Z));
+                    return new Ponto3d(this.Pontos.Min(x => x.X), this.Pontos.Max(x => x.Y), this.Pontos.Min(x => x.Z));
                 }
-                return new Ponto3D();
+                return new Ponto3d();
             }
         }
-        public Ponto3D OrigemInf
+        public Ponto3d OrigemInf
         {
             get
             {
                 if (this.Pontos.Count > 0)
                 {
-                    return new Ponto3D(this.Pontos.Min(x => x.X), this.Pontos.Max(x => x.Y), this.Pontos.Min(x => x.Z));
+                    return new Ponto3d(this.Pontos.Min(x => x.X), this.Pontos.Max(x => x.Y), this.Pontos.Min(x => x.Z));
                 }
-                return new Ponto3D();
+                return new Ponto3d();
             }
         }
-        public Ponto3D PontaSup
+        public Ponto3d PontaSup
         {
             get
             {
                 if (this.Pontos.Count > 0)
                 {
-                    return new Ponto3D(this.Pontos.Max(x => x.X), this.Pontos.Max(x => x.Y), this.Pontos.Min(x => x.Z)) ;
+                    return new Ponto3d(this.Pontos.Max(x => x.X), this.Pontos.Max(x => x.Y), this.Pontos.Min(x => x.Z)) ;
                 }
-                return new Ponto3D();
+                return new Ponto3d();
             }
         }
-        public Ponto3D PontaInf
+        public Ponto3d PontaInf
         {
             get
             {
                 if (this.Pontos.Count > 0)
                 {
-                    return new Ponto3D(this.Pontos.Max(x => x.X), this.Pontos.Min(x => x.Y), this.Pontos.Min(x => x.Z));
+                    return new Ponto3d(this.Pontos.Max(x => x.X), this.Pontos.Min(x => x.Y), this.Pontos.Min(x => x.Z));
                 }
-                return new Ponto3D();
+                return new Ponto3d();
             }
         }
         public Chapa3D(double Comprimento, double Largura, double Espessura)
         {
-            Pontos.Add(new Ponto3D(0, 0));
-            Pontos.Add(new Ponto3D(Comprimento, 0));
-            Pontos.Add(new Ponto3D(Comprimento, Largura));
-            Pontos.Add(new Ponto3D(0, Largura));
-            Pontos.Add(new Ponto3D(0, 0));
+            Pontos.Add(new Ponto3d(0, 0));
+            Pontos.Add(new Ponto3d(Comprimento, 0));
+            Pontos.Add(new Ponto3d(Comprimento, Largura));
+            Pontos.Add(new Ponto3d(0, Largura));
+            Pontos.Add(new Ponto3d(0, 0));
             this.Espessura = Espessura;
         }
     }
@@ -264,7 +255,7 @@ namespace DLM.helix
         }
         public double LarguraFace { get; set; } = 50;
         public double Comprimento { get; set; } = 1500;
-        public Ponto3D Origem { get; set; } = new Ponto3D();
+        public Ponto3d Origem { get; set; } = new Ponto3d();
         public double Circunferencia
         {
             get
@@ -284,23 +275,23 @@ namespace DLM.helix
             {
                 var largs = this.Circunferencia / Num_Faces;
                 double ang0 = (double)360 / (double)Num_Faces;
-                List<Ponto3D> tamp = new List<Ponto3D>();
+                List<Ponto3d> tamp = new List<Ponto3d>();
                 double ang = ang0;
                 for (int i = 0; i < Num_Faces; i++)
                 {
 
-                    Ponto3D pt = new Ponto3D(0, 0, 0).MoverXY(ang, Diametro / 2);
+                    Ponto3d pt = new Ponto3d(0, 0, 0).MoverXY(ang, Diametro / 2);
                     Chapa3D ch = new Chapa3D("Face");
                     ch.Espessura = this.Espessura;
-                    ch.Pontos.Add(new Ponto3D(0, 0, 0));
-                    ch.Pontos.Add(new Ponto3D(0, largs/2, 0));
-                    ch.Pontos.Add(new Ponto3D(this.Comprimento, largs/2, 0));
-                    ch.Pontos.Add(new Ponto3D(this.Comprimento, 0, 0));
-                    ch.Pontos.Add(new Ponto3D(0, 0, 0));
+                    ch.Pontos.Add(new Ponto3d(0, 0, 0));
+                    ch.Pontos.Add(new Ponto3d(0, largs/2, 0));
+                    ch.Pontos.Add(new Ponto3d(this.Comprimento, largs/2, 0));
+                    ch.Pontos.Add(new Ponto3d(this.Comprimento, 0, 0));
+                    ch.Pontos.Add(new Ponto3d(0, 0, 0));
 
 
                     ch.AnguloX = ang-90 - ang0/2;
-                    ch.Origem = new Ponto3D(0,pt.X,pt.Y);
+                    ch.Origem = new Ponto3d(0,pt.X,pt.Y);
                     tamp.Add(pt.Clonar());
                     ang = ang + ang0;
                     retorno.Add(ch);
@@ -327,7 +318,7 @@ namespace DLM.helix
 
             foreach (var p in retorno)
             {
-                p.Origem = p.Origem.somar(this.Origem);
+                p.Origem = p.Origem.Somar(this.Origem);
             }
 
             return retorno;

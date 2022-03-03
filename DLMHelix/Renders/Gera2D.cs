@@ -33,14 +33,14 @@ namespace DLM.helix
             viewPort.Children.Clear();
             viewPort.Children.Add(Gera3D.Luz());
             ControleCamera.Setar(viewPort, ControleCamera.eCameraViews.Top, 0); ;
-            Ponto3D origem = new Ponto3D();
+            Ponto3d origem = new Ponto3d();
             var cor = Brushes.Black.Color;
             var shape = cam.GetShapeLIV1();
             double ctf = cam.ContraFlecha;
 
             double offset = 25;
-            Ponto3D origem_Liv2 = origem.MoverXY(90, offset + (cam.Faces>2? cam.LIV2_Largura:0));
-            Ponto3D origem_Liv3 = origem.MoverXY(90, -cam.LIV1_Largura - cam.LIV3_Largura - offset);
+            Ponto3d origem_Liv2 = origem.MoverXY(90, offset + (cam.Faces>2? cam.LIV2_Largura:0));
+            Ponto3d origem_Liv3 = origem.MoverXY(90, -cam.LIV1_Largura - cam.LIV3_Largura - offset);
 
 
 
@@ -107,7 +107,7 @@ namespace DLM.helix
 
             //viewPort.Children.Add(teste);
 
-            var txt = Gera2D.Texto(cam.Descricao, new Ponto3D(cam.GetCentro()));
+            var txt = Gera2D.Texto(cam.Descricao, new Ponto3d(cam.GetCentro()));
             viewPort.Children.Add(txt);
 
 
@@ -124,7 +124,7 @@ namespace DLM.helix
             viewPort.Children.Clear();
             viewPort.Children.Add(Gera3D.Luz());
             ControleCamera.Setar(viewPort, ControleCamera.eCameraViews.Top, 0); ;
-            Ponto3D origem = new Ponto3D();
+            Ponto3d origem = new Ponto3d();
             //Brush cor = Brushes.Black.Color;
 
             foreach (var s in cam)
@@ -156,27 +156,27 @@ namespace DLM.helix
             viewPort.ZoomExtents();
 
         }
-        private static void AddDobra(HelixViewport3D viewPort, double espessura, Ponto3D origem, Est.Dobra dob)
+        private static void AddDobra(HelixViewport3D viewPort, double espessura, Ponto3d origem, Est.Dobra dob)
         {
-            var p1 = new Ponto3D(dob.X1, dob.Y1);
-            var p2 = new Ponto3D(dob.X2, dob.Y2);
+            var p1 = new Ponto3d(dob.X1, dob.Y1);
+            var p2 = new Ponto3d(dob.X2, dob.Y2);
 
             var s = Linha(espessura, p1, p2, origem, Brushes.DarkGray.Color);
             viewPort.Children.Add(s);
             var t = Texto("Dobra " + dob.Angulo + "°", p1.Centro(p2));
             viewPort.Children.Add(t);
         }
-        public static BillboardTextVisual3D Texto(string texto, Ponto3D origem, double tam = 10)
+        public static BillboardTextVisual3D Texto(string texto, Ponto3d origem, double tam = 10)
         {
             var teste = new BillboardTextVisual3D();
             teste.Text = texto;
             
-            teste.Position = origem.ToPoint3D;
+            teste.Position = origem.GetPoint3D();
             teste.FontSize = tam;
            
             return teste;
         }
-        public static List<LinesVisual3D> Contorno(double espessura, List<Liv> shape,  Ponto3D origem, Color cor,  double ctf)
+        public static List<LinesVisual3D> Contorno(double espessura, List<Liv> shape,  Ponto3d origem, Color cor,  double ctf)
         {
             List<LinesVisual3D> linhas = new List<LinesVisual3D>();
 
@@ -189,16 +189,16 @@ namespace DLM.helix
                 pts.Add(shape[0]);
             }
 
-            List<Ponto3D> liv1pts = new List<Ponto3D>();
+            List<Ponto3d> liv1pts = new List<Ponto3d>();
             if (ctf == 0)
             {
 
-                liv1pts.AddRange(pts.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
+                liv1pts.AddRange(pts.Select(x => new DLM.helix.Util.Ponto3d(x.X, x.Y, 0)));
             }
             else
             {
                 var segs = DLM.cam.FuncoesDLMCam.Poligonos.ArcoParaSegmento(pts, ctf);
-                liv1pts.AddRange(segs.Select(x => new DLM.helix.Util.Ponto3D(x.X, x.Y, 0)));
+                liv1pts.AddRange(segs.Select(x => new DLM.helix.Util.Ponto3d(x.X, x.Y, 0)));
 
             }
             for (int i = 1; i < liv1pts.Count; i++)
@@ -210,7 +210,7 @@ namespace DLM.helix
             }
             return linhas;
         }
-        public static List<LinesVisual3D> Furo2D(double espessura, Est.Furo fr0,Ponto3D origem, Color color)
+        public static List<LinesVisual3D> Furo2D(double espessura, Est.Furo fr0,Ponto3d origem, Color color)
         {
             List<LinesVisual3D> linhas = new List<LinesVisual3D>();
             Furo pp = new Furo(fr0.Diametro, fr0.X, fr0.Y, fr0.Dist, fr0.Ang);
@@ -226,7 +226,7 @@ namespace DLM.helix
             linhas.Add(Linha(espessura, ptsfr[ptsfr.Count - 1], ptsfr[0], origem,color));
             return linhas;
         }
-        public static LinesVisual3D Linha(double espessura, Ponto3D shp0, Ponto3D shp, Ponto3D origem, Color cor)
+        public static LinesVisual3D Linha(double espessura, Ponto3d shp0, Ponto3d shp, Ponto3d origem, Color cor)
         {
             LinesVisual3D l = new LinesVisual3D();
             l.Color = new Color() { A = cor.A, B = cor.B, G = cor.G, R = cor.R };
@@ -235,22 +235,22 @@ namespace DLM.helix
             l.Points.Add(new Point3D(shp.X + origem.X, shp.Y + origem.Y, 0 + origem.Z));
             return l;
         }
-        public static LinesVisual3D Linha(double espessura, TriangulationPoint shp0, TriangulationPoint shp, Ponto3D origem, Color cor)
+        public static LinesVisual3D Linha(double espessura, TriangulationPoint shp0, TriangulationPoint shp, Ponto3d origem, Color cor)
         {
-            return Linha(espessura,new Ponto3D(shp0.X,shp0.Y,0), new Ponto3D(shp.X, shp.Y, 0),origem, cor);
+            return Linha(espessura,new Ponto3d(shp0.X,shp0.Y,0), new Ponto3d(shp.X, shp.Y, 0),origem, cor);
         }
-        public static LinesVisual3D Linha(double espessura, Liv shp0, Liv shp, Ponto3D origem, Color cor)
+        public static LinesVisual3D Linha(double espessura, Liv shp0, Liv shp, Ponto3d origem, Color cor)
         {
-            return Linha(espessura, new Ponto3D(shp0.X, shp0.Y, 0), new Ponto3D(shp.X, shp.Y, 0), origem, cor);
+            return Linha(espessura, new Ponto3d(shp0.X, shp0.Y, 0), new Ponto3d(shp.X, shp.Y, 0), origem, cor);
         }
 
         public static void AddUCSIcon(HelixViewport3D viewPort, double comp = 100)
         {
             comp = comp / 1000;
-            var l1 = Linha(1, new Ponto3D(), new Ponto3D(comp, 0),new Ponto3D(), Colors.Red);
-            var l2 = Linha(1, new Ponto3D(), new Ponto3D(0, comp),new Ponto3D(), Colors.Red);
-            var xt = Texto("X", new Ponto3D(comp, 0));
-            var yt = Texto("Y", new Ponto3D(0, comp));
+            var l1 = Linha(1, new Ponto3d(), new Ponto3d(comp, 0),new Ponto3d(), Colors.Red);
+            var l2 = Linha(1, new Ponto3d(), new Ponto3d(0, comp),new Ponto3d(), Colors.Red);
+            var xt = Texto("X", new Ponto3d(comp, 0));
+            var yt = Texto("Y", new Ponto3d(0, comp));
 
             viewPort.Children.Add(l1);
             viewPort.Children.Add(l2);

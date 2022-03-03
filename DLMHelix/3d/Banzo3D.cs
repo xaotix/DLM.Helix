@@ -24,15 +24,16 @@ namespace DLM.helix
             ch2.AnguloX = a0 + 90;
             ch3.AnguloX = a0 + 135;
             ch4.AnguloX = a0 + 90 + 135;
-            ch2.Origem = new Util.Ponto3D(0,this.Aba1,0);
-            ch3.Origem = new Util.Ponto3D(0,this.Aba1,this.Aba2);
+            ch2.Origem = new Util.Ponto3d(0,this.Aba1,0);
+            ch3.Origem = new Util.Ponto3d(0,this.Aba1,this.Aba2);
             //ch2.cor = System.Windows.Media.Brushes.Red;
             //ch3.cor = System.Windows.Media.Brushes.Cyan;
             //ch4.cor = System.Windows.Media.Brushes.Blue;
 
-            var p0 = Trigonometria.MoverXY(new DLM.helix.Util.Ponto3D(), 0, this.Aba1);
-            p0 = Trigonometria.MoverXY(p0, 90, this.Aba2);
-            p0 = Trigonometria.MoverXY(p0, 135, this.Aba3);
+            var p0 = new DLM.helix.Util.Ponto3d().MoverXY(0, this.Aba1);
+            
+            p0 = p0.MoverXY(90, this.Aba2);
+            p0 = p0.MoverXY(135, this.Aba3);
             ch4.Origem.Z = p0.Y;
             ch4.Origem.Y = p0.X;
 

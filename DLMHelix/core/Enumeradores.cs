@@ -1,43 +1,25 @@
-﻿using DLM.helix.Util;
-using HelixToolkit.Wpf;
-
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Windows;
-using System.Windows.Media.Media3D;
-
-namespace DLM.helix
+﻿namespace DLM.helix
 {
-    internal static class Enumeradores
+    public enum Eixo
     {
-
-
-        internal enum quadrante
-        {
-            xPos,
-            xNeg,
-            yPos,
-            yNeg,
-            quad1,
-            quad2,
-            quad3,
-            quad4,
-            nulo
-        }
-
-
-        internal enum eixo
-        {
-            X,
-            Y,
-            Z,
-            XNeg,
-            YNeg,
-            ZNeg,
-            nulo
-        }
+        X,
+        Y,
+        Z,
+        X_Neg,
+        Y_Neg,
+        Z_Neg,
+        nulo
+    }
+    internal enum Quadrante
+    {
+        xPos,
+        xNeg,
+        yPos,
+        yNeg,
+        quad1,
+        quad2,
+        quad3,
+        quad4,
+        nulo
     }
 }

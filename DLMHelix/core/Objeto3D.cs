@@ -12,155 +12,141 @@ namespace DLM.helix._3d
 {
     internal class Objeto3D
     {
-        internal Objeto3D(Ponto3D origem, Matriz3D orientacao,SLista<Ponto3D> pontosChapa, double espessura)
+        public List<PolygonPoint> Pontos2dChapa { get; private set; } = new List<PolygonPoint>();
+        public List<Furo> Furos { get; private set; } = new List<Furo>();
+
+
+        internal Objeto3D(Ponto3d origem, Matriz3d orientacao,SLista<Ponto3d> pontosChapa, double espessura)
         {
             this.espessura = espessura;
-            this.origem = origem;
-            this.orientacao = orientacao;
-            this.pontos3DChapa.OnAdded += Calcular;
+            this.Origem = origem;
+            this.Orientacao = orientacao;
+            this.Pontos3DChapa.OnAdded += Calcular;
             pontosChapa.ForEach(x =>
             {
-                this.pontos3DChapa.Add(x);
+                this.Pontos3DChapa.Add(x);
             });
         }
 
         private void Calcular(object sender, EventArgs e)
         {
-            Ponto3D p = null;
-            if(sender is Ponto3D) p = (Ponto3D)sender;
+            Ponto3d p = null;
+            if(sender is Ponto3d) p = (Ponto3d)sender;
             if(p == null) return;
-            double x = Trigonometria.DistanciaProjetada(this.origem, p, this.orientacao.vetorZ);
-            double y = Trigonometria.DistanciaProjetada(this.origem, p, this.orientacao.vetorY);
-            this._pontos2dChapa.Add(new PolygonPoint(x, y));
+            double x = Trigonometria.DistanciaProjetada(this.Origem, p, this.Orientacao.VetorZ);
+            double y = Trigonometria.DistanciaProjetada(this.Origem, p, this.Orientacao.VetorY);
+            this.Pontos2dChapa.Add(new PolygonPoint(x, y));
 
         }
 
+        public Ponto3d Origem { get; set; } = new Ponto3d();
+        public Matriz3d Orientacao { get; set; } = new Matriz3d();
 
-        public Ponto3D origem { get; set; } = new Ponto3D();
-        public Matriz3D orientacao { get; set; } = new Matriz3D();
-
-        public double comprimento
+        public double Comprimento
         {
             get
             {
-                if (this.pontos2dChapa.Count == 0)
+                if (this.Pontos2dChapa.Count == 0)
                 {
                     return 0;
                 }
-                return this.pontos2dChapa.Select(pt => pt.X).Max() - this.pontos2dChapa.Select(pt => pt.X).Min();
+                return this.Pontos2dChapa.Select(pt => pt.X).Max() - this.Pontos2dChapa.Select(pt => pt.X).Min();
             }
         }
 
-        public double largura
+        public double Largura
         {
             get
             {
-                if(this.pontos2dChapa.Count==0)
+                if(this.Pontos2dChapa.Count==0)
                 {
                     return 0;
                 }
-                return  this.pontos2dChapa.Select(pt => pt.Y).Max() - this.pontos2dChapa.Select(pt => pt.Y).Min();
+                return  this.Pontos2dChapa.Select(pt => pt.Y).Max() - this.Pontos2dChapa.Select(pt => pt.Y).Min();
             }
         }
 
-        public SLista<Ponto3D> pontos3DChapa { get; set; } = new SLista<Ponto3D>();
+        public SLista<Ponto3d> Pontos3DChapa { get; set; } = new SLista<Ponto3d>();
 
-        private List<PolygonPoint> _pontos2dChapa { get; set; } = new List<PolygonPoint>();
-        public List<PolygonPoint> pontos2dChapa
-        {
-            get
-            {
-                return this._pontos2dChapa;
-            }
-        }
+ 
 
         internal double espessura { get; set; }
 
-        private List<Furo> _furos { get; set; } = new List<Furo>();
-        public List<Furo> furos
-        {
-            get
-            {
-                return this._furos;
-            }
-        }
 
- 
+
         public void AddFuro(double diam, double x, double y, double offset, double angulo)
         {
-            this._furos.Add(new Furo(diam,new Ponto3D(x,y),offset,angulo));
+            this.Furos.Add(new Furo(diam,new Ponto3d(x,y),offset,angulo));
         }
 
 
-        public Brush corChapa3D { get; set; } = Brushes.Magenta;
+        public Brush Cor { get; set; } = Brushes.Magenta;
 
         #region Faces
 
 
 
-        private Face faceL
+        private Face3d FaceL
         {
             get
             {
-                Ponto3D ptOrigem = Trigonometria.Mover(this.origem, this.orientacao.vetorXNeg, this.espessura / 2);
-                SLista<Ponto3D> pontos = new SLista<Ponto3D>();
-                foreach(var pt in this.pontos3DChapa)
+                Ponto3d ptOrigem = this.Origem.Mover(this.Orientacao.VetorXNeg, this.espessura / 2);
+                SLista<Ponto3d> pontos = new SLista<Ponto3d>();
+                foreach(var pt in this.Pontos3DChapa)
                 {
-                    pontos.Add(Trigonometria.Mover(pt, this.orientacao.vetorXNeg, this.espessura / 2));
+                    pontos.Add(pt.Mover(this.Orientacao.VetorXNeg, this.espessura / 2));
                 }
-                Face retorno = new Face(ptOrigem, pontos, this.orientacao.vetorZ, this.orientacao.vetorYNeg);
-                retorno.furos.AddRange(this.furos);
+                Face3d retorno = new Face3d(ptOrigem, pontos, this.Orientacao.VetorZ, this.Orientacao.VetorYNeg);
+                retorno.Furos.AddRange(this.Furos);
                 return retorno;
             }
         }
 
-        private Face faceR
+        private Face3d FaceR
         {
             get
             {
-                Ponto3D ptOrigem = Trigonometria.Mover(this.origem, this.orientacao.vetorX, this.espessura / 2);
-                SLista<Ponto3D> pontos = new SLista<Ponto3D>();
-                foreach(var pt in this.pontos3DChapa)
+                Ponto3d ptOrigem = this.Origem.Mover(this.Orientacao.VetorX, this.espessura / 2);
+                SLista<Ponto3d> pontos = new SLista<Ponto3d>();
+                foreach(var pt in this.Pontos3DChapa)
                 {
-                    pontos.Add(Trigonometria.Mover(pt, this.orientacao.vetorX, this.espessura / 2));
+                    pontos.Add(pt.Mover(this.Orientacao.VetorX, this.espessura / 2));
                 }
                 pontos.Reverse();
-                Face retorno = new Face(ptOrigem, pontos, this.orientacao.vetorZ, this.orientacao.vetorYNeg);
-                retorno.furos.AddRange(this.furos);
+                Face3d retorno = new Face3d(ptOrigem, pontos, this.Orientacao.VetorZ, this.Orientacao.VetorYNeg);
+                retorno.Furos.AddRange(this.Furos);
                 return retorno;
             }
         }
 
-        private SLista<Face> facesTopo
+        private SLista<Face3d> GetFacesTopo()
         {
-            get
+            SLista<Face3d> retorno = new SLista<Face3d>();
+            for (int i = 0; i < this.Pontos3DChapa.Count; i++)
             {
-                SLista<Face> retorno = new SLista<Face>();
-                for(int i = 0; i < this.pontos3DChapa.Count; i++)
+                if (i > 0)
                 {
-                    if(i > 0)
-                    {
-                        SLista<Ponto3D> pts = new SLista<Ponto3D>();
-                        pts.Add(Trigonometria.Mover(this.pontos3DChapa[i - 1], this.orientacao.vetorXNeg, this.espessura / 2));
-                        pts.Add(Trigonometria.Mover(this.pontos3DChapa[i], this.orientacao.vetorXNeg, this.espessura / 2));
-                        pts.Add(Trigonometria.Mover(this.pontos3DChapa[i], this.orientacao.vetorX, this.espessura / 2));
-                        pts.Add(Trigonometria.Mover(this.pontos3DChapa[i - 1], this.orientacao.vetorX, this.espessura / 2));
-                        Face face = new Face(pts[0], pts, new Vetor3D(this.pontos3DChapa[i - 1], this.pontos3DChapa[i]),this.orientacao.vetorXNeg);
-                        retorno.Add(face);
-                    }
-                }
-                {
-                    SLista<Ponto3D> pts = new SLista<Ponto3D>();
-                    pts.Add(Trigonometria.Mover(this.pontos3DChapa[0], this.orientacao.vetorX, this.espessura / 2));
-                    pts.Add(Trigonometria.Mover(this.pontos3DChapa[this.pontos3DChapa.Count - 1], this.orientacao.vetorX, this.espessura / 2));
-                    pts.Add(Trigonometria.Mover(this.pontos3DChapa[this.pontos3DChapa.Count - 1], this.orientacao.vetorXNeg, this.espessura / 2));
-                    pts.Add(Trigonometria.Mover(this.pontos3DChapa[0], this.orientacao.vetorXNeg, this.espessura / 2));
-                    Face face = new Face(pts[0], pts, new Vetor3D(this.pontos3DChapa[0], this.pontos3DChapa[this.pontos3DChapa.Count - 1]), this.orientacao.vetorXNeg);
+                    SLista<Ponto3d> pts = new SLista<Ponto3d>();
+                    pts.Add(this.Pontos3DChapa[i - 1].Mover(this.Orientacao.VetorXNeg, this.espessura / 2));
+                    pts.Add(this.Pontos3DChapa[i].Mover(this.Orientacao.VetorXNeg, this.espessura / 2));
+                    pts.Add(this.Pontos3DChapa[i].Mover(this.Orientacao.VetorX, this.espessura / 2));
+                    pts.Add(this.Pontos3DChapa[i - 1].Mover(this.Orientacao.VetorX, this.espessura / 2));
+
+                    Face3d face = new Face3d(pts[0], pts, new Vetor3D(this.Pontos3DChapa[i - 1], this.Pontos3DChapa[i]), this.Orientacao.VetorXNeg);
                     retorno.Add(face);
                 }
-
-                return retorno;
             }
+            {
+                SLista<Ponto3d> pts = new SLista<Ponto3d>();
+                pts.Add(this.Pontos3DChapa[0].Mover(this.Orientacao.VetorX, this.espessura / 2));
+                pts.Add(this.Pontos3DChapa[this.Pontos3DChapa.Count - 1].Mover( this.Orientacao.VetorX, this.espessura / 2));
+                pts.Add(this.Pontos3DChapa[this.Pontos3DChapa.Count - 1].Mover(this.Orientacao.VetorXNeg, this.espessura / 2));
+                pts.Add(this.Pontos3DChapa[0].Mover(this.Orientacao.VetorXNeg, this.espessura / 2));
+                Face3d face = new Face3d(pts[0], pts, new Vetor3D(this.Pontos3DChapa[0], this.Pontos3DChapa[this.Pontos3DChapa.Count - 1]), this.Orientacao.VetorXNeg);
+                retorno.Add(face);
+            }
+
+            return retorno;
         }
 
         private List<HelixToolkit.Wpf.ExtrudedVisual3D> furosFacesInternas
@@ -168,7 +154,7 @@ namespace DLM.helix._3d
             get
             {
                 List<HelixToolkit.Wpf.ExtrudedVisual3D> retorno = new List<ExtrudedVisual3D>();
-                foreach(var fur in this.furos)
+                foreach(var fur in this.Furos)
                 {
                     HelixToolkit.Wpf.ExtrudedVisual3D extrude = new ExtrudedVisual3D();
                     PointCollection pontos = new PointCollection();
@@ -178,21 +164,21 @@ namespace DLM.helix._3d
                     }
 
                     //extrude.Section = pontos;
-                    Ponto3D cima = Trigonometria.Mover(this.origem, this.orientacao.vetorZ, fur.Centro.X);
-                    cima = Trigonometria.Mover(cima, this.orientacao.vetorYNeg, fur.Centro.Y);
-                    cima = Trigonometria.Mover(cima, this.orientacao.vetorXNeg, this.espessura / 2);
-                    Ponto3D baixo = Trigonometria.Mover(cima, this.orientacao.vetorX, this.espessura);
+                    Ponto3d cima = this.Origem.Mover(this.Orientacao.VetorZ, fur.Centro.X);
+                    cima = cima.Mover( this.Orientacao.VetorYNeg, fur.Centro.Y);
+                    cima = cima.Mover(this.Orientacao.VetorXNeg, this.espessura / 2);
+                    Ponto3d baixo = cima.Mover(this.Orientacao.VetorX, this.espessura);
 
-                    extrude.Path.Add(cima.ToPoint3DModel);
-                    extrude.Path.Add(baixo.ToPoint3DModel);
+                    extrude.Path.Add(cima.GetPoint3DModel());
+                    extrude.Path.Add(baixo.GetPoint3DModel());
 
                     #region Contorno Furos
                     LinesVisual3D line = new LinesVisual3D();
 
 
                     //faz as paredes do furo na chapa
-                    List<Ponto3D> listcima = fur.GetptsFuro3D(cima, this.orientacao);
-                    List<Ponto3D> listbaixo = fur.GetptsFuro3D(baixo, this.orientacao) ;
+                    List<Ponto3d> listcima = fur.GetptsFuro3D(cima, this.Orientacao);
+                    List<Ponto3d> listbaixo = fur.GetptsFuro3D(baixo, this.Orientacao) ;
 
                     //List<Ponto3D> listcima = fur.getPoints(cima, this.orientacao.vetorZ, this.orientacao.vetorYNeg);
                     //List<Ponto3D> listbaixo = fur.getPoints(baixo, this.orientacao.vetorZ, this.orientacao.vetorYNeg);
@@ -202,26 +188,26 @@ namespace DLM.helix._3d
                         if (i > 0)
                         {
                             {
-                                line.Points.Add(listcima[i].ToPoint3DModel);
-                                line.Points.Add(listcima[i - 1].ToPoint3DModel);
+                                line.Points.Add(listcima[i].GetPoint3DModel());
+                                line.Points.Add(listcima[i - 1].GetPoint3DModel());
                             }
                             {
-                                line.Points.Add(listbaixo[i].ToPoint3DModel);
-                                line.Points.Add(listbaixo[i - 1].ToPoint3DModel);
+                                line.Points.Add(listbaixo[i].GetPoint3DModel());
+                                line.Points.Add(listbaixo[i - 1].GetPoint3DModel());
                             }
                         }
                         {
-                            line.Points.Add(listcima[i].ToPoint3DModel);
-                            line.Points.Add(listbaixo[i].ToPoint3DModel);
+                            line.Points.Add(listcima[i].GetPoint3DModel());
+                            line.Points.Add(listbaixo[i].GetPoint3DModel());
                         }
                     }
                     {
-                        line.Points.Add(listcima[0].ToPoint3DModel);
-                        line.Points.Add(listcima[listcima.Count - 1].ToPoint3DModel);
+                        line.Points.Add(listcima[0].GetPoint3DModel());
+                        line.Points.Add(listcima[listcima.Count - 1].GetPoint3DModel());
                     }
                     {
-                        line.Points.Add(listbaixo[0].ToPoint3DModel);
-                        line.Points.Add(listbaixo[listcima.Count - 1].ToPoint3DModel);
+                        line.Points.Add(listbaixo[0].GetPoint3DModel());
+                        line.Points.Add(listbaixo[listcima.Count - 1].GetPoint3DModel());
                     }
                     extrude.Children.Add(line);
 
@@ -241,32 +227,32 @@ namespace DLM.helix._3d
             MeshGeometryVisual3D retorno = new MeshGeometryVisual3D();
             MeshGeometry3D mesh = new MeshGeometry3D();
 
-            retorno.Children.Add(faceR.contorno);
-            foreach (var pt in this.faceR.pontosTriangulos)
+            retorno.Children.Add(FaceR.GetContorno());
+            foreach (var pt in this.FaceR.GetPontosTriangulos())
             {
                 mesh.TriangleIndices.Add(mesh.Positions.Count);
-                mesh.Positions.Add(pt.ToPoint3DModel);
+                mesh.Positions.Add(pt.GetPoint3DModel());
             }
 
-            retorno.Children.Add(faceL.contorno);
-            foreach (var pt in this.faceL.pontosTriangulos)
+            retorno.Children.Add(FaceL.GetContorno());
+            foreach (var pt in this.FaceL.GetPontosTriangulos())
             {
                 mesh.TriangleIndices.Add(mesh.Positions.Count);
-                mesh.Positions.Add(pt.ToPoint3DModel);
+                mesh.Positions.Add(pt.GetPoint3DModel());
             }
 
-            foreach (var face in this.facesTopo)
+            foreach (var face in this.GetFacesTopo())
             {
-                retorno.Children.Add(face.contorno);
-                foreach (var pt in face.pontosTriangulos)
+                retorno.Children.Add(face.GetContorno());
+                foreach (var pt in face.GetPontosTriangulos())
                 {
                     mesh.TriangleIndices.Add(mesh.Positions.Count);
-                    mesh.Positions.Add(pt.ToPoint3DModel);
+                    mesh.Positions.Add(pt.GetPoint3DModel());
                 }
             }
 
             retorno.MeshGeometry = mesh;
-            retorno.Fill = corChapa3D.Clone();
+            retorno.Fill = Cor.Clone();
             foreach (var fur in this.furosFacesInternas)
             {
                 retorno.Children.Add(fur);

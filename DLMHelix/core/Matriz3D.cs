@@ -7,9 +7,18 @@ using System.Windows.Media.Media3D;
 
 namespace DLM.helix
 {
-    internal class Matriz3D
+    internal class Matriz3d
     {
+        private double _Xy { get; set; }
+        private double _Xz { get; set; }
+        private double _Yx { get; set; }
+        private double _Yy { get; set; }
+        private double _Yz { get; set; }
+        private double _Zx { get; set; }
+        private double _Zy { get; set; }
+        private double _Zz { get; set; }
         private double _Xx { get; set; }
+
         public double Xx
         {
             get
@@ -21,8 +30,6 @@ namespace DLM.helix
                 this._Xx = value;
             }
         }
-
-        private double _Xy { get; set; }
         public double Xy
         {
             get
@@ -34,8 +41,6 @@ namespace DLM.helix
                 this._Xy = value;
             }
         }
-
-        private double _Xz { get; set; }
         public double Xz
         {
             get
@@ -48,8 +53,6 @@ namespace DLM.helix
             }
         }
 
-
-        private double _Yx { get; set; }
         public double Yx
         {
             get
@@ -61,8 +64,6 @@ namespace DLM.helix
                 this._Yx = value;
             }
         }
-
-        private double _Yy { get; set; }
         public double Yy
         {
             get
@@ -74,8 +75,6 @@ namespace DLM.helix
                 this._Yy = value;
             }
         }
-
-        private double _Yz { get; set; }
         public double Yz
         {
             get
@@ -88,9 +87,6 @@ namespace DLM.helix
             }
         }
 
-
-
-        private double _Zx { get; set; }
         public double Zx
         {
             get
@@ -102,8 +98,6 @@ namespace DLM.helix
                 this._Zx = value;
             }
         }
-
-        private double _Zy { get; set; }
         public double Zy
         {
             get
@@ -115,8 +109,6 @@ namespace DLM.helix
                 this._Zy = value;
             }
         }
-
-        private double _Zz { get; set; }
         public double Zz
         {
             get
@@ -129,7 +121,7 @@ namespace DLM.helix
             }
         }
 
-        public Matriz3D()
+        public Matriz3d()
         {
             Xx = 1;
             Xy = 0;
@@ -146,7 +138,7 @@ namespace DLM.helix
 
 
 
-        public Matriz3D(Matrix3D matriz)
+        public Matriz3d(Matrix3D matriz)
         {
             this.Xx = matriz.M11;
             this.Xy = matriz.M12;
@@ -161,7 +153,7 @@ namespace DLM.helix
             this.Zz = matriz.M33;
         }
 
-        public Matriz3D(Vetor3D vecX, Vetor3D vecY, Vetor3D vecZ)
+        public Matriz3d(Vetor3D vecX, Vetor3D vecY, Vetor3D vecZ)
         {
             this.Xx = vecX.X;
             this.Xy = vecX.Y;
@@ -197,67 +189,23 @@ namespace DLM.helix
             }
         }
 
+        public Vetor3D VetorX => new Vetor3D(this.Xx, this.Xy, this.Xz);
 
+        public Vetor3D VetorY => new Vetor3D(this.Yx, this.Yy, this.Yz);
 
-        public Vetor3D vetorX
+        public Vetor3D VetorZ => new Vetor3D(this.Zx, this.Zy, this.Zz);
+
+        public Vetor3D VetorXNeg => new Vetor3D(-this.Xx, -this.Xy, -this.Xz);
+
+        public Vetor3D VetorYNeg => new Vetor3D(-this.Yx, -this.Yy, -this.Yz);
+
+        public Vetor3D VetorZNeg => new Vetor3D(-this.Zx, -this.Zy, -this.Zz);
+
+        public Matriz3d Inverse => new Matriz3d(this.VetorXNeg, this.VetorYNeg, this.VetorZNeg);
+
+        public Vetor3D Transform(Vetor3D vec)
         {
-            get
-            {
-                return new Vetor3D(this.Xx, this.Xy, this.Xz);
-            }
-        }
-
-        public Vetor3D vetorY
-        {
-            get
-            {
-                return new Vetor3D(this.Yx, this.Yy, this.Yz);
-            }
-        }
-
-        public Vetor3D vetorZ
-        {
-            get
-            {
-                return new Vetor3D(this.Zx, this.Zy, this.Zz);
-            }
-        }
-
-        public Vetor3D vetorXNeg
-        {
-            get
-            {
-                return new Vetor3D(-this.Xx, -this.Xy, -this.Xz);
-            }
-        }
-
-        public Vetor3D vetorYNeg
-        {
-            get
-            {
-                return new Vetor3D(-this.Yx, -this.Yy, -this.Yz);
-            }
-        }
-
-        public Vetor3D vetorZNeg
-        {
-            get
-            {
-                return new Vetor3D(-this.Zx, -this.Zy, -this.Zz);
-            }
-        }
-
-        public Matriz3D inverse
-        {
-            get
-            {
-                return new Matriz3D(this.vetorXNeg, this.vetorYNeg, this.vetorZNeg);
-            }
-        }
-
-        public Vetor3D transform(Vetor3D vec)
-        {
-           return new Vetor3D(this.ToMatriz3D.Transform(vec.ToVector3D));
+           return new Vetor3D(this.ToMatriz3D.Transform(vec.GetVector3D()));
         }
 
         public void Rotate(Quaternion quat)
@@ -277,7 +225,7 @@ namespace DLM.helix
             this.Zz = mat.M33;
         }
 
-        public Matriz3D Rotacionar(double Angulo, Eixo eixo, bool zerar = true)
+        public Matriz3d Rotacionar(double Angulo, Eixo eixo, bool zerar = true)
         {
             var vet = new Vector3D(0, 1, 0);
             if(!zerar)
@@ -285,16 +233,16 @@ namespace DLM.helix
                 switch (eixo)
                 {
                     case Eixo.X:
-                        vet = this.vetorX.ToVector3D;
+                        vet = this.VetorX.GetVector3D();
                         //vet = new Vector3D(1, 0, 0);
                         break;
                     case Eixo.Y:
-                        vet = this.vetorY.ToVector3D;
+                        vet = this.VetorY.GetVector3D();
 
                         //vet = new Vector3D(0, 1, 0);
                         break;
                     case Eixo.Z:
-                        vet = this.vetorZ.ToVector3D;
+                        vet = this.VetorZ.GetVector3D();
 
                         //vet = new Vector3D(0, 1, 0);
                         break;
@@ -318,7 +266,7 @@ namespace DLM.helix
             System.Windows.Media.Media3D.Quaternion qZ = new System.Windows.Media.Media3D.Quaternion(vet, Angulo);
             Matrix3D mat = this.ToMatriz3D;
             mat.Rotate(qZ);
-            Matriz3D ret = new Matriz3D();
+            Matriz3d ret = new Matriz3d();
             ret.Xx = mat.M11;
             ret.Xy = mat.M12;
             ret.Xz = mat.M13;
@@ -352,9 +300,9 @@ namespace DLM.helix
             return retorno;
         }
 
-        internal static Matriz3D Multiplicar(Matriz3D mt1, Matriz3D mt2)
+        internal static Matriz3d Multiplicar(Matriz3d mt1, Matriz3d mt2)
         {
-            Matriz3D retorno = new Matriz3D();
+            Matriz3d retorno = new Matriz3d();
 
             Matrix3D produto = Matrix3D.Multiply(mt1.ToMatriz3D, mt2.ToMatriz3D);
 
@@ -373,18 +321,13 @@ namespace DLM.helix
             return retorno;
         }
 
-        internal static Matriz3D Dividir(Matriz3D mt1, Matriz3D mt2)
+        internal static Matriz3d Dividir(Matriz3d mt1, Matriz3d mt2)
         {
             Matrix3D mtAux = mt2.ToMatriz3D;
             mtAux.Invert();
-            mt2 = new Matriz3D(mtAux);
+            mt2 = new Matriz3d(mtAux);
             return Multiplicar(mt1, mt2);
         }
     }
-    public enum Eixo
-    {
-        X,
-        Y,
-        Z,
-    }
+
 }

@@ -1,22 +1,10 @@
-﻿using DLM.helix._3d;
-using HelixToolkit.Wpf;
-using NXOpen.CAE;
+﻿using HelixToolkit.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using DLM.cam;
 
 namespace DLM.helix
@@ -62,9 +50,6 @@ namespace DLM.helix
             this.viewport2D.Children.Clear();
             this.Cam = arq;
             Recarregar();
-            //Front();
-
-
         }
         public void Abrir(Cam arq)
         {
@@ -77,7 +62,6 @@ namespace DLM.helix
                 List<MeshGeometryVisual3D> desenho = new List<MeshGeometryVisual3D>();
                 this.Cam = arq.GetReadCam();
                 Recarregar();
-                //Front();
             }
             catch (Exception ex)
             {

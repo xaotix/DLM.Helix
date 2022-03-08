@@ -28,7 +28,7 @@ namespace DLM.helix._3d
             return retorno;
         }
 
-        public List<Furo> Furos { get; set; } = new List<Furo>();
+        public List<Furo3d> Furos { get; set; } = new List<Furo3d>();
 
         public Vetor3D Normal()
         {

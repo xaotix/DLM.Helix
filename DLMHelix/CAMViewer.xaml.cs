@@ -75,7 +75,7 @@ namespace DLM.helix
 
         public void Recarregar()
         {
-            Gera3D.Desenho(this.Cam,this.viewport);
+            Gera3d.Desenho(this.Cam,this.viewport);
             Gera2D.Desenho(this.Cam, this.viewport2D);
             this.CamIcon.Source = this.Cam.GetPerfil().Imagem;
             Ajustes();
@@ -84,7 +84,7 @@ namespace DLM.helix
 
         private void Ajustes()
         {
-            this.viewport.Children.Add(DLM.helix.Gera3D.Luz());
+            this.viewport.Children.Add(DLM.helix.Gera3d.Luz());
 
             //this.viewport.ZoomExtents();
 

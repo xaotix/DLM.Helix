@@ -9,46 +9,31 @@ using DLM.vars;
 
 namespace DLM.helix
 {
-    public class Gera3D
+    public class Gera3d
     {
-        public static List<Chapa3D> Desenho(List<DLM.cam.Face> Faces, HelixViewport3D viewPort)
+        public static List<Chapa3d> Desenho(List<DLM.cam.Face> Faces, HelixViewport3D viewPort)
         {
             viewPort.Children.Clear();
-            viewPort.Children.Add(Gera3D.Luz());
-            List<Chapa3D> desenho = new List<Chapa3D>();
-
+            viewPort.Children.Add(Gera3d.Luz());
+            List<Chapa3d> desenho = new List<Chapa3d>();
 
             foreach (var s in Faces)
             {
-                Chapa3D z3 = NovaChapa(s);
+                Chapa3d z3 = new Chapa3d(s);
                 desenho.Add(z3);
-
             }
-
 
             foreach (var s in desenho)
             {
-  
                 viewPort.Children.Add(s.GetDesenho3D());
             }
 
-
-
             return desenho;
-
         }
 
-        private static Chapa3D NovaChapa(DLM.cam.Face s)
-        {
-            var z3 = new Chapa3D();
-            z3.Espessura = s.Espessura;
-            z3.Pontos.AddRange(s.LivsAninhados().SelectMany(x => x.SegmentosArco()).Select(x => new DLM.helix.Util.Ponto3d(x.X, x.Y, 0)));
-            z3.Furos.AddRange(s.Furos.FindAll(x => x.MinX > s.MinX && x.MaxX < s.MaxX).Select(y => new DLM.helix.Furo(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-            z3.cor = s.Cor.Clone();
-            return z3;
-        }
 
-        public static List<Chapa3D> Desenho(ReadCAM readcam, HelixViewport3D viewPort)
+
+        public static List<Chapa3d> Desenho(ReadCAM readcam, HelixViewport3D viewPort)
         {
             /*a fazer:
              1) resolver bug do perfil cartola
@@ -57,25 +42,25 @@ namespace DLM.helix
             double folga = 0.5;
             var perfil = readcam.GetPerfil();
             viewPort.Children.Clear();
-            viewPort.Children.Add(Gera3D.Luz());
+            viewPort.Children.Add(Gera3d.Luz());
             var cam = readcam.GetCam();
             Gera2D.AddUCSIcon(viewPort,cam.Formato.Comprimento/10);
 
             viewPort.ShowCameraTarget = true;
 
-            List<Chapa3D> desenho = new List<Chapa3D>();
+            List<Chapa3d> desenho = new List<Chapa3d>();
 
             var chliv1 = cam.Formato.LIV1.GetFaceSemBordas();
-            var liv1 = NovaChapa(chliv1);
+            var liv1 = new Chapa3d(chliv1);
             if (readcam.TipoPerfil == CAM_PERFIL_TIPO.Tubo_Redondo)
             {
                 /*não pega recortes*/
-                var ms = new Tubo3D(perfil.Altura, perfil.Esp, readcam.Comprimento);
+                var ms = new Tubo3d(perfil.Altura, perfil.Esp, readcam.Comprimento);
                 desenho.AddRange(ms.getContorno());
             }
             else if (readcam.TipoPerfil == CAM_PERFIL_TIPO.Barra_Redonda)
             {
-                var ms = new Tubo3D(perfil.Altura, 0.001, readcam.Comprimento);
+                var ms = new Tubo3d(perfil.Altura, 0.001, readcam.Comprimento);
                 desenho.AddRange(ms.getContorno());
             }
             else
@@ -90,7 +75,7 @@ namespace DLM.helix
             if (cam.Perfil.Familia != CAM_FAMILIA.Chapa)
             {
                 var chliv2 = cam.Formato.LIV2.MesaParaChapa();
-                var liv2 = NovaChapa(chliv2);
+                var liv2 = new Chapa3d(chliv2);
                 liv2.AnguloX = 90;
                 liv2.Origem.Y = -chliv2.Espessura / 2;
 
@@ -125,14 +110,14 @@ namespace DLM.helix
                 else if(cam.Perfil.Tipo == CAM_PERFIL_TIPO.Tubo_Quadrado)
                 {
                     var liv11 = liv1.Clonar();
-                    liv11.Origem.Z = -liv2.Largura + liv1.Espessura;
+                    liv11.Origem.Z = -liv2.GetLargura() + liv1.Espessura;
                     desenho.Add(liv11);
                 }
                 else if(cam.Perfil.Tipo == CAM_PERFIL_TIPO.Cartola)
                 {
                     var liv11 = liv1.Clonar();
-                    liv11.Origem.Z = -liv2.Largura/2 + liv1.Espessura/2;
-                    liv1.Origem.Z = +liv2.Largura/2 - liv1.Espessura/2;
+                    liv11.Origem.Z = -liv2.GetLargura() / 2 + liv1.Espessura/2;
+                    liv1.Origem.Z = +liv2.GetLargura() / 2 - liv1.Espessura/2;
 
                     desenho.Add(liv11);
                 
@@ -142,13 +127,13 @@ namespace DLM.helix
                 {
                     var chliv3 = cam.Formato.LIV3.MesaParaChapa();
 
-                    var liv3 = NovaChapa(chliv3);
+                    var liv3 = new Chapa3d(chliv3);
                     liv3.AnguloX = 90;
                     liv3.Origem.Y = -chliv3.Espessura / 2-chliv1.Largura - chliv2.Espessura - 2*folga;
 
                     if (cam.Formato.LIV2.OrigemLIV == OrigemLiv.Centro)
                     {
-                        liv3.Origem.Z = liv3.Largura / 2;
+                        liv3.Origem.Z = liv3.GetLargura() / 2;
                     }
                     else if (cam.Formato.LIV1.OrigemLIV == OrigemLiv.Cima_Baixo)
                     {
@@ -160,29 +145,29 @@ namespace DLM.helix
                     }
                     if(cam.Perfil.Tipo ==  CAM_PERFIL_TIPO.Z_Dobrado)
                     {
-                        liv3.Origem.Z = liv3.Largura - (liv1.Espessura/2);
+                        liv3.Origem.Z = liv3.GetLargura() - (liv1.Espessura/2);
                     }
                     if (cam.Perfil.Tipo == CAM_PERFIL_TIPO.C_Enrigecido | cam.Perfil.Tipo == CAM_PERFIL_TIPO.Z_Purlin)
                     {
                         var aba1 = cam.Formato.LIV2_Aba_Menor(false);
                         var aba2 = cam.Formato.LIV3_Aba_Menor(false);
 
-                        var ab1 = NovaChapa(aba1);
-                        var ab2 = NovaChapa(aba2);
+                        var ab1 = new Chapa3d(aba1);
+                        var ab2 = new Chapa3d(aba2);
 
                         ab1.Origem.Y = -liv3.Espessura- folga;
-                        ab2.Origem.Y = -liv1.Largura + ab2.Largura-liv3.Espessura-folga;
+                        ab2.Origem.Y = -liv1.GetLargura() + ab2.GetLargura() - liv3.Espessura-folga;
 
                         if(cam.Perfil.Tipo == CAM_PERFIL_TIPO.C_Enrigecido)
                         {
-                            ab1.Origem.Z = -liv3.Largura + liv3.Espessura;
-                            ab2.Origem.Z = -liv3.Largura + liv3.Espessura;
+                            ab1.Origem.Z = -liv3.GetLargura() + liv3.Espessura;
+                            ab2.Origem.Z = -liv3.GetLargura() + liv3.Espessura;
                         }
                         else if(cam.Perfil.Tipo == CAM_PERFIL_TIPO.Z_Purlin)
                         {
-                        ab1.Origem.Z = -liv3.Largura + liv3.Espessura;
-                        ab2.Origem.Z = +liv3.Largura - liv3.Espessura;
-                            liv3.Origem.Z = liv3.Origem.Z + liv3.Largura - liv3.Espessura;
+                        ab1.Origem.Z = -liv3.GetLargura() + liv3.Espessura;
+                        ab2.Origem.Z = +liv3.GetLargura() - liv3.Espessura;
+                            liv3.Origem.Z = liv3.Origem.Z + liv3.GetLargura() - liv3.Espessura;
                         }
 
                         desenho.Add(ab1);
@@ -197,17 +182,17 @@ namespace DLM.helix
                     {
                         var chliv3_1 = cam.Formato.LIV3_Cartola2();
                         var chliv3_2 = cam.Formato.LIV3_Cartola1();
-                        var liv3_1 = NovaChapa(chliv3_1);
-                        var liv3_2 = NovaChapa(chliv3_2);
+                        var liv3_1 = new Chapa3d(chliv3_1);
+                        var liv3_2 = new Chapa3d(chliv3_2);
 
-                        liv3_1.Origem.Z = -liv2.Largura / 2 + liv1.Espessura;
-                        liv3_2.Origem.Z =  liv2.Largura / 2 - liv1.Espessura + liv3_2.Largura;
+                        liv3_1.Origem.Z = -liv2.GetLargura() / 2 + liv1.Espessura;
+                        liv3_2.Origem.Z =  liv2.GetLargura() / 2 - liv1.Espessura + liv3_2.GetLargura();
 
                         liv3_1.AnguloX = 90;
                         liv3_2.AnguloX = 90;
 
-                        liv3_1.Origem.Y = -liv1.Largura-liv1.Espessura*1.5-folga*2;
-                        liv3_2.Origem.Y = -liv1.Largura-liv1.Espessura * 1.5 - folga*2;
+                        liv3_1.Origem.Y = -liv1.GetLargura() - liv1.Espessura*1.5-folga*2;
+                        liv3_2.Origem.Y = -liv1.GetLargura() - liv1.Espessura * 1.5 - folga*2;
 
                         desenho.Add(liv3_1);
                         desenho.Add(liv3_2);

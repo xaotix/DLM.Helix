@@ -10,14 +10,14 @@ namespace DLM.helix
     public class Banzo3D
     {
 
-        public List<Chapa3D> GetDesenho()
+        public List<Chapa3d> GetDesenho()
         {
             /*falta ver uma maneira de rotacionar os desenhos conforme o angulo*/
-            List<Chapa3D> retorno = new List<Chapa3D>();
-            var ch1 = new Chapa3D(this.Comprimento, Aba1, this.Espessura);
-            var ch2 = new Chapa3D(this.Comprimento, Aba2, this.Espessura);
-            var ch3 = new Chapa3D(this.Comprimento, Aba3, this.Espessura);
-            var ch4 = new Chapa3D(this.Comprimento, Aba4, this.Espessura);
+            List<Chapa3d> retorno = new List<Chapa3d>();
+            var ch1 = new Chapa3d(this.Comprimento, Aba1, this.Espessura);
+            var ch2 = new Chapa3d(this.Comprimento, Aba2, this.Espessura);
+            var ch3 = new Chapa3d(this.Comprimento, Aba3, this.Espessura);
+            var ch4 = new Chapa3d(this.Comprimento, Aba4, this.Espessura);
 
             var a0 = 0;
             ch1.AnguloX = a0;
@@ -38,7 +38,7 @@ namespace DLM.helix
             ch4.Origem.Y = p0.X;
 
 
-            var borda1 = new Tubo3D(this.Espessura*1.1, 0.01, this.Comprimento);
+            var borda1 = new Tubo3d(this.Espessura*1.1, 0.01, this.Comprimento);
             borda1.Origem = ch2.Origem.Clonar();
 
 
@@ -70,8 +70,8 @@ namespace DLM.helix
         public double Aba3 { get; set; } = 90;
         public double Aba4 { get; set; } = 37;
         public double Comprimento { get; set; } = 12000;
-        public List<Furo> Furos_Inferiores { get; set; } = new List<Furo>();
-        public List<Furo> Furos_Superiores { get; set; } = new List<Furo>();
+        public List<Furo3d> Furos_Inferiores { get; set; } = new List<Furo3d>();
+        public List<Furo3d> Furos_Superiores { get; set; } = new List<Furo3d>();
         public Banzo3D()
         {
 

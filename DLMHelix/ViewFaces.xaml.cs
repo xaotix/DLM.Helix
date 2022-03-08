@@ -26,7 +26,7 @@ namespace DLM.helix
             this.faces = faces;
             InitializeComponent();
             DLM.helix.Gera2D.Desenho(faces, v2d);
-            DLM.helix.Gera3D.Desenho(faces, v3d);
+            DLM.helix.Gera3d.Desenho(faces, v3d);
             ControleCamera.Setar(v2d, ControleCamera.eCameraViews.Top, 0);
             this.v3d.ShowCoordinateSystem = true;
             this.v3d.ShowFieldOfView = false;
@@ -49,7 +49,7 @@ namespace DLM.helix
         {
             InitializeComponent();
             DLM.helix.Gera2D.Desenho(cam, v2d);
-            DLM.helix.Gera3D.Desenho(cam, v3d);
+            DLM.helix.Gera3d.Desenho(cam, v3d);
             ControleCamera.Setar(v2d, ControleCamera.eCameraViews.Top, 0);
             this.v3d.ShowCoordinateSystem = true;
             this.v3d.ShowFieldOfView = false;

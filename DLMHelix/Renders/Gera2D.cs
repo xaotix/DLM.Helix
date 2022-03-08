@@ -31,7 +31,7 @@ namespace DLM.helix
             double espessura = 1;
             List<LinesVisual3D> linhas = new List<LinesVisual3D>();
             viewPort.Children.Clear();
-            viewPort.Children.Add(Gera3D.Luz());
+            viewPort.Children.Add(Gera3d.Luz());
             ControleCamera.Setar(viewPort, ControleCamera.eCameraViews.Top, 0); ;
             Ponto3d origem = new Ponto3d();
             var cor = Brushes.Black.Color;
@@ -122,7 +122,7 @@ namespace DLM.helix
             double espessura = 1;
             List<LinesVisual3D> linhas = new List<LinesVisual3D>();
             viewPort.Children.Clear();
-            viewPort.Children.Add(Gera3D.Luz());
+            viewPort.Children.Add(Gera3d.Luz());
             ControleCamera.Setar(viewPort, ControleCamera.eCameraViews.Top, 0); ;
             Ponto3d origem = new Ponto3d();
             //Brush cor = Brushes.Black.Color;
@@ -213,7 +213,7 @@ namespace DLM.helix
         public static List<LinesVisual3D> Furo2D(double espessura, Est.Furo fr0,Ponto3d origem, Color color)
         {
             List<LinesVisual3D> linhas = new List<LinesVisual3D>();
-            Furo pp = new Furo(fr0.Diametro, fr0.X, fr0.Y, fr0.Dist, fr0.Ang);
+            Furo3d pp = new Furo3d(fr0.Diametro, fr0.X, fr0.Y, fr0.Dist, fr0.Ang);
             var ptsfr = pp.Getcontorno();
             for (int i = 1; i < ptsfr.Count; i++)
             {

@@ -74,15 +74,15 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="3d\Banzo3D.cs" />
-    <Compile Include="3d\ControleCamera.cs" />
+    <Compile Include="3d\Chapa3D.cs" />
+    <Compile Include="3d\Furo3d.cs" />
+    <Compile Include="3d\Tubo3d.cs" />
+    <Compile Include="core\ControleCamera.cs" />
     <Compile Include="CAMViewer.xaml.cs">
       <DependentUpon>CAMViewer.xaml</DependentUpon>
     </Compile>
-    <Compile Include="core\Objeto3D.cs" />
-    <Compile Include="core\Face.cs" />
-    <Compile Include="3d\Furo.cs" />
-    <Compile Include="3d\Chapa.cs" />
     <Compile Include="core\Enumeradores.cs" />
+    <Compile Include="core\Face3d.cs" />
     <Compile Include="core\Matriz3D.cs" />
     <Compile Include="core\Ponto3D.cs" />
     <Compile Include="Properties\Resources.Designer.cs">

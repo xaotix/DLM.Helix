@@ -105,7 +105,7 @@ namespace DLM.helix
         {
             var pontos3d = GetPts();
             //var Origem = GetOrigem();
-            var orientacao = GetOrientacao();
+            var orientacao = GetMatriz();
 
             SLista<Face3d> retorno = new SLista<Face3d>();
             for (int i = 0; i < pontos3d.Count; i++)

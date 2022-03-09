@@ -1,14 +1,15 @@
-﻿using DLM.helix.Util;
+﻿using DLM.desenho;
 using HelixToolkit.Wpf;
 using Poly2Tri.Triangulation.Polygon;
 using System;
 using System.Collections.Generic;
+using Conexoes;
 
 namespace DLM.helix._3d
 {
     internal class Face3d
     {
-        public SLista<Ponto3d> PontosExternos { get; set; } = new SLista<Ponto3d>();
+        public sList<P3d> PontosExternos { get; set; } = new sList<P3d>();
 
         public Vetor3D XVec { get; set; }
 
@@ -20,15 +21,15 @@ namespace DLM.helix._3d
             int contador = 0;
             foreach (var pt in this.PontosExternos)
             {
-                retorno.Points.Add(pt.GetPoint3DModel());
-                if (contador > 0) retorno.Points.Add(pt.GetPoint3DModel());
+                retorno.Points.Add(pt.GetPoint3D(1000));
+                if (contador > 0) retorno.Points.Add(pt.GetPoint3D(1000));
                 contador++;
             }
-            retorno.Points.Add(this.PontosExternos[0].GetPoint3DModel());
+            retorno.Points.Add(this.PontosExternos[0].GetPoint3D(1000));
             return retorno;
         }
 
-        public List<Furo3d> Furos { get; set; } = new List<Furo3d>();
+        public List<Abertura3d> Furos { get; set; } = new List<Abertura3d>();
 
         public Vetor3D Normal()
         {
@@ -39,7 +40,7 @@ namespace DLM.helix._3d
             return retorno;
         }
 
-        public Ponto3d Origem { get; set; }
+        public P3d Origem { get; set; }
 
         private Poly2Tri.Triangulation.Polygon.Polygon GetPoligono()
         {
@@ -66,14 +67,14 @@ namespace DLM.helix._3d
             return retorno;
         }
 
-        public List<Ponto3d> GetPontosTriangulos()
+        public List<P3d> GetPontosTriangulos()
         {
-            List<Ponto3d> retorno = new List<Ponto3d>();
+            List<P3d> retorno = new List<P3d>();
             foreach (var triangulo in GetTriangulos())
             {
                 foreach (Poly2Tri.Triangulation.TriangulationPoint ponto2D in triangulo.Points)
                 {
-                    Ponto3d ponto = Origem.Mover(XVec, ponto2D.X);
+                    P3d ponto = Origem.Mover(XVec, ponto2D.X);
                     ponto = ponto.Mover(YVec, ponto2D.Y);
                     retorno.Add(ponto);
                 }
@@ -86,13 +87,13 @@ namespace DLM.helix._3d
         public List<Poly2Tri.Triangulation.Polygon.PolygonPoint> Pontos2d { get; private set; } = new List<PolygonPoint>();
 
         
-        public Face3d(Ponto3d origem, SLista<Ponto3d> pontosExternos, Vetor3D xVec, Vetor3D yVec)
+        public Face3d(P3d origem, sList<P3d> pontosExternos, Vetor3D xVec, Vetor3D yVec)
         {
             this.Origem = origem;
             this.XVec = xVec;
             this.YVec = yVec;
-            this.PontosExternos.OnAdded += PontosExternos_OnAdd;
-            this.PontosExternos.OnRemoved += PontosExternos_OnRemoved;
+            this.PontosExternos.AfterAdd += PontosExternos_OnAdd;
+            this.PontosExternos.AfterRemove += PontosExternos_OnRemoved;
             pontosExternos.ForEach(x =>
             {
                 this.PontosExternos.Add(x);
@@ -101,8 +102,8 @@ namespace DLM.helix._3d
 
         private void PontosExternos_OnRemoved(object sender, EventArgs e)
         {
-            Ponto3d p = null;
-            if(sender is Ponto3d) p = (Ponto3d)sender;
+            P3d p = null;
+            if(sender is P3d) p = (P3d)sender;
             if(p == null) return;
             double x = Trigonometria.DistanciaProjetada(Origem, p, this.XVec, true);
             double y = Trigonometria.DistanciaProjetada(Origem, p, this.YVec, true);
@@ -111,12 +112,13 @@ namespace DLM.helix._3d
 
         private void PontosExternos_OnAdd(object sender, EventArgs e)
         {
-            Ponto3d p = null;
-            if(sender is Ponto3d) p = (Ponto3d)sender;
+            P3d p = null;
+            if(sender is P3d) p = (P3d)sender;
             if(p == null) return;
             double x = Trigonometria.DistanciaProjetada(Origem, p, this.XVec, true);
             double y = Trigonometria.DistanciaProjetada(Origem, p, this.YVec, true);
             this.Pontos2d.Add(new PolygonPoint(x, y));
+
         }
 
     }

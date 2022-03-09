@@ -1,5 +1,4 @@
-﻿using DLM.helix.Util;
-using HelixToolkit.Wpf;
+﻿using HelixToolkit.Wpf;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Media;
@@ -44,7 +43,7 @@ namespace DLM.helix
             viewPort.Children.Clear();
             viewPort.Children.Add(Gera3d.Luz());
             var cam = readcam.GetCam();
-            Gera2D.AddUCSIcon(viewPort,cam.Formato.Comprimento/10);
+            Gera2D.AddUCSIcon(viewPort,cam.Formato.GetComprimento() / 10);
 
             viewPort.ShowCameraTarget = true;
 
@@ -87,7 +86,7 @@ namespace DLM.helix
 
                 if (cam.Formato.LIV2.OrigemLIV == OrigemLiv.Centro)
                 {
-                    liv2.Origem.Z = chliv2.Largura / 2;
+                    liv2.Origem.Z = chliv2.Largura/ 2;
                 }
                 else if (cam.Formato.LIV1.OrigemLIV == OrigemLiv.Cima_Baixo)
                 {
@@ -129,7 +128,7 @@ namespace DLM.helix
 
                     var liv3 = new Chapa3d(chliv3);
                     liv3.AnguloX = 90;
-                    liv3.Origem.Y = -chliv3.Espessura / 2-chliv1.Largura - chliv2.Espessura - 2*folga;
+                    liv3.Origem.Y = -chliv3.Espessura / 2-chliv1.Largura- chliv2.Espessura - 2*folga;
 
                     if (cam.Formato.LIV2.OrigemLIV == OrigemLiv.Centro)
                     {

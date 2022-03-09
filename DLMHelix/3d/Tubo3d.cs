@@ -1,4 +1,5 @@
-﻿using DLM.helix.Util;
+﻿using Conexoes;
+using DLM.desenho;
 using System;
 using System.Collections.Generic;
 
@@ -14,7 +15,7 @@ namespace DLM.helix
         }
         public double LarguraFace { get; set; } = 50;
         public double Comprimento { get; set; } = 1500;
-        public Ponto3d Origem { get; set; } = new Ponto3d();
+        public P3d Origem { get; set; } = new P3d();
 
         public double GetCircunferencia()
         {
@@ -32,23 +33,23 @@ namespace DLM.helix
             {
                 var largs = this.GetCircunferencia() / Num_Faces;
                 double ang0 = (double)360 / (double)Num_Faces;
-                List<Ponto3d> tamp = new List<Ponto3d>();
+                List<P3d> tamp = new List<P3d>();
                 double ang = ang0;
                 for (int i = 0; i < Num_Faces; i++)
                 {
 
-                    Ponto3d pt = new Ponto3d(0, 0, 0).MoverXY(ang, Diametro / 2);
+                    P3d pt = new P3d(0, 0, 0).MoverXY(ang, Diametro / 2);
                     Chapa3d ch = new Chapa3d("Face");
                     ch.Espessura = this.Espessura;
-                    ch.Pontos.Add(new Ponto3d(0, 0, 0));
-                    ch.Pontos.Add(new Ponto3d(0, largs/2, 0));
-                    ch.Pontos.Add(new Ponto3d(this.Comprimento, largs/2, 0));
-                    ch.Pontos.Add(new Ponto3d(this.Comprimento, 0, 0));
-                    ch.Pontos.Add(new Ponto3d(0, 0, 0));
+                    ch.Pontos.Add(new P3d(0, 0, 0));
+                    ch.Pontos.Add(new P3d(0, largs/2, 0));
+                    ch.Pontos.Add(new P3d(this.Comprimento, largs/2, 0));
+                    ch.Pontos.Add(new P3d(this.Comprimento, 0, 0));
+                    ch.Pontos.Add(new P3d(0, 0, 0));
 
 
                     ch.AnguloX = ang-90 - ang0/2;
-                    ch.Origem = new Ponto3d(0,pt.X,pt.Y);
+                    ch.Origem = new P3d(0,pt.X,pt.Y);
                     tamp.Add(pt.Clonar());
                     ang = ang + ang0;
                     retorno.Add(ch);

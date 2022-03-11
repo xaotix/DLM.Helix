@@ -6,6 +6,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using DLM.cam;
+using Conexoes;
 
 namespace DLM.helix
 {
@@ -14,11 +15,12 @@ namespace DLM.helix
     /// </summary>
     public partial class CAMViewer : UserControl
     {
-        public ReadCAM Cam { get; set; } = new ReadCAM();
 
+        public CAMViewerMVC MVC { get; set; } = new CAMViewerMVC();
         public CAMViewer()
         {
             InitializeComponent();
+            this.DataContext = MVC;
         }
         public void Abrir(string arq)
         {
@@ -35,7 +37,7 @@ namespace DLM.helix
             List<MeshGeometryVisual3D> desenho = new List<MeshGeometryVisual3D>();
             if(arq.ToUpper().EndsWith(".CAM"))
             {
-            this.Cam = new ReadCAM(arq);
+            this.MVC.CAM = new ReadCAM(arq);
 
             Recarregar();
             Front();
@@ -48,7 +50,7 @@ namespace DLM.helix
         {
             this.viewport.Children.Clear();
             this.viewport2D.Children.Clear();
-            this.Cam = arq;
+            this.MVC.CAM = arq;
             Recarregar();
         }
         public void Abrir(Cam arq)
@@ -56,28 +58,21 @@ namespace DLM.helix
            
             this.viewport.Children.Clear();
             this.viewport2D.Children.Clear();
-
             try
             {
                 List<MeshGeometryVisual3D> desenho = new List<MeshGeometryVisual3D>();
-                this.Cam = arq.GetReadCam();
+                this.MVC.CAM = arq.GetReadCam();
                 Recarregar();
             }
             catch (Exception ex)
             {
                 Conexoes.Utilz.Alerta(ex);
             }
-
-
-
         }
-
-
         public void Recarregar()
         {
-            Gera3d.Desenho(this.Cam,this.viewport);
-            Gera2D.Desenho(this.Cam, this.viewport2D);
-            this.CamIcon.Source = this.Cam.GetPerfil().Imagem;
+            Gera3d.Desenho(this.MVC.CAM,this.viewport);
+            Gera2D.Desenho(this.MVC.CAM, this.viewport2D);
             Ajustes();
 
         }
@@ -177,11 +172,11 @@ namespace DLM.helix
 
         private void abrir(object sender, RoutedEventArgs e)
         {
-            if(File.Exists(Cam.Arquivo))
+            if(File.Exists(MVC.CAM.Arquivo))
             {
                 try
                 {
-                    Process.Start(Cam.Arquivo);
+                    Process.Start(MVC.CAM.Arquivo);
                 }
                 catch (Exception)
                 {
@@ -200,4 +195,25 @@ namespace DLM.helix
             viewport.ZoomExtents();
         }
     }
+
+    public class CAMViewerMVC :Notificar
+    {
+        private ReadCAM _CAM { get; set; }  
+        public ReadCAM CAM
+        {
+            get
+            {
+                return _CAM;
+            }
+            set
+            {
+                _CAM = value;
+                NotifyPropertyChanged();
+            }
+        }
+        public CAMViewerMVC()
+        {
+        }
+    }
+
 }

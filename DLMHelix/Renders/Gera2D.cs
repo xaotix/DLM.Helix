@@ -36,12 +36,12 @@ namespace DLM.helix
             ControleCamera.Setar(viewPort, ControleCamera.eCameraViews.Top, 0); ;
             P3d origem = new P3d();
             var cor = Brushes.Black.Color;
-            var shape = cam.GetShapeLIV1();
+            var shape = cam.Shape.LIV1.Liv;
             double ctf = cam.ContraFlecha;
 
             double offset = 25;
-            P3d origem_Liv2 = origem.MoverXY(90, offset + (cam.Faces>2? cam.LIV2_Largura:0));
-            P3d origem_Liv3 = origem.MoverXY(90, -cam.LIV1_Largura - cam.LIV3_Largura - offset);
+            P3d origem_Liv2 = origem.MoverXY(90, offset + (cam.Perfil.Faces > 2? cam.Shape.LIV2.Largura:0));
+            P3d origem_Liv3 = origem.MoverXY(90, -cam.Shape.LIV1.Largura - cam.Shape.LIV3.Largura - offset);
 
 
 
@@ -57,11 +57,11 @@ namespace DLM.helix
 
 
                 //LIV2
-                linhas.AddRange(Contorno(espessura, cam.GetShapeLIV2().Select(x => x.GetLivY().InverterY()).ToList(), origem_Liv2, cor, 0));
+                linhas.AddRange(Contorno(espessura, cam.Shape.LIV2.Liv.Select(x => x.GetLivY().InverterY()).ToList(), origem_Liv2, cor, 0));
 
 
                 //LIV3
-                linhas.AddRange(Contorno(espessura, cam.GetShapeLIV3().Select(x => x.GetLivY()).ToList(),origem_Liv3 , cor, 0));
+                linhas.AddRange(Contorno(espessura, cam.Shape.LIV3.Liv.Select(x => x.GetLivY()).ToList(),origem_Liv3 , cor, 0));
 
             }
             #endregion
@@ -75,7 +75,7 @@ namespace DLM.helix
 
             foreach (var fr0 in cam.GetFurosLIV2())
             {
-                if(cam.Faces>2)
+                if(cam.Perfil.Faces>2)
                 {
                     var nf = Furo2D(espessura, fr0, origem_Liv2, cor);
                     linhas.AddRange(nf);
@@ -106,8 +106,7 @@ namespace DLM.helix
                 viewPort.Children.Add(l);
             }
 
-            //viewPort.Children.Add(teste);
-            var centro = cam.GetCentro();
+            var centro = cam.Shape.LIV1.GetCentro();
             var txt = Gera2D.Texto(cam.Descricao, new P3d(centro.X, centro.Y, centro.Z));
             viewPort.Children.Add(txt);
 
@@ -115,48 +114,7 @@ namespace DLM.helix
             viewPort.ZoomExtents();
 
         }
-        public static void Desenho(List<DLM.cam.Face> cam, HelixViewport3D viewPort)
-        {
 
-
-
-            double espessura = 1;
-            List<LinesVisual3D> linhas = new List<LinesVisual3D>();
-            viewPort.Children.Clear();
-            viewPort.Children.Add(Gera3d.Luz());
-            ControleCamera.Setar(viewPort, ControleCamera.eCameraViews.Top, 0); ;
-            P3d origem = new P3d();
-            //Brush cor = Brushes.Black.Color;
-
-            foreach (var s in cam)
-            {
-                linhas.AddRange(Contorno(s.Espessura, s.Liv.SelectMany(x=> x.SegmentosArco()).ToList(), origem, Conexoes.Utilz.Cores.BrushToColor(s.Cor), s.ContraFlecha));
-                foreach (var fr0 in s.Furacoes)
-                {
-                    var nf = Furo2D(s.Espessura, fr0, origem, Conexoes.Utilz.Cores.BrushToColor(s.Cor));
-                    linhas.AddRange(nf);
-                }
-                foreach (var dob in s.Dobras)
-                {
-                    AddDobra(viewPort, espessura, origem, dob);
-                }
-            }
-
-
-            foreach (var l in linhas)
-            {
-                viewPort.Children.Add(l);
-            }
-
-            //viewPort.Children.Add(teste);
-
-            //var txt = Gera2D.Texto(cam.Descricao, new Ponto3D(cam.Centro));
-            //viewPort.Children.Add(txt);
-
-
-            viewPort.ZoomExtents();
-
-        }
         private static void AddDobra(HelixViewport3D viewPort, double espessura, P3d origem, Dobra dob)
         {
             var p1 = new P3d(dob.X1, dob.Y1);
@@ -215,7 +173,7 @@ namespace DLM.helix
         {
             List<LinesVisual3D> linhas = new List<LinesVisual3D>();
             Abertura3d pp = new Abertura3d(fr0.Diametro, fr0.X, fr0.Y, fr0.Dist, fr0.Ang);
-            var ptsfr = pp.Getcontorno();
+            var ptsfr = pp.GetContornoPlanificado();
             for (int i = 1; i < ptsfr.Count; i++)
             {
                 var shp0 = ptsfr[i - 1];

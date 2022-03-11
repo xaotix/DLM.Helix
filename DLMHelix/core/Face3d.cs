@@ -9,7 +9,7 @@ namespace DLM.helix._3d
 {
     internal class Face3d
     {
-        public sList<P3d> PontosExternos { get; set; } = new sList<P3d>();
+        public sList<P3d> Coordenadas { get; set; } = new sList<P3d>();
 
         public Vetor3D XVec { get; set; }
 
@@ -19,17 +19,17 @@ namespace DLM.helix._3d
         {
             LinesVisual3D retorno = new LinesVisual3D();
             int contador = 0;
-            foreach (var pt in this.PontosExternos)
+            foreach (var pt in this.Coordenadas)
             {
                 retorno.Points.Add(pt.GetPoint3D(1000));
                 if (contador > 0) retorno.Points.Add(pt.GetPoint3D(1000));
                 contador++;
             }
-            retorno.Points.Add(this.PontosExternos[0].GetPoint3D(1000));
+            retorno.Points.Add(this.Coordenadas[0].GetPoint3D(1000));
             return retorno;
         }
 
-        public List<Abertura3d> Furos { get; set; } = new List<Abertura3d>();
+        public List<Abertura3d> AberturasInternas { get; set; } = new List<Abertura3d>();
 
         public Vetor3D Normal()
         {
@@ -40,14 +40,14 @@ namespace DLM.helix._3d
             return retorno;
         }
 
-        public P3d Origem { get; set; }
+        public P3d Origem { get; set; } = new P3d();
 
         private Poly2Tri.Triangulation.Polygon.Polygon GetPoligono()
         {
             Poly2Tri.Triangulation.Polygon.Polygon pol = new Poly2Tri.Triangulation.Polygon.Polygon(Pontos2d);
-            foreach (var furo in this.Furos)
+            foreach (var furo in this.AberturasInternas)
             {
-                pol.AddHole(furo.Getcontorno());
+                pol.AddHole(furo.GetContornoPlanificado());
             }
             return pol;
         }
@@ -92,11 +92,11 @@ namespace DLM.helix._3d
             this.Origem = origem;
             this.XVec = xVec;
             this.YVec = yVec;
-            this.PontosExternos.AfterAdd += PontosExternos_OnAdd;
-            this.PontosExternos.AfterRemove += PontosExternos_OnRemoved;
+            this.Coordenadas.AfterAdd += PontosExternos_OnAdd;
+            this.Coordenadas.AfterRemove += PontosExternos_OnRemoved;
             pontosExternos.ForEach(x =>
             {
-                this.PontosExternos.Add(x);
+                this.Coordenadas.Add(x);
             });
         }
 

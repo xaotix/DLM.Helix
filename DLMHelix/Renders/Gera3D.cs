@@ -5,6 +5,7 @@ using System.Windows.Media;
 using System.Windows.Media.Media3D;
 using DLM.cam;
 using DLM.vars;
+using Conexoes;
 
 namespace DLM.helix
 {
@@ -39,7 +40,7 @@ namespace DLM.helix
 
              */
             double folga = 0.5;
-            var perfil = readcam.GetPerfil();
+            var perfil = readcam.Perfil;
             viewPort.Children.Clear();
             viewPort.Children.Add(Gera3d.Luz());
             var cam = readcam.GetCam();
@@ -122,7 +123,7 @@ namespace DLM.helix
                 
                 }
 
-                if (readcam.Faces>2)
+                if (readcam.Perfil.Faces > 2)
                 {
                     var chliv3 = cam.Formato.LIV3.MesaParaChapa();
 

@@ -2,21 +2,31 @@
 using DLM.desenho;
 using DLM.helix._3d;
 using HelixToolkit.Wpf;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
+using System.Xml.Serialization;
 
 namespace DLM.helix
 {
+    [Serializable]
     public class Chapa3d
     {
+        public List<P3d> Pontos { get; set; } = new List<P3d>();
+        public List<Abertura3d> Aberturas { get; set; } = new List<Abertura3d>();
+        public P3d Origem { get; set; } = new P3d();
+        public double AnguloX { get; set; } = 0;
+        public double AnguloY { get; set; } = 0;
+        public double AnguloZ { get; set; } = 0;
+        public double Espessura { get; set; } = 6.35;
         public string Nome { get; set; } = "Chapa";
+
         public override string ToString()
         {
             return $"{Nome} - CH.{this.GetComprimento()}x{this.GetLargura()}x{this.Espessura}";
         }
-
         public double GetComprimento()
         {
             var xs = this.Pontos.Select(x => x.X).Distinct().ToList();
@@ -26,7 +36,6 @@ namespace DLM.helix
             }
             return 0;
         }
-
         public double GetLargura()
         {
             var ys = this.Pontos.Select(x => x.Y).Distinct().ToList();
@@ -36,34 +45,16 @@ namespace DLM.helix
             }
             return 0;
         }
-
-        public Chapa3d Clonar()
-        {
-            Chapa3d p = new Chapa3d(this.Nome);
-            p.AnguloX = this.AnguloX;
-            p.AnguloY = this.AnguloY;
-            p.AnguloZ = this.AnguloZ;
-            p.Cor = this.Cor.Clone();
-            p.Espessura = this.Espessura;
-            p.Aberturas = this.Aberturas.Select(x => new Abertura3d(x.Diametro, x.X, x.Y,x.Dist,x.Ang)).ToList();
-            p.Origem = new P3d(this.Origem, 10);
-            p.Pontos = this.Pontos.Select(x => new P3d(x)).ToList();
-            return p;
-        }
         public void SomarAngulos(double X, double Y, double Z)
         {
             this.AnguloX = this.AnguloX + X;
             this.AnguloY = this.AnguloY + Y;
             this.AnguloZ = this.AnguloZ + Z;
         }
-        public double AnguloX { get; set; } = 0;
-        public double AnguloY { get; set; } = 0;
-        public double AnguloZ { get; set; } = 0;
-        public double Espessura { get; set; } = 6.35;
-        public P3d Origem { get; set; } = new P3d();
+
+        [XmlIgnore]
         public Brush Cor { get; set; } = Brushes.Green;
-        public List<P3d> Pontos { get; set; } = new List<P3d>();
-        public List<Abertura3d> Aberturas { get; set; } = new List<Abertura3d>();
+
 
 
         #region Faces
@@ -80,10 +71,9 @@ namespace DLM.helix
                 pontos.Add(pt.Mover(orientacao.VetorXNeg, this.Espessura / 2));
             }
             Face3d retorno = new Face3d(ptOrigem, pontos, orientacao.VetorZ, orientacao.VetorYNeg);
-            retorno.Furos.AddRange(this.Aberturas);
+            retorno.AberturasInternas.AddRange(this.Aberturas);
             return retorno;
         }
-
         private Face3d GetFaceR()
         {
             var pontos3d = GetPts();
@@ -98,11 +88,10 @@ namespace DLM.helix
             }
             pontos.Reverse();
             Face3d retorno = new Face3d(ptOrigem, pontos, orientacao.VetorZ, orientacao.VetorYNeg);
-            retorno.Furos.AddRange(this.Aberturas);
+            retorno.AberturasInternas.AddRange(this.Aberturas);
             return retorno;
         }
-
-        private sList<Face3d> GetFacesTopo()
+        private sList<Face3d> GetFacesBordas()
         {
             var pontos3d = GetPts();
             //var Origem = GetOrigem();
@@ -135,7 +124,6 @@ namespace DLM.helix
 
             return retorno;
         }
-
         private List<ExtrudedVisual3D> GetFurosFacesInternas()
         {
             var pontos3d = GetPts();
@@ -147,14 +135,12 @@ namespace DLM.helix
             {
                 HelixToolkit.Wpf.ExtrudedVisual3D extrude = new ExtrudedVisual3D();
                 PointCollection pontos = new PointCollection();
-                foreach (var ponto in abertura.GetptsFuroPlanificado())
+                foreach (var ponto in abertura.Coordenadas)
                 {
                     pontos.Add(new System.Windows.Point((int)ponto.X / 1000, (int)ponto.Y / 1000));
                 }
 
-                //extrude.Section = pontos;
-                P3d cima = Origem.Mover(orientacao.VetorZ, abertura.X);
-                cima = cima.Mover(orientacao.VetorYNeg, abertura.Y);
+                P3d cima = Origem.Clonar();
                 cima = cima.Mover(orientacao.VetorXNeg, this.Espessura / 2);
                 P3d baixo = cima.Mover(orientacao.VetorX, this.Espessura);
 
@@ -208,22 +194,25 @@ namespace DLM.helix
         {
             MeshGeometryVisual3D retorno = new MeshGeometryVisual3D();
             MeshGeometry3D mesh = new MeshGeometry3D();
+            var R = GetFaceR();
+            var L = GetFaceL();
+            var Bordas = GetFacesBordas();
 
-            retorno.Children.Add(GetFaceR().GetContorno());
-            foreach (var pt in GetFaceR().GetPontosTriangulos())
+            retorno.Children.Add(R.GetContorno());
+            foreach (var pt in R.GetPontosTriangulos())
             {
                 mesh.TriangleIndices.Add(mesh.Positions.Count);
                 mesh.Positions.Add(pt.GetPoint3D(1000));
             }
 
-            retorno.Children.Add(GetFaceL().GetContorno());
-            foreach (var pt in GetFaceL().GetPontosTriangulos())
+            retorno.Children.Add(L.GetContorno());
+            foreach (var pt in L.GetPontosTriangulos())
             {
                 mesh.TriangleIndices.Add(mesh.Positions.Count);
                 mesh.Positions.Add(pt.GetPoint3D(1000));
             }
 
-            foreach (var face in GetFacesTopo())
+            foreach (var face in Bordas)
             {
                 retorno.Children.Add(face.GetContorno());
                 foreach (var pt in face.GetPontosTriangulos())
@@ -241,29 +230,6 @@ namespace DLM.helix
             }
             return retorno;
         }
-
-        //public MeshGeometryVisual3D GetDesenho3D()
-        //{
-        //    if (this.Pontos.Count < 3)
-        //    {
-        //        return new MeshGeometryVisual3D();
-        //    }
-
-        //    var pontos = GetPts();
-        //    var matriz = GetMatriz();
-        //    var origem = GetOrigem();
-
-        //    DLM.helix._3d.Objeto3d ch = new DLM.helix._3d.Objeto3d(origem, matriz, pontos, this.Espessura) { Cor = Cor.Clone() };
-        //    ch.Cor = this.Cor.Clone();
-        //    ch.Furos.AddRange(this.Furos);
-        //    //foreach (var s in this.Furos)
-        //    //{
-        //    //    ch.AddFuro(s.Diametro, s.Centro.X, s.Centro.Y, s.Offset, s.Angulo);
-        //    //}
-
-        //    return ch.Getmesh3d();
-        //}
-
         private sList<P3d> GetPts()
         {
             sList<P3d> pontos = new sList<P3d>();
@@ -280,8 +246,6 @@ namespace DLM.helix
             }
             return pontos;
         }
-
-
         private Matriz3d GetMatriz()
         {
             var orientacao = GetOrientacao();
@@ -330,7 +294,13 @@ namespace DLM.helix
             this.Espessura = s.Espessura;
             this.Pontos.AddRange(s.Liv.SelectMany(x => x.SegmentosArco()).Select(x => new P3d(x.X, x.Y, 0)));
             this.Aberturas.AddRange(s.Furacoes.FindAll(x => x.MinX > s.MinX && x.MaxX < s.MaxX).Select(y => new DLM.helix.Abertura3d(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-            this.Cor = s.Cor.Clone();
+            this.Aberturas.AddRange(s.RecortesInternos.Select(x => new Abertura3d(x.GetLiv())));
+            this.Cor = Brushes.Green.Clone();
+        }
+
+        public Chapa3d()
+        {
+
         }
     }
  

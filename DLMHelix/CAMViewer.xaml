@@ -6,66 +6,92 @@
              xmlns:local="clr-namespace:DLM.helix"
               xmlns:HelixToolkit="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf"
              mc:Ignorable="d" 
+             xmlns:Conexoes="clr-namespace:Conexoes;assembly=Conexoes"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
 
 
         <TabControl Grid.Row="1" Background="Transparent">
-            <TabItem Header="3d" Background="Transparent" FontSize="20">
+            <TabItem Header="3d" Background="Transparent">
                 <Grid>
-                    <HelixToolkit:HelixViewport3D SizeChanged="viewport_SizeChanged"  Grid.Row="1" ZoomExtentsWhenLoaded="True" Name="viewport" Background="Transparent" IsHeadLightEnabled="True" ZoomAroundMouseDownPoint="True" RotateAroundMouseDownPoint="True">
+                    <HelixToolkit:HelixViewport3D 
+                        SizeChanged="viewport_SizeChanged"  
+                        Grid.Row="1" 
+                        ZoomExtentsWhenLoaded="True" 
+                        Name="viewport" 
+                        Background="Transparent" 
+                        IsHeadLightEnabled="True" 
+                        
+                        ZoomAroundMouseDownPoint="True" 
+                        RotateAroundMouseDownPoint="True">
                         <ModelVisual3D>
                             <ModelVisual3D.Content>
                                 <AmbientLight Color="White"/>
                             </ModelVisual3D.Content>
                         </ModelVisual3D>
                     </HelixToolkit:HelixViewport3D>
-                    <Image Grid.Row="10" Name="CamIcon" HorizontalAlignment="Right" VerticalAlignment="Top" Height="64" Width="64"/>
+                    
                 </Grid>
             </TabItem>
-            <TabItem Header="2d" Background="Transparent" FontSize="20">
-                <HelixToolkit:HelixViewport3D SizeChanged="viewport2D_SizeChanged"  Grid.Row="1" ZoomExtentsWhenLoaded="True" Name="viewport2D" Background="Transparent" IsHeadLightEnabled="True" ZoomAroundMouseDownPoint="True" RotateAroundMouseDownPoint="True" CameraRotationMode="Turntable">
+            <TabItem Header="2d" Background="Transparent">
+                <HelixToolkit:HelixViewport3D 
+                    SizeChanged="viewport2D_SizeChanged" 
+                    Grid.Row="1" 
+                    ZoomExtentsWhenLoaded="True" 
+                    Name="viewport2D" 
+                    Background="Transparent" 
+                    IsHeadLightEnabled="True" 
+                    ZoomAroundMouseDownPoint="True" 
+                    RotateAroundMouseDownPoint="True" 
+                    CameraRotationMode="Turntable">
                     <ModelVisual3D>
                         <ModelVisual3D.Content>
-                            <AmbientLight Color="White"/>
+                            <AmbientLight Color="Black"/>
                         </ModelVisual3D.Content>
                     </ModelVisual3D>
                 </HelixToolkit:HelixViewport3D>
             </TabItem>
         </TabControl>
 
-                    <WrapPanel Background="Transparent" VerticalAlignment="Top" HorizontalAlignment="Right">
-            <Button  Click="abrir"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Abrir Externamente">
-                <WrapPanel>
-                    <Image Source="Resources/open.png" Height="24" Width="24"/>
-                </WrapPanel>
-            </Button>
-            <Button Click="zom_ex"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Zoom Extends">
-                <WrapPanel>
-                    <Image Source="Resources/zoom_ex.png" Height="24" Width="24"/>
-                </WrapPanel>
-            </Button>
-            <Button Click="iso"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
-                <WrapPanel>
-                    <Image Source="Resources/isometric.png" Height="24" Width="24"/>
-                </WrapPanel>
-            </Button>
-            <Button Click="front"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
-                <WrapPanel>
-                    <Image Source="Resources/front.png" Height="24" Width="24"/>
-                </WrapPanel>
-            </Button>
-            <Button Click="top"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Top">
-                <WrapPanel>
-                    <Image Source="Resources/top.png" Height="24" Width="24"/>
-                </WrapPanel>
-            </Button>
-            <Button Click="recarregar" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Recarregar">
-                <WrapPanel>
-                    <Image Source="Resources/reload.png" Height="24" Width="24"/>
-                </WrapPanel>
-            </Button>
-                        <!--<MenuItem Header="Render Banzo" Click="cria_banzo"/>-->
-                    </WrapPanel>
+        <Border Margin="155,30,0,0"  Background="White" VerticalAlignment="Top" HorizontalAlignment="Left" Height="25" BorderBrush="Black" BorderThickness="1">
+            <WrapPanel>
+                <Button  Click="abrir"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Abrir Externamente">
+                    <Image Source="Resources/open.png"/>
+                </Button>
+                <Button Click="zom_ex"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Zoom Extends">
+                    <Image Source="Resources/zoom_ex.png"/>
+                </Button>
+                <Button Click="iso"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+                    <Image Source="Resources/isometric.png"/>
+                </Button>
+                <Button Click="front"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+                    <Image Source="Resources/front.png"/>
+                </Button>
+                <Button Click="top"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Top">
+                    <Image Source="Resources/top.png"/>
+                </Button>
+                <Button Click="recarregar" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Recarregar">
+                    <Image Source="Resources/reload.png"/>
+                </Button>
+            </WrapPanel>
+        </Border>
+        <Border Background="White"  Margin="5,30,0,0" Width="150" VerticalAlignment="Top" HorizontalAlignment="Left" BorderBrush="Black" BorderThickness="1">
+            <Expander Header="{Binding CAM.Descricao}">
+                <ScrollViewer>
+                    <StackPanel  Margin="2">
+                        <Conexoes:Texto Titulo="" Valor="{Binding CAM.Posicao}" SomenteLeitura="True"/>
+
+                        <Conexoes:PerfilDBF Grid.Column="10" SomenteLeitura="True" Perfil="{Binding CAM.Perfil,Mode=OneWay}"/>
+                        <CheckBox Content="Tem Recorte" IsEnabled="False" IsChecked="{Binding CAM.Formato.Tem_Recorte,Mode=OneWay}"/>
+                        <Conexoes:Texto Titulo="Comp:" Valor="{Binding CAM.Comprimento}" SomenteLeitura="True"/>
+                        <Conexoes:Texto Titulo="Trat:" Valor="{Binding CAM.Tratamento}" SomenteLeitura="True"/>
+                        <Conexoes:Texto Titulo="Mat:" Valor="{Binding CAM.Material}" SomenteLeitura="True"/>
+                        <Conexoes:Texto Titulo="Peso:" Valor="{Binding CAM.Peso}" SomenteLeitura="True"/>
+                        <Conexoes:Texto Titulo="CTF:" Valor="{Binding CAM.ContraFlecha}" SomenteLeitura="True"/>
+                    </StackPanel>
+                </ScrollViewer>
+            </Expander>
+        </Border>
+        <Image Grid.Row="10" Source="{Binding CAM.Imagem}" HorizontalAlignment="Right" VerticalAlignment="Top" Height="64" Width="64" Margin="5,30,0,0"   />
     </Grid>
 </UserControl>

@@ -90,10 +90,6 @@
     <Compile Include="core\Utilidades.cs" />
     <Compile Include="Renders\Gera3D.cs" />
     <Compile Include="Renders\Gera2D.cs" />
-    <Compile Include="Renders\View.cs" />
-    <Compile Include="ViewFaces.xaml.cs">
-      <DependentUpon>ViewFaces.xaml</DependentUpon>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -107,10 +103,6 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="CAMViewer.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="ViewFaces.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

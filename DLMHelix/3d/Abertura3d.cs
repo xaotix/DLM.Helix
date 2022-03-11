@@ -1,104 +1,95 @@
-﻿using DLM.desenho;
+﻿using Conexoes;
+using DLM.cam;
+using DLM.desenho;
 using Poly2Tri.Triangulation.Polygon;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DLM.helix
 {
+    [Serializable]
     public class Abertura3d
     {
-        public double Ang { get; set; } = 0;
-        public double Dist { get; set; } = 0;
-        public double X { get; set; } = 0;
-        public double Y { get; set; } = 0;
-        public double Diametro { get; set; } = 0;
-
-        private double Raio
+        public List<P3d> Coordenadas { get; set; } = new List<P3d>();
+               
+        public List<P3d> Getpts3d(P3d centro,Matriz3d matriz)
         {
-            get
-            {
-                return this.Diametro / 2;
-            }
-        }
-
-        internal List<P3d> Getpts3d(P3d centro,Matriz3d matriz)
-        {
-            List<P3d> retorno = new List<P3d>();
-
             List<P3d> ptsXY = new List<P3d>();
-            var c = centro;
-            var a = this.Ang;
-            double a0 = 0;
-            double a1 = a0 + 180;
-            var o = this.Dist/2;
-            //matriz = matriz.Rotacionar(90, Eixo.X);
-            var mt = matriz.Rotacionar(a + a0, DLM.vars.Eixo.X, false);
-            var p0a =c.Mover(matriz.Rotacionar(a + a0, DLM.vars.Eixo.X,false).VetorZ, o);
-            var p0b =c.Mover(matriz.Rotacionar(a + a1, DLM.vars.Eixo.X,false).VetorZ, o);
 
-            /*p09*/
-            ptsXY.Add(p0a.Mover(matriz.Rotacionar(a + a0 - 90, DLM.vars.Eixo.X, false).VetorZ, Raio));
-            ptsXY.Add(p0a.Mover(matriz.Rotacionar(a + a0 - 45, DLM.vars.Eixo.X, false).VetorZ, Raio));
-            ptsXY.Add(p0a.Mover(matriz.Rotacionar(a + a0, DLM.vars.Eixo.X, false).VetorZ, Raio));
-            ptsXY.Add(p0a.Mover(matriz.Rotacionar(a + a0 + 45, DLM.vars.Eixo.X, false).VetorZ, Raio));
-            ptsXY.Add(p0a.Mover(matriz.Rotacionar(a + a0 + 90, DLM.vars.Eixo.X, false).VetorZ, Raio));
-            ptsXY.Add(p0b.Mover(matriz.Rotacionar(a + a0 + 90, DLM.vars.Eixo.X, false).VetorZ, Raio));
-            ptsXY.Add(p0b.Mover(matriz.Rotacionar(a + a0 + 135, DLM.vars.Eixo.X, false).VetorZ, Raio));
-            ptsXY.Add(p0b.Mover(matriz.Rotacionar(a + a0 + 180, DLM.vars.Eixo.X, false).VetorZ, Raio));
-            ptsXY.Add(p0b.Mover(matriz.Rotacionar(a + a0 + 225, DLM.vars.Eixo.X, false).VetorZ, Raio));
-            ptsXY.Add(p0b.Mover(matriz.Rotacionar(a + a0 + 270, DLM.vars.Eixo.X, false).VetorZ, Raio));
+            foreach(var p in this.Coordenadas)
+            {
+                var p3d = new P3d(p.X, p.Y);
+                var p1 = p3d.Clonar().Mover(centro);
 
+                var p0 = centro.Mover(matriz.VetorZ, p.X);
+                p0 = p0.Mover(matriz.VetorY, -p.Y);
+                ptsXY.Add(p0);
+            }
             return ptsXY;
         }
-        public List<PolygonPoint> GetptsFuroPlanificado(P3d Centro = null)
-        {
-            if (Centro == null)
-            {
-                Centro = new P3d(this.X,this.Y);
-            }
 
-            List<PolygonPoint> pts = new List<PolygonPoint>();
-            var c = new PolygonPoint(Centro.X, Centro.Y);
-            var a = this.Ang;
+        public Polygon GetContornoPlanificado()
+        {
+            return new Poly2Tri.Triangulation.Polygon.Polygon(Coordenadas.Select(x => new PolygonPoint(x.X, x.Y)));
+        }
+
+        public Abertura3d(double Diametro, double X, double Y, double Dist, double Ang)
+        {
+            //this.Diametro = Diametro;
+            //this.X = X;
+            //this.Y = Y;
+            //this.Dist = Dist;
+            //this.Ang = Ang;
+
+
+            P3d c = new P3d(X, Y);
+            var a = Ang;
             double a0 = 0;
             double a1 = a0 + 180;
-            var o = this.Dist;
+            var o = Dist;
+            var r = Diametro / 2;
 
             if (o > 0)
             {
                 o = o / 2;
             }
             /*pontos de deslocamento do furo*/
-            var p0a = Trigonometria.MoverXY(c, a + a0, o);
-            var p0b = Trigonometria.MoverXY(c, a + a1, o);
+            var p0a = c.MoverXY(a + a0, o);
+            var p0b = c.MoverXY(a + a1, o);
 
-            pts.Add(Trigonometria.MoverXY(p0a, a + a0 - 90, Raio));
-            pts.Add(Trigonometria.MoverXY(p0a, a + a0 - 45, Raio));
-            pts.Add(Trigonometria.MoverXY(p0a, a + a0, Raio));
-            pts.Add(Trigonometria.MoverXY(p0a, a + a0 + 45, Raio));
-            pts.Add(Trigonometria.MoverXY(p0a, a + a0 + 90, Raio));
+            Coordenadas.Add(p0a.MoverXY(a + a0 - 90, r));
+            Coordenadas.Add(p0a.MoverXY(a + a0 - 45, r));
+            Coordenadas.Add(p0a.MoverXY(a + a0, r));
+            Coordenadas.Add(p0a.MoverXY(a + a0 + 45, r));
+            Coordenadas.Add(p0a.MoverXY(a + a0 + 90, r));
 
-            pts.Add(Trigonometria.MoverXY(p0b, a + a0 + 90, Raio));
-            pts.Add(Trigonometria.MoverXY(p0b, a + a0 + 135, Raio));
-            pts.Add(Trigonometria.MoverXY(p0b, a + a0 + 180, Raio));
-            pts.Add(Trigonometria.MoverXY(p0b, a + a0 + 225, Raio));
-            pts.Add(Trigonometria.MoverXY(p0b, a + a0 + 270, Raio));
+            Coordenadas.Add(p0b.MoverXY(a + a0 + 90, r));
+            Coordenadas.Add(p0b.MoverXY(a + a0 + 135, r));
+            Coordenadas.Add(p0b.MoverXY(a + a0 + 180, r));
+            Coordenadas.Add(p0b.MoverXY(a + a0 + 225, r));
+            Coordenadas.Add(p0b.MoverXY(a + a0 + 270, r));
 
-            return pts;
+
         }
-
- 
-
-        public Polygon Getcontorno()
+        public Abertura3d(List<Liv> pontos)
         {
-            return new Poly2Tri.Triangulation.Polygon.Polygon(GetptsFuroPlanificado());
+           foreach (var p in pontos)
+            {
+                var p1 = p.Clonar();
+                Coordenadas.Add(new P3d(p.X,p.Y));
+            }
+            if (Coordenadas.Count > 0)
+            {
+                if (Coordenadas.First().X == Coordenadas.Last().X && Coordenadas.First().Y == Coordenadas.Last().Y)
+                {
+                    Coordenadas.Remove(Coordenadas.Last());
+                }
+            }
         }
-        public Abertura3d(double diametro, double x, double y, double offset, double angulo)
+        public Abertura3d()
         {
-            this.Diametro = diametro;
-            this.X = x;
-            this.Y = y;
-            this.Dist = offset;
-            this.Ang = angulo;
+
         }
     }
 }

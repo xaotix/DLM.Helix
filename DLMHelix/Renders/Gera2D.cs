@@ -36,17 +36,18 @@ namespace DLM.helix
             ControleCamera.Setar(viewPort, ControleCamera.eCameraViews.Top, 0); ;
             P3d origem = new P3d();
             var cor = Brushes.Black.Color;
-            var shape = cam.Shape.LIV1.Liv;
+            var shape = cam.Formato.LIV1;
             double ctf = cam.ContraFlecha;
 
             double offset = 25;
-            P3d origem_Liv2 = origem.MoverXY(90, offset + (cam.Perfil.Faces > 2? cam.Shape.LIV2.Largura:0));
-            P3d origem_Liv3 = origem.MoverXY(90, -cam.Shape.LIV1.Largura - cam.Shape.LIV3.Largura - offset);
+            P3d origem_Liv2 = origem.MoverXY(90, offset + (cam.Perfil.Faces > 2? cam.Formato.LIV2.Largura:0));
+            P3d origem_Liv3 = origem.MoverXY(90, -cam.Formato.LIV1.Largura - cam.Formato.LIV3.Largura - offset);
 
 
-
+            var mchapa2 = cam.Formato.GetLIV2_MesaParaChapa();
+            var mchapa3 = cam.Formato.GetLIV3_MesaParaChapa();
             #region CHAPAS
-            if (cam.TipoPerfil == CAM_PERFIL_TIPO.Barra_Chata | cam.TipoPerfil == CAM_PERFIL_TIPO.Chapa | cam.TipoPerfil == CAM_PERFIL_TIPO.Chapa_Xadrez)
+            if (cam.Perfil.Tipo == CAM_PERFIL_TIPO.Barra_Chata | cam.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa | cam.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa_Xadrez)
             {
                 linhas.AddRange(Contorno(espessura, shape, origem, cor, ctf));
             }
@@ -57,23 +58,23 @@ namespace DLM.helix
 
 
                 //LIV2
-                linhas.AddRange(Contorno(espessura, cam.Shape.LIV2.Liv.Select(x => x.GetLivY().InverterY()).ToList(), origem_Liv2, cor, 0));
+                linhas.AddRange(Contorno(espessura, mchapa2, origem_Liv2, cor, 0));
 
 
                 //LIV3
-                linhas.AddRange(Contorno(espessura, cam.Shape.LIV3.Liv.Select(x => x.GetLivY()).ToList(),origem_Liv3 , cor, 0));
+                linhas.AddRange(Contorno(espessura, mchapa3, origem_Liv3 , cor, 0));
 
             }
             #endregion
 
 
-            foreach (var fr0 in cam.GetFurosLIV1())
+            foreach (var fr0 in cam.Formato.LIV1.Furacoes)
             {
                 var nf = Furo2D(espessura, fr0, origem, Brushes.Red.Color);
                 linhas.AddRange(nf);
             }
 
-            foreach (var fr0 in cam.GetFurosLIV2())
+            foreach (var fr0 in mchapa2.Furacoes)
             {
                 if(cam.Perfil.Faces>2)
                 {
@@ -88,13 +89,13 @@ namespace DLM.helix
             }
 
 
-            foreach (var fr0 in cam.GetFurosLIV3())
+            foreach (var fr0 in mchapa3.Furacoes)
             {
                 var nf = Furo2D(espessura, fr0, origem_Liv3, cor);
                 linhas.AddRange(nf);
             }
 
-            foreach(var dob in cam.GetDobras())
+            foreach(var dob in cam.Formato.LIV1.Dobras)
             {
                 AddDobra(viewPort, espessura, origem, dob);
             }
@@ -106,7 +107,7 @@ namespace DLM.helix
                 viewPort.Children.Add(l);
             }
 
-            var centro = cam.Shape.LIV1.GetCentro();
+            var centro = cam.Formato.LIV1.GetCentro();
             var txt = Gera2D.Texto(cam.Descricao, new P3d(centro.X, centro.Y, centro.Z));
             viewPort.Children.Add(txt);
 
@@ -135,39 +136,44 @@ namespace DLM.helix
            
             return teste;
         }
-        public static List<LinesVisual3D> Contorno(double espessura, List<Liv> shape,  P3d origem, Color cor,  double ctf)
+        public static List<LinesVisual3D> Contorno(double espessura, Face shape,  P3d origem, Color cor,  double ctf)
         {
-            List<LinesVisual3D> linhas = new List<LinesVisual3D>();
+            List<LinesVisual3D> retorno = new List<LinesVisual3D>();
 
-            /*alguns cams não repetem a coordenada inicial no fim, essa correção adiciona o ponto para fechar o contorno*/
-            List<Liv> pts = new List<Liv>();
-   
-            if(shape.Count>0)
-            {
-                pts.AddRange(shape);
-                pts.Add(shape[0]);
-            }
+            ///*alguns cams não repetem a coordenada inicial no fim, essa correção adiciona o ponto para fechar o contorno*/
+            //List<Liv> pts = new List<Liv>();
 
-            List<P3d> liv1pts = new List<P3d>();
-            if (ctf == 0)
-            {
+            //if(shape.Liv.Count>0)
+            //{
+            //    pts.AddRange(shape.Liv);
+            //    pts.Add(shape.Liv[0]);
+            //}
 
-                liv1pts.AddRange(pts.Select(x => new P3d(x.X, x.Y)));
-            }
-            else
-            {
-                var segs = DLM.cam.FuncoesDLMCam.Poligonos.ArcoParaSegmento(pts, ctf);
-                liv1pts.AddRange(segs.Select(x => new P3d(x.X, x.Y)));
 
-            }
-            for (int i = 1; i < liv1pts.Count; i++)
+            var linhas = shape.GetLinhas();
+            foreach (var l in linhas)
             {
-                var shp0 = liv1pts[i - 1];
-                var shp = liv1pts[i];
-                LinesVisual3D l = Linha(espessura, shp0, shp, origem, cor);
-                linhas.Add(l);
+                retorno.Add(Linha(espessura, l.P1, l.P2, origem, cor));
             }
-            return linhas;
+            foreach(var rec in shape.RecortesInternos)
+            {
+                var lrec = rec.GetLinhas();
+                foreach (var l in lrec)
+                {
+                    retorno.Add(Linha(espessura, l.P1, l.P2, origem, cor));
+                }
+            }
+            //List<P3d> liv1pts = new List<P3d>();
+            //liv1pts.AddRange(pts.SelectMany(x=>x.SegmentosArco()).Select(x => new P3d(x.X, x.Y)));
+
+            //for (int i = 1; i < liv1pts.Count; i++)
+            //{
+            //    var shp0 = liv1pts[i - 1];
+            //    var shp = liv1pts[i];
+            //    LinesVisual3D l = Linha(espessura, shp0, shp, origem, cor);
+            //    linhas.Add(l);
+            //}
+            return retorno;
         }
         public static List<LinesVisual3D> Furo2D(double espessura, DLM.cam.Furo fr0,P3d origem, Color color)
         {

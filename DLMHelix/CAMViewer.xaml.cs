@@ -172,6 +172,7 @@ namespace DLM.helix
 
         private void abrir(object sender, RoutedEventArgs e)
         {
+            if (MVC.CAM == null) { return; }
             if(File.Exists(MVC.CAM.Arquivo))
             {
                 try

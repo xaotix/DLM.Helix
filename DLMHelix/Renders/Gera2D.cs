@@ -107,10 +107,11 @@ namespace DLM.helix
                 viewPort.Children.Add(l);
             }
 
-            var centro = cam.Formato.LIV1.GetCentro();
+            var centro = cam.Formato.LIV1.Centro;
             var txt = Gera2D.Texto(cam.Descricao, new P3d(centro.X, centro.Y, centro.Z));
             viewPort.Children.Add(txt);
 
+            Gera2D.AddUCSIcon(viewPort, cam.Formato.Comprimento / 10);
 
             viewPort.ZoomExtents();
 
@@ -140,21 +141,14 @@ namespace DLM.helix
         {
             List<LinesVisual3D> retorno = new List<LinesVisual3D>();
 
-            ///*alguns cams não repetem a coordenada inicial no fim, essa correção adiciona o ponto para fechar o contorno*/
-            //List<Liv> pts = new List<Liv>();
-
-            //if(shape.Liv.Count>0)
-            //{
-            //    pts.AddRange(shape.Liv);
-            //    pts.Add(shape.Liv[0]);
-            //}
-
-
-            var linhas = shape.GetLinhas();
+            List<LinhaLiv> linhas = new List<LinhaLiv>();
+            linhas.AddRange(shape.Linhas);
             foreach (var l in linhas)
             {
                 retorno.Add(Linha(espessura, l.P1, l.P2, origem, cor));
             }
+            
+
             foreach(var rec in shape.RecortesInternos)
             {
                 var lrec = rec.GetLinhas();

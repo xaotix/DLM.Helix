@@ -292,9 +292,9 @@ namespace DLM.helix
         public Chapa3d(DLM.cam.Face face, double Espessura)
         {
             this.Espessura = Espessura;
-            this.Pontos.AddRange(face.GetLivSegmentada().Select(x => new P3d(x.X, x.Y, 0)));
+            this.Pontos.AddRange(face.LivSegmentada.Select(x => new P3d(x.X, x.Y, 0)));
             this.Aberturas.AddRange(face.Furacoes.FindAll(x => x.MinX > face.MinX && x.MaxX < face.MaxX).Select(y => new DLM.helix.Abertura3d(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
-            this.Aberturas.AddRange(face.RecortesInternos.Select(x => new Abertura3d(x.GetLiv())));
+            this.Aberturas.AddRange(face.RecortesInternos.Select(x => new Abertura3d(x.GetLiv(2))));
             this.Cor = Brushes.Green.Clone();
         }
 

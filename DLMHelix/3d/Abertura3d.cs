@@ -74,7 +74,8 @@ namespace DLM.helix
         }
         public Abertura3d(List<Liv> pontos)
         {
-           foreach (var p in pontos)
+            var segmentada = pontos.Segmentar();
+           foreach (var p in segmentada)
             {
                 var p1 = p.Clonar();
                 Coordenadas.Add(new P3d(p.X,p.Y));

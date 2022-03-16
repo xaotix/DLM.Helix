@@ -166,8 +166,13 @@ namespace DLM.helix
 
         private void iso(object sender, RoutedEventArgs e)
         {
-            ControleCamera.Setar(this.viewport, ControleCamera.eCameraViews.Isometric_PPP, 0);
+            Isometric();
             SetView2D();
+        }
+
+        public void Isometric()
+        {
+            ControleCamera.Setar(this.viewport, ControleCamera.eCameraViews.Isometric_PPP, 0);
         }
 
         private void abrir(object sender, RoutedEventArgs e)

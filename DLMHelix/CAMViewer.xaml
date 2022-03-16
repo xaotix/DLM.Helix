@@ -76,7 +76,7 @@
             </WrapPanel>
         </Border>
         <Border Background="White"  Margin="5,30,0,0" Width="150" VerticalAlignment="Top" HorizontalAlignment="Left" BorderBrush="Black" BorderThickness="1">
-            <Expander Header="{Binding CAM.Descricao}">
+            <Expander Header="{Binding CAM.Descricao}" FontSize="10">
                 <ScrollViewer>
                     <StackPanel  Margin="2">
                         <Conexoes:Texto Titulo="" Valor="{Binding CAM.Posicao}" SomenteLeitura="True"/>
@@ -87,6 +87,7 @@
                         <Conexoes:Texto Titulo="Trat:" Valor="{Binding CAM.Tratamento}" SomenteLeitura="True"/>
                         <Conexoes:Texto Titulo="Mat:" Valor="{Binding CAM.Material}" SomenteLeitura="True"/>
                         <Conexoes:Texto Titulo="Peso:" Valor="{Binding CAM.Peso}" SomenteLeitura="True"/>
+                        <Conexoes:Texto Titulo="Peso Calc.:" Valor="{Binding CAM.Formato.PesoCalculado}" SomenteLeitura="True"/>
                         <Conexoes:Texto Titulo="CTF:" Valor="{Binding CAM.ContraFlecha}" SomenteLeitura="True"/>
                     </StackPanel>
                 </ScrollViewer>

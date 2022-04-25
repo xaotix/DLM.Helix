@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:DLM.helix"
               xmlns:HelixToolkit="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf"
              mc:Ignorable="d" 
-             xmlns:Conexoes="clr-namespace:Conexoes;assembly=Conexoes"
+             xmlns:Con="clr-namespace:Conexoes;assembly=Conexoes"
              d:DesignHeight="450" d:DesignWidth="800">
     <Grid>
 
@@ -79,16 +79,16 @@
             <Expander Header="{Binding CAM.Descricao}" FontSize="10">
                 <ScrollViewer>
                     <StackPanel  Margin="2">
-                        <Conexoes:Texto Titulo="" Valor="{Binding CAM.Posicao}" SomenteLeitura="True"/>
+                        <Con:Texto Titulo="" Valor="{Binding Path=CAM.Posicao,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
 
-                        <Conexoes:PerfilDBF Grid.Column="10" SomenteLeitura="True" Perfil="{Binding CAM.Perfil,Mode=OneWay}"/>
-                        <CheckBox Content="Tem Recorte" IsEnabled="False" IsChecked="{Binding CAM.Formato.Tem_Recorte,Mode=OneWay}"/>
-                        <Conexoes:Texto Titulo="Comp:" Valor="{Binding CAM.Comprimento}" SomenteLeitura="True"/>
-                        <Conexoes:Texto Titulo="Trat:" Valor="{Binding CAM.Tratamento}" SomenteLeitura="True"/>
-                        <Conexoes:Texto Titulo="Mat:" Valor="{Binding CAM.Material}" SomenteLeitura="True"/>
-                        <Conexoes:Texto Titulo="Peso:" Valor="{Binding CAM.Peso}" SomenteLeitura="True"/>
-                        <Conexoes:Texto Titulo="Peso Calc.:" Valor="{Binding CAM.Formato.PesoCalculado}" SomenteLeitura="True"/>
-                        <Conexoes:Texto Titulo="CTF:" Valor="{Binding CAM.ContraFlecha}" SomenteLeitura="True"/>
+                        <Con:PerfilDBF Grid.Column="10" SomenteLeitura="True" Perfil="{Binding Path=CAM.Perfil,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+                        <CheckBox Content="Tem Recorte" IsEnabled="False" IsChecked="{Binding Path=CAM.Formato.Tem_Recorte,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+                        <Con:Texto Titulo="Comp:" Valor="{Binding Path=CAM.Comprimento,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
+                        <Con:Texto Titulo="Trat:" Valor="{Binding Path=CAM.Tratamento,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
+                        <Con:Texto Titulo="Mat:" Valor="{Binding Path=CAM.Material,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
+                        <Con:Texto Titulo="Peso:" Valor="{Binding Path=CAM.Peso,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
+                        <Con:Texto Titulo="Peso Calc.:" Valor="{Binding Path=CAM.Formato.PesoCalculado,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
+                        <Con:Texto Titulo="CTF:" Valor="{Binding Path=CAM.ContraFlecha,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
                     </StackPanel>
                 </ScrollViewer>
             </Expander>

@@ -96,31 +96,35 @@ namespace DLM.helix
             var pontos3d = GetPts();
             //var Origem = GetOrigem();
             var orientacao = GetMatriz();
-
             sList<Face3d> retorno = new sList<Face3d>();
-            for (int i = 0; i < pontos3d.Count; i++)
+            if (pontos3d.Count>1)
             {
-                if (i > 0)
+          
+                for (int i = 0; i < pontos3d.Count; i++)
+                {
+                    if (i > 0)
+                    {
+                        sList<P3d> pts = new sList<P3d>();
+                        pts.Add(pontos3d[i - 1].Mover(orientacao.VetorXNeg, this.Espessura / 2));
+                        pts.Add(pontos3d[i].Mover(orientacao.VetorXNeg, this.Espessura / 2));
+                        pts.Add(pontos3d[i].Mover(orientacao.VetorX, this.Espessura / 2));
+                        pts.Add(pontos3d[i - 1].Mover(orientacao.VetorX, this.Espessura / 2));
+
+                        Face3d face = new Face3d(pts[0], pts, new Vetor3D(pontos3d[i - 1], pontos3d[i]), orientacao.VetorXNeg);
+                        retorno.Add(face);
+                    }
+                }
                 {
                     sList<P3d> pts = new sList<P3d>();
-                    pts.Add(pontos3d[i - 1].Mover(orientacao.VetorXNeg, this.Espessura / 2));
-                    pts.Add(pontos3d[i].Mover(orientacao.VetorXNeg, this.Espessura / 2));
-                    pts.Add(pontos3d[i].Mover(orientacao.VetorX, this.Espessura / 2));
-                    pts.Add(pontos3d[i - 1].Mover(orientacao.VetorX, this.Espessura / 2));
-
-                    Face3d face = new Face3d(pts[0], pts, new Vetor3D(pontos3d[i - 1], pontos3d[i]), orientacao.VetorXNeg);
+                    pts.Add(pontos3d[0].Mover(orientacao.VetorX, this.Espessura / 2));
+                    pts.Add(pontos3d[pontos3d.Count - 1].Mover(orientacao.VetorX, this.Espessura / 2));
+                    pts.Add(pontos3d[pontos3d.Count - 1].Mover(orientacao.VetorXNeg, this.Espessura / 2));
+                    pts.Add(pontos3d[0].Mover(orientacao.VetorXNeg, this.Espessura / 2));
+                    Face3d face = new Face3d(pts[0], pts, new Vetor3D(pontos3d[0], pontos3d[pontos3d.Count - 1]), orientacao.VetorXNeg);
                     retorno.Add(face);
                 }
             }
-            {
-                sList<P3d> pts = new sList<P3d>();
-                pts.Add(pontos3d[0].Mover(orientacao.VetorX, this.Espessura / 2));
-                pts.Add(pontos3d[pontos3d.Count - 1].Mover(orientacao.VetorX, this.Espessura / 2));
-                pts.Add(pontos3d[pontos3d.Count - 1].Mover(orientacao.VetorXNeg, this.Espessura / 2));
-                pts.Add(pontos3d[0].Mover(orientacao.VetorXNeg, this.Espessura / 2));
-                Face3d face = new Face3d(pts[0], pts, new Vetor3D(pontos3d[0], pontos3d[pontos3d.Count - 1]), orientacao.VetorXNeg);
-                retorno.Add(face);
-            }
+
 
             return retorno;
         }

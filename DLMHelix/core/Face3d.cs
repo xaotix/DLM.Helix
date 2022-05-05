@@ -19,13 +19,17 @@ namespace DLM.helix._3d
         {
             LinesVisual3D retorno = new LinesVisual3D();
             int contador = 0;
-            foreach (var pt in this.Coordenadas)
+            if(this.Coordenadas.Count>1)
             {
-                retorno.Points.Add(pt.GetPoint3D(1000));
-                if (contador > 0) retorno.Points.Add(pt.GetPoint3D(1000));
-                contador++;
+                foreach (var pt in this.Coordenadas)
+                {
+                    retorno.Points.Add(pt.GetPoint3D(1000));
+                    if (contador > 0) retorno.Points.Add(pt.GetPoint3D(1000));
+                    contador++;
+                }
+                retorno.Points.Add(this.Coordenadas[0].GetPoint3D(1000));
             }
-            retorno.Points.Add(this.Coordenadas[0].GetPoint3D(1000));
+
             return retorno;
         }
 
@@ -54,10 +58,10 @@ namespace DLM.helix._3d
 
         private List<Poly2Tri.Triangulation.Delaunay.DelaunayTriangle> GetTriangulos()
         {
-            GetPoligono().ClearTriangles();
             List<Poly2Tri.Triangulation.Delaunay.DelaunayTriangle> retorno = new List<Poly2Tri.Triangulation.Delaunay.DelaunayTriangle>();
             try
             {
+                GetPoligono().ClearTriangles();
                 Poly2Tri.Triangulation.Polygon.Polygon pTemp = this.GetPoligono();
                 Poly2Tri.P2T.Triangulate(pTemp);
                 retorno.AddRange(pTemp.Triangles);

@@ -83,11 +83,11 @@
 
                         <Con:PerfilDBF Grid.Column="10" SomenteLeitura="True" Perfil="{Binding Path=CAM.Perfil,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
                         <CheckBox Content="Tem Recorte" IsEnabled="False" IsChecked="{Binding Path=CAM.Formato.Tem_Recorte,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
-                        <Con:Texto Titulo="Comp:" Valor="{Binding Path=CAM.Comprimento,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
+                        <Con:Texto Titulo="Comp:" Valor="{Binding Path=CAM.Comprimento,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
                         <Con:Texto Titulo="Trat:" Valor="{Binding Path=CAM.Tratamento,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
                         <Con:Texto Titulo="Mat:" Valor="{Binding Path=CAM.Material,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
                         <Con:Texto Titulo="Peso:" Valor="{Binding Path=CAM.Peso,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
-                        <Con:Texto Titulo="Peso Calc.:" Valor="{Binding Path=CAM.Formato.PesoCalculado,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
+                        <Con:Texto Titulo="Peso Calc.:" Valor="{Binding Path=CAM.Formato.PesoCalculado,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
                         <Con:Texto Titulo="CTF:" Valor="{Binding Path=CAM.ContraFlecha,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
                     </StackPanel>
                 </ScrollViewer>

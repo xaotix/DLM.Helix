@@ -55,20 +55,20 @@ namespace DLM.helix
                 o = o / 2;
             }
             /*pontos de deslocamento do furo*/
-            var p0a = c.MoverXY(a + a0, o);
-            var p0b = c.MoverXY(a + a1, o);
+            var p0a = c.Mover(a + a0, o);
+            var p0b = c.Mover(a + a1, o);
 
-            Coordenadas.Add(p0a.MoverXY(a + a0 - 90, r));
-            Coordenadas.Add(p0a.MoverXY(a + a0 - 45, r));
-            Coordenadas.Add(p0a.MoverXY(a + a0, r));
-            Coordenadas.Add(p0a.MoverXY(a + a0 + 45, r));
-            Coordenadas.Add(p0a.MoverXY(a + a0 + 90, r));
+            Coordenadas.Add(p0a.Mover(a + a0 - 90, r));
+            Coordenadas.Add(p0a.Mover(a + a0 - 45, r));
+            Coordenadas.Add(p0a.Mover(a + a0, r));
+            Coordenadas.Add(p0a.Mover(a + a0 + 45, r));
+            Coordenadas.Add(p0a.Mover(a + a0 + 90, r));
 
-            Coordenadas.Add(p0b.MoverXY(a + a0 + 90, r));
-            Coordenadas.Add(p0b.MoverXY(a + a0 + 135, r));
-            Coordenadas.Add(p0b.MoverXY(a + a0 + 180, r));
-            Coordenadas.Add(p0b.MoverXY(a + a0 + 225, r));
-            Coordenadas.Add(p0b.MoverXY(a + a0 + 270, r));
+            Coordenadas.Add(p0b.Mover(a + a0 + 90, r));
+            Coordenadas.Add(p0b.Mover(a + a0 + 135, r));
+            Coordenadas.Add(p0b.Mover(a + a0 + 180, r));
+            Coordenadas.Add(p0b.Mover(a + a0 + 225, r));
+            Coordenadas.Add(p0b.Mover(a + a0 + 270, r));
 
 
         }

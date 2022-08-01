@@ -40,8 +40,8 @@ namespace DLM.helix
             double ctf = cam.ContraFlecha;
 
             double offset = 25;
-            P3d origem_Liv2 = origem.MoverXY(90, offset + (cam.Perfil.Faces > 2? cam.Formato.LIV2.Largura:0));
-            P3d origem_Liv3 = origem.MoverXY(90, -cam.Formato.LIV1.Largura - cam.Formato.LIV3.Largura - offset);
+            P3d origem_Liv2 = origem.Mover(90, offset + (cam.Perfil.Faces > 2? cam.Formato.LIV2.Largura:0));
+            P3d origem_Liv3 = origem.Mover(90, -cam.Formato.LIV1.Largura - cam.Formato.LIV3.Largura - offset);
 
 
             var mchapa2 = cam.Formato.GetLIV2_MesaParaChapa();

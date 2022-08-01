@@ -38,7 +38,7 @@ namespace DLM.helix
                 for (int i = 0; i < Num_Faces; i++)
                 {
 
-                    P3d pt = new P3d(0, 0, 0).MoverXY(ang, Diametro / 2);
+                    P3d pt = new P3d(0, 0, 0).Mover(ang, Diametro / 2);
                     Chapa3d ch = new Chapa3d("Face");
                     ch.Espessura = this.Espessura;
                     ch.Pontos.Add(new P3d(0, 0, 0));
@@ -76,7 +76,7 @@ namespace DLM.helix
 
             foreach (var p in retorno)
             {
-                p.Origem = p.Origem.Somar(this.Origem);
+                p.Origem = p.Origem.Mover(this.Origem);
             }
 
             return retorno;

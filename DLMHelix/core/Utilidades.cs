@@ -11,7 +11,7 @@ namespace DLM.helix
 
         public static PolygonPoint MoverXY(PolygonPoint origem, double angulo, double distancia, int decimais = 10)
         {
-            var pt = new P3d(origem.X, origem.Y, 0).MoverXY(angulo, distancia, decimais);
+            var pt = new P3d(origem.X, origem.Y, 0).Mover(angulo, distancia, decimais);
             return new PolygonPoint(pt.X, pt.Y);
         }
 

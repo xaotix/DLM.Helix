@@ -38,11 +38,11 @@
     <Reference Include="Conexoes">
       <HintPath>..\..\DLLS\Conexoes.dll</HintPath>
     </Reference>
-    <Reference Include="HelixToolkit">
-      <HintPath>..\..\DLLS\HelixToolkit.dll</HintPath>
+    <Reference Include="HelixToolkit, Version=2.21.1.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
+      <HintPath>..\..\CAM_Viewer\packages\HelixToolkit.2.21.1\lib\netstandard1.1\HelixToolkit.dll</HintPath>
     </Reference>
-    <Reference Include="HelixToolkit.Wpf">
-      <HintPath>..\..\DLLS\HelixToolkit.Wpf.dll</HintPath>
+    <Reference Include="HelixToolkit.Wpf, Version=2.21.1.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
+      <HintPath>..\..\CAM_Viewer\packages\HelixToolkit.Wpf.2.21.1\lib\net45\HelixToolkit.Wpf.dll</HintPath>
     </Reference>
     <Reference Include="Poly2Tri">
       <HintPath>..\..\DLLS\Poly2Tri.dll</HintPath>

@@ -22,6 +22,8 @@
                         Background="Transparent" 
                         IsHeadLightEnabled="True" 
                         
+                       
+                        
                         ZoomAroundMouseDownPoint="True" 
                         RotateAroundMouseDownPoint="True">
                         <ModelVisual3D>
@@ -81,7 +83,7 @@
                     <StackPanel  Margin="2">
                         <Con:Texto Titulo="" Valor="{Binding Path=CAM.Posicao,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
 
-                        <Con:PerfilDBF Grid.Column="10" SomenteLeitura="True" Perfil="{Binding Path=CAM.Perfil,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
+                        <Con:PerfilDBF SomenteLeitura="True" Grid.Column="10" Perfil="{Binding Path=CAM.Perfil,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
                         <CheckBox Content="Tem Recorte" IsEnabled="False" IsChecked="{Binding Path=CAM.Formato.Tem_Recorte,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"/>
                         <Con:Texto Titulo="Comp:" Valor="{Binding Path=CAM.Comprimento,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>
                         <Con:Texto Titulo="Trat:" Valor="{Binding Path=CAM.Tratamento,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}" SomenteLeitura="True"/>

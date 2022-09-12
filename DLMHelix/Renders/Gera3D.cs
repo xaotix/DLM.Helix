@@ -13,6 +13,7 @@ namespace DLM.helix
     {
         public static List<Chapa3d> Desenho(ReadCAM readcam, HelixViewport3D viewPort)
         {
+            if(readcam == null) { return new List<Chapa3d>(); }
             /*a fazer:
              1) resolver bug do perfil cartola
 

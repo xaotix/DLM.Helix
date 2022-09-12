@@ -71,6 +71,7 @@ namespace DLM.helix
         }
         public void Recarregar()
         {
+            if(this.MVC.CAM == null) { return; }
             Gera3d.Desenho(this.MVC.CAM,this.viewport);
             Gera2D.Desenho(this.MVC.CAM, this.viewport2D);
             Ajustes();

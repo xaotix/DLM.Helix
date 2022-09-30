@@ -7,6 +7,7 @@ using System.Windows;
 using System.Windows.Controls;
 using DLM.cam;
 using Conexoes;
+using System.Windows.Threading;
 
 namespace DLM.helix
 {
@@ -24,8 +25,8 @@ namespace DLM.helix
         }
         public void Abrir(string arq)
         {
-            this.viewport.Children.Clear();
-            this.viewport2D.Children.Clear();
+            this.viewPort.Children.Clear();
+            this.viewPort2D.Children.Clear();
            if(!File.Exists(arq))
             {
                 return;
@@ -48,16 +49,16 @@ namespace DLM.helix
         }
         public void Abrir(ReadCAM arq)
         {
-            this.viewport.Children.Clear();
-            this.viewport2D.Children.Clear();
+            this.viewPort.Children.Clear();
+            this.viewPort2D.Children.Clear();
             this.MVC.CAM = arq;
             Recarregar();
         }
         public void Abrir(Cam arq)
         {
            
-            this.viewport.Children.Clear();
-            this.viewport2D.Children.Clear();
+            this.viewPort.Children.Clear();
+            this.viewPort2D.Children.Clear();
             try
             {
                 List<MeshGeometryVisual3D> desenho = new List<MeshGeometryVisual3D>();
@@ -72,33 +73,51 @@ namespace DLM.helix
         public void Recarregar()
         {
             if(this.MVC.CAM == null) { return; }
-            Gera3d.Desenho(this.MVC.CAM,this.viewport);
-            Gera2D.Desenho(this.MVC.CAM, this.viewport2D);
-            Ajustes();
+
+            Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+            {
+                viewPort.Children.Clear();
+                viewPort.Children.Add(Gera3d.Luz());
+                //var readcam = readcam.GetCam();
+                Gera2D.AddUCSIcon(viewPort, this.MVC.CAM.Formato.Comprimento / 10);
+                viewPort.ShowCameraTarget = true;
+
+                //var chapas3d = Gera3d.Desenho(this.MVC.CAM);
+                var chapas3d = this.MVC.CAM.GetChapas3Ds();
+
+                foreach (var chapa in chapas3d)
+                {
+                    viewPort.Children.Add(chapa.GetDesenho3D());
+                }
+                Gera2D.Desenho(this.MVC.CAM, this.viewPort2D);
+                Ajustes();
+            }));
+
+         
 
         }
 
         private void Ajustes()
         {
-            this.viewport.Children.Add(DLM.helix.Gera3d.Luz());
+            this.viewPort.Children.Add(DLM.helix.Gera3d.Luz());
 
             //this.viewport.ZoomExtents();
 
 
-            this.viewport.ShowCoordinateSystem = true;
-            this.viewport.ShowFieldOfView = false;
-            this.viewport.ShowViewCube = true;
-            this.viewport.ShowCameraTarget = false;
-            this.viewport.ShowCameraInfo = false;
+            this.viewPort.ShowCoordinateSystem = true;
+            this.viewPort.ShowFieldOfView = false;
+            this.viewPort.ShowViewCube = true;
+            this.viewPort.ShowCameraTarget = false;
+            this.viewPort.ShowCameraInfo = false;
 
-            this.viewport2D.ShowCoordinateSystem = false;
-            this.viewport2D.ShowFieldOfView = false;
-            this.viewport2D.ShowViewCube = false;
-            this.viewport2D.ShowCameraTarget = false;
-            this.viewport2D.ShowCameraInfo = false;
+            this.viewPort2D.ShowCoordinateSystem = false;
+            this.viewPort2D.ShowFieldOfView = false;
+            this.viewPort2D.ShowViewCube = false;
+            this.viewPort2D.ShowCameraTarget = false;
+            this.viewPort2D.ShowCameraInfo = false;
 
             
-            this.viewport2D.IsRotationEnabled = false;
+            this.viewPort2D.IsRotationEnabled = false;
 
             SetView2D();
 
@@ -107,12 +126,12 @@ namespace DLM.helix
 
         private void SetView2D()
         {
-            ControleCamera.Setar(viewport2D, ControleCamera.eCameraViews.Top, 0);
+            ControleCamera.Setar(viewPort2D, ControleCamera.eCameraViews.Top, 0);
         }
 
         private void Front()
         {
-            ControleCamera.Setar(this.viewport, ControleCamera.eCameraViews.Top, 0);
+            ControleCamera.Setar(this.viewPort, ControleCamera.eCameraViews.Top, 0);
             SetView2D();
         }
 
@@ -131,25 +150,25 @@ namespace DLM.helix
 
         private void top(object sender, RoutedEventArgs e)
         {
-            ControleCamera.Setar(this.viewport, ControleCamera.eCameraViews.Right, 0);
+            ControleCamera.Setar(this.viewPort, ControleCamera.eCameraViews.Right, 0);
             SetView2D();
         }
 
         private void bottom(object sender, RoutedEventArgs e)
         {
-            ControleCamera.Setar(this.viewport, ControleCamera.eCameraViews.Left, 0);
+            ControleCamera.Setar(this.viewPort, ControleCamera.eCameraViews.Left, 0);
             SetView2D();
         }
 
         private void left(object sender, RoutedEventArgs e)
         {
-            ControleCamera.Setar(this.viewport, ControleCamera.eCameraViews.Back, 0);
+            ControleCamera.Setar(this.viewPort, ControleCamera.eCameraViews.Back, 0);
             SetView2D();
         }
 
         private void right(object sender, RoutedEventArgs e)
         {
-            ControleCamera.Setar(this.viewport, ControleCamera.eCameraViews.Bottom, 0);
+            ControleCamera.Setar(this.viewPort, ControleCamera.eCameraViews.Bottom, 0);
             SetView2D();
 
         }
@@ -161,8 +180,8 @@ namespace DLM.helix
 
         public void ZoomExtend()
         {
-            this.viewport.ZoomExtents();
-            this.viewport2D.ZoomExtents();
+            this.viewPort.ZoomExtents();
+            this.viewPort2D.ZoomExtents();
         }
 
         private void iso(object sender, RoutedEventArgs e)
@@ -173,7 +192,7 @@ namespace DLM.helix
 
         public void Isometric()
         {
-            ControleCamera.Setar(this.viewport, ControleCamera.eCameraViews.Isometric_PPP, 0);
+            ControleCamera.Setar(this.viewPort, ControleCamera.eCameraViews.Isometric_PPP, 0);
         }
 
         private void abrir(object sender, RoutedEventArgs e)
@@ -194,12 +213,28 @@ namespace DLM.helix
 
         private void viewport2D_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            viewport2D.ZoomExtents();
+            viewPort2D.ZoomExtents();
         }
 
         private void viewport_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            viewport.ZoomExtents();
+            viewPort.ZoomExtents();
+        }
+
+        private void exp_dxf(object sender, RoutedEventArgs e)
+        {
+            if (this.MVC.CAM == null)
+                return;
+
+            var destino = Conexoes.Utilz.SalvarArquivo("dxf");
+            if(destino!=null)
+            {
+                if(Conexoes.Utilz.Apagar(destino))
+                {
+                this.MVC.CAM.Formato.GetDxf().Save(destino);
+                    destino.Abrir();
+                }
+            }
         }
     }
 

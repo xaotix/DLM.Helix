@@ -15,22 +15,29 @@ namespace DLM.helix._3d
 
         public Vetor3D YVec { get; set; }
 
+        private LinesVisual3D _Contorno { get; set; }
         public LinesVisual3D GetContorno()
         {
-            LinesVisual3D retorno = new LinesVisual3D();
+           
             int contador = 0;
-            if(this.Coordenadas.Count>1)
+            if(this.Coordenadas.Count>1 && _Contorno==null)
             {
+                _Contorno = new LinesVisual3D();
                 foreach (var pt in this.Coordenadas)
                 {
-                    retorno.Points.Add(pt.GetPoint3D(1000));
-                    if (contador > 0) retorno.Points.Add(pt.GetPoint3D(1000));
+                    var origem = pt.GetPoint3D(1000);
+                    _Contorno.Points.Add(origem);
+                    //if (contador > 0) retorno.Points.Add(pt.GetPoint3D(1000));
                     contador++;
                 }
-                retorno.Points.Add(this.Coordenadas[0].GetPoint3D(1000));
+                _Contorno.Points.Add(this.Coordenadas[0].GetPoint3D(1000));
+            }
+            else if(_Contorno==null)
+            {
+                return new LinesVisual3D();
             }
 
-            return retorno;
+            return _Contorno;
         }
 
         public List<Abertura3d> AberturasInternas { get; set; } = new List<Abertura3d>();

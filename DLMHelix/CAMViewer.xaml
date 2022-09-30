@@ -18,7 +18,7 @@
                         SizeChanged="viewport_SizeChanged"  
                         Grid.Row="1" 
                         ZoomExtentsWhenLoaded="True" 
-                        Name="viewport" 
+                        Name="viewPort" 
                         Background="Transparent" 
                         IsHeadLightEnabled="True" 
                         
@@ -40,7 +40,7 @@
                     SizeChanged="viewport2D_SizeChanged" 
                     Grid.Row="1" 
                     ZoomExtentsWhenLoaded="True" 
-                    Name="viewport2D" 
+                    Name="viewPort2D" 
                     Background="Transparent" 
                     IsHeadLightEnabled="True" 
                     ZoomAroundMouseDownPoint="True" 
@@ -75,6 +75,7 @@
                 <Button Click="recarregar" Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Recarregar">
                     <Image Source="Resources/reload.png"/>
                 </Button>
+                <Button Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Exportar DXF..."  Content="DXF..." Click="exp_dxf"/>
             </WrapPanel>
         </Border>
         <Border Background="White"  Margin="2,30,0,0" Width="175" VerticalAlignment="Top" HorizontalAlignment="Left" BorderBrush="Black" BorderThickness="1">

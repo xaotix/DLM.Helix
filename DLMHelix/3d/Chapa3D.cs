@@ -14,9 +14,10 @@ namespace DLM.helix
     [Serializable]
     public class Chapa3d
     {
+        public double Multiplo { get; set; } = 1000;
+        public P3d Origem { get; set; } = new P3d();
         public List<P3d> Pontos { get; set; } = new List<P3d>();
         public List<Abertura3d> Aberturas { get; set; } = new List<Abertura3d>();
-        public P3d Origem { get; set; } = new P3d();
         public double AnguloX { get; set; } = 0;
         public double AnguloY { get; set; } = 0;
         public double AnguloZ { get; set; } = 0;
@@ -141,14 +142,14 @@ namespace DLM.helix
                 PointCollection pontos = new PointCollection();
                 foreach (var ponto in abertura.Coordenadas)
                 {
-                    pontos.Add(new System.Windows.Point((int)ponto.X / 1000, (int)ponto.Y / 1000));
+                    pontos.Add(new System.Windows.Point((int)ponto.X / Multiplo, (int)ponto.Y / Multiplo));
                 }
 
                 P3d cima = Origem.Clonar();
                 cima = cima.Mover(orientacao.VetorXNeg, this.Espessura / 2);
                 P3d baixo = cima.Mover(orientacao.VetorX, this.Espessura);
 
-                extrude.Path.Add(cima.GetPoint3D(1000));
+                extrude.Path.Add(cima.GetPoint3D(Multiplo));
                 extrude.Path.Add(baixo.GetPoint3D());
 
                 #region Contorno Furos
@@ -164,26 +165,26 @@ namespace DLM.helix
                     if (i > 0)
                     {
                         {
-                            line.Points.Add(listcima[i].GetPoint3D(1000));
-                            line.Points.Add(listcima[i - 1].GetPoint3D(1000));
+                            line.Points.Add(listcima[i].GetPoint3D(Multiplo));
+                            line.Points.Add(listcima[i - 1].GetPoint3D(Multiplo));
                         }
                         {
-                            line.Points.Add(listbaixo[i].GetPoint3D(1000));
-                            line.Points.Add(listbaixo[i - 1].GetPoint3D(1000));
+                            line.Points.Add(listbaixo[i].GetPoint3D(Multiplo));
+                            line.Points.Add(listbaixo[i - 1].GetPoint3D(Multiplo));
                         }
                     }
                     {
-                        line.Points.Add(listcima[i].GetPoint3D(1000));
-                        line.Points.Add(listbaixo[i].GetPoint3D(1000));
+                        line.Points.Add(listcima[i].GetPoint3D(Multiplo));
+                        line.Points.Add(listbaixo[i].GetPoint3D(Multiplo));
                     }
                 }
                 {
-                    line.Points.Add(listcima[0].GetPoint3D(1000));
-                    line.Points.Add(listcima[listcima.Count - 1].GetPoint3D(1000));
+                    line.Points.Add(listcima[0].GetPoint3D(Multiplo));
+                    line.Points.Add(listcima[listcima.Count - 1].GetPoint3D(Multiplo));
                 }
                 {
-                    line.Points.Add(listbaixo[0].GetPoint3D(1000));
-                    line.Points.Add(listbaixo[listcima.Count - 1].GetPoint3D(1000));
+                    line.Points.Add(listbaixo[0].GetPoint3D(Multiplo));
+                    line.Points.Add(listbaixo[listcima.Count - 1].GetPoint3D(Multiplo));
                 }
                 extrude.Children.Add(line);
                 #endregion
@@ -198,22 +199,22 @@ namespace DLM.helix
         {
             MeshGeometryVisual3D retorno = new MeshGeometryVisual3D();
             MeshGeometry3D mesh = new MeshGeometry3D();
-            var R = GetFaceR();
-            var L = GetFaceL();
+            var Face_R = GetFaceR();
+            var Face_L = GetFaceL();
             var Bordas = GetFacesBordas();
 
-            retorno.Children.Add(R.GetContorno());
-            foreach (var pt in R.GetPontosTriangulos())
+            retorno.Children.Add(Face_R.GetContorno());
+            foreach (var pt in Face_R.GetPontosTriangulos())
             {
                 mesh.TriangleIndices.Add(mesh.Positions.Count);
-                mesh.Positions.Add(pt.GetPoint3D(1000));
+                mesh.Positions.Add(pt.GetPoint3D(Multiplo));
             }
 
-            retorno.Children.Add(L.GetContorno());
-            foreach (var pt in L.GetPontosTriangulos())
+            retorno.Children.Add(Face_L.GetContorno());
+            foreach (var pt in Face_L.GetPontosTriangulos())
             {
                 mesh.TriangleIndices.Add(mesh.Positions.Count);
-                mesh.Positions.Add(pt.GetPoint3D(1000));
+                mesh.Positions.Add(pt.GetPoint3D(Multiplo));
             }
 
             foreach (var face in Bordas)
@@ -222,7 +223,7 @@ namespace DLM.helix
                 foreach (var pt in face.GetPontosTriangulos())
                 {
                     mesh.TriangleIndices.Add(mesh.Positions.Count);
-                    mesh.Positions.Add(pt.GetPoint3D(1000));
+                    mesh.Positions.Add(pt.GetPoint3D(Multiplo));
                 }
             }
 
@@ -296,7 +297,7 @@ namespace DLM.helix
         public Chapa3d(DLM.cam.Face face, double Espessura)
         {
             this.Espessura = Espessura;
-            this.Pontos.AddRange(face.LivSegmentada.Select(x => new P3d(x.X, x.Y, 0)));
+            this.Pontos.AddRange(face.Linhas.Select(x => new P3d(x.P1.X, x.P1.Y, 0)));
             this.Aberturas.AddRange(face.Furacoes.GroupBy(x=> x.ToString()).Select(x=>x.First()).ToList().FindAll(x => x.MinX > face.MinX && x.MaxX < face.MaxX).Select(y => new DLM.helix.Abertura3d(y.Diametro, y.X, y.Y, y.Dist, y.Ang)));
             this.Aberturas.AddRange(face.RecortesInternos.Select(x => new Abertura3d(x.GetLiv(2))));
             this.Cor = Brushes.Green.Clone();

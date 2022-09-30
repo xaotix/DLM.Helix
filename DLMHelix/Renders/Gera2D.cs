@@ -1,17 +1,11 @@
-﻿using DLM.helix._3d;
+﻿using DLM.cam;
+using DLM.desenho;
+using DLM.vars;
 using HelixToolkit.Wpf;
 using Poly2Tri.Triangulation;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using DLM.cam;
-using DLM.vars;
-using DLM.desenho;
-using Conexoes;
 
 namespace DLM.helix
 {
@@ -26,14 +20,14 @@ namespace DLM.helix
                 
 
          */
-        public static void Desenho(ReadCAM cam, HelixViewport3D viewPort)
+        public static void Desenho(ReadCAM cam, HelixViewport3D viewPort2D)
         {
             
             double espessura = 1;
             List<LinesVisual3D> linhas = new List<LinesVisual3D>();
-            viewPort.Children.Clear();
-            viewPort.Children.Add(Gera3d.Luz());
-            ControleCamera.Setar(viewPort, ControleCamera.eCameraViews.Top, 0); ;
+            viewPort2D.Children.Clear();
+            viewPort2D.Children.Add(Gera3d.Luz());
+            ControleCamera.Setar(viewPort2D, ControleCamera.eCameraViews.Top, 0); ;
             P3d origem = new P3d();
             var cor = Brushes.Black.Color;
             var shape = cam.Formato.LIV1;
@@ -97,23 +91,23 @@ namespace DLM.helix
 
             foreach(var dob in cam.Formato.LIV1.Dobras)
             {
-                AddDobra(viewPort, espessura, origem, dob);
+                AddDobra(viewPort2D, espessura, origem, dob);
             }
 
 
 
             foreach (var l in linhas)
             {
-                viewPort.Children.Add(l);
+                viewPort2D.Children.Add(l);
             }
 
             var centro = cam.Formato.LIV1.Centro;
             var txt = Gera2D.Texto(cam.Descricao, new P3d(centro.X, centro.Y, centro.Z));
-            viewPort.Children.Add(txt);
+            viewPort2D.Children.Add(txt);
 
-            Gera2D.AddUCSIcon(viewPort, cam.Formato.Comprimento / 10);
+            Gera2D.AddUCSIcon(viewPort2D, cam.Formato.Comprimento / 10);
 
-            viewPort.ZoomExtents();
+            viewPort2D.ZoomExtents();
 
         }
 
@@ -181,7 +175,6 @@ namespace DLM.helix
                 LinesVisual3D l = Linha(espessura, shp0, shp, origem,color);
                 linhas.Add(l);
             }
-            Linha(espessura, ptsfr[ptsfr.Count - 1], ptsfr[0],origem,color);
             linhas.Add(Linha(espessura, ptsfr[ptsfr.Count - 1], ptsfr[0], origem,color));
             return linhas;
         }

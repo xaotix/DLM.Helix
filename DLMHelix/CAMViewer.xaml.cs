@@ -8,6 +8,9 @@ using System.Windows.Controls;
 using DLM.cam;
 using Conexoes;
 using System.Windows.Threading;
+using System.Windows.Media.Media3D;
+using System.Linq;
+using DLM.desenho;
 
 namespace DLM.helix
 {
@@ -70,6 +73,7 @@ namespace DLM.helix
                 Conexoes.Utilz.Alerta(ex);
             }
         }
+        public Rect3D ?Bounds { get; private set; }
         public void Recarregar()
         {
             if(this.MVC.CAM == null) { return; }
@@ -84,45 +88,55 @@ namespace DLM.helix
 
                 //var chapas3d = Gera3d.Desenho(this.MVC.CAM);
                 var chapas3d = this.MVC.CAM.GetChapas3Ds();
-
+                List<Rect3D> recs = new List<Rect3D>();
+                Bounds = null;
                 foreach (var chapa in chapas3d)
                 {
-                    viewPort.Children.Add(chapa.GetDesenho3D());
+                    var desenho = chapa.GetDesenho3D();
+
+                    var rec = desenho.FindBounds(desenho.Transform);
+                    recs.Add(rec);
+                    viewPort.Children.Add(desenho);
                 }
                 Gera2D.Desenho(this.MVC.CAM, this.viewPort2D);
-                Ajustes();
+                this.viewPort.Children.Add(DLM.helix.Gera3d.Luz());
+
+                if(recs.Count>0)
+                {
+                    List< P3d> pts = recs.Select(x => new P3d(x.X, x.Y, x.Z,false)).ToList();
+                    var p1 = pts.Min();
+                    var p2 = pts.Max();
+
+                    Bounds = new Rect3D(p1.X, p1.Y, p1.Z, p1.DistanciaX(p2).Abs(), p1.DistanciaY(p2).Abs(), p1.DistanciaZ(p2).Abs());
+                }
+            
+
+                this.viewPort.ShowCoordinateSystem = true;
+                this.viewPort.ShowFieldOfView = false;
+                this.viewPort.ShowViewCube = true;
+                this.viewPort.ShowCameraTarget = false;
+                this.viewPort.ShowCameraInfo = false;
+
+                this.viewPort2D.ShowCoordinateSystem = false;
+                this.viewPort2D.ShowFieldOfView = false;
+                this.viewPort2D.ShowViewCube = false;
+                this.viewPort2D.ShowCameraTarget = false;
+                this.viewPort2D.ShowCameraInfo = false;
+
+
+                this.viewPort2D.IsRotationEnabled = false;
+
+                SetView2D();
+
+                //this.viewport.ZoomExtents();
+                ZoomExtend();
             }));
 
          
 
         }
 
-        private void Ajustes()
-        {
-            this.viewPort.Children.Add(DLM.helix.Gera3d.Luz());
-
-            //this.viewport.ZoomExtents();
-
-
-            this.viewPort.ShowCoordinateSystem = true;
-            this.viewPort.ShowFieldOfView = false;
-            this.viewPort.ShowViewCube = true;
-            this.viewPort.ShowCameraTarget = false;
-            this.viewPort.ShowCameraInfo = false;
-
-            this.viewPort2D.ShowCoordinateSystem = false;
-            this.viewPort2D.ShowFieldOfView = false;
-            this.viewPort2D.ShowViewCube = false;
-            this.viewPort2D.ShowCameraTarget = false;
-            this.viewPort2D.ShowCameraInfo = false;
-
-            
-            this.viewPort2D.IsRotationEnabled = false;
-
-            SetView2D();
-
-            //ZoomExtend();
-        }
+ 
 
         private void SetView2D()
         {
@@ -145,6 +159,8 @@ namespace DLM.helix
             this.Recarregar();
             ZoomExtend();
         }
+        
+
 
 
 
@@ -180,6 +196,7 @@ namespace DLM.helix
 
         public void ZoomExtend()
         {
+
             this.viewPort.ZoomExtents();
             this.viewPort2D.ZoomExtents();
         }

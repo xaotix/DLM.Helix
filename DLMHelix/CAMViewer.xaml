@@ -15,23 +15,26 @@
             <TabItem Header="3d" Background="Transparent">
                 <Grid>
                     <HelixToolkit:HelixViewport3D 
+						
                         SizeChanged="viewport_SizeChanged"  
                         Grid.Row="1" 
                         ZoomExtentsWhenLoaded="True" 
                         Name="viewPort" 
+						IsTouchZoomEnabled="True"
                         Background="Transparent" 
-                        IsHeadLightEnabled="True" 
-                        
-                       
-                        
+                        IsHeadLightEnabled="True"                     
                         ZoomAroundMouseDownPoint="True" 
-                        RotateAroundMouseDownPoint="True">
+                        RotateAroundMouseDownPoint="True"
+						>
                         <ModelVisual3D>
                             <ModelVisual3D.Content>
                                 <AmbientLight Color="White"/>
                             </ModelVisual3D.Content>
                         </ModelVisual3D>
-                    </HelixToolkit:HelixViewport3D>
+						<HelixToolkit:HelixViewport3D.Camera>
+							<PerspectiveCamera FieldOfView="60" />
+						</HelixToolkit:HelixViewport3D.Camera>
+					</HelixToolkit:HelixViewport3D>
                     
                 </Grid>
             </TabItem>

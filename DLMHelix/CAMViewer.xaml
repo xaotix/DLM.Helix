@@ -58,7 +58,7 @@
             </TabItem>
         </TabControl>
 
-        <Border Margin="180,30,0,0"  Background="White" VerticalAlignment="Top" HorizontalAlignment="Left" Height="25" BorderBrush="Black" BorderThickness="1">
+        <Border Margin="180,30,0,0"  Background="White" VerticalAlignment="Top" HorizontalAlignment="Left" Height="25" BorderThickness="1">
             <WrapPanel>
                 <Button  Click="abrir"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Abrir Externamente">
                     <Image Source="Resources/open.png"/>
@@ -81,7 +81,7 @@
                 <Button Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Exportar DXF..."  Content="DXF..." Click="exp_dxf"/>
             </WrapPanel>
         </Border>
-        <Border Background="White"  Margin="2,30,0,0" Width="175" VerticalAlignment="Top" HorizontalAlignment="Left" BorderBrush="Black" BorderThickness="1">
+        <Border Background="White"  Margin="2,30,0,0" Width="175" VerticalAlignment="Top" HorizontalAlignment="Left" BorderThickness="1">
             <Expander Header="{Binding CAM.Posicao}" FontSize="10">
                 <ScrollViewer>
                     <StackPanel  Margin="2">

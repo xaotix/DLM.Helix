@@ -11,6 +11,15 @@ using System.Xml.Serialization;
 
 namespace DLM.helix
 {
+    public static class ExtensoesHelix
+    {
+        public static List<Chapa3d> GetChapas3Ds(this DLM.cam.ReadCAM cam)
+        {
+           var _Chapas3D = new List<Chapa3d>();
+            _Chapas3D.AddRange(Gera3d.Desenho(cam));
+            return _Chapas3D;
+        }
+    }
     [Serializable]
     public class Chapa3d
     {

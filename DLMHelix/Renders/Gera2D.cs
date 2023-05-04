@@ -166,7 +166,7 @@ namespace DLM.helix
         public static List<LinesVisual3D> Furo2D(double espessura, DLM.cam.Furo fr0,P3d origem, Color color)
         {
             List<LinesVisual3D> linhas = new List<LinesVisual3D>();
-            Abertura3d pp = new Abertura3d(fr0.Diametro, fr0.X, fr0.Y, fr0.Dist, fr0.Ang);
+            Abertura3d pp = new Abertura3d(fr0.Diametro, fr0.Origem.X, fr0.Origem.Y, fr0.Dist, fr0.Ang);
             var ptsfr = pp.GetContornoPlanificado();
             for (int i = 1; i < ptsfr.Count; i++)
             {

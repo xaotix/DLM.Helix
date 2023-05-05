@@ -113,8 +113,8 @@ namespace DLM.helix
 
         private static void AddDobra(HelixViewport3D viewPort, double espessura, P3d origem, Dobra dob)
         {
-            var p1 = new P3d(dob.X1, dob.Y1);
-            var p2 = new P3d(dob.X2, dob.Y2);
+            var p1 = dob.P1.Clonar();
+            var p2 = dob.P2.Clonar();
 
             var s = Linha(espessura, p1, p2, origem, Brushes.DarkGray.Color);
             viewPort.Children.Add(s);
@@ -193,7 +193,7 @@ namespace DLM.helix
         }
         public static LinesVisual3D Linha(double espessura, Liv shp0, Liv shp, P3d origem, Color cor)
         {
-            return Linha(espessura, new P3d(shp0.X, shp0.Y, 0), new P3d(shp.X, shp.Y, 0), origem, cor);
+            return Linha(espessura, new P3d(shp0.Origem.X, shp0.Origem.Y, 0), new P3d(shp.Origem.X, shp.Origem.Y, 0), origem, cor);
         }
 
         public static void AddUCSIcon(HelixViewport3D viewPort, double comp = 100)

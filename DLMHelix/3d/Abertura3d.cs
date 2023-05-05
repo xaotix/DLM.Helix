@@ -77,8 +77,7 @@ namespace DLM.helix
             var segmentada = pontos.Segmentar();
            foreach (var p in segmentada)
             {
-                var p1 = p.Clonar();
-                Coordenadas.Add(new P3d(p.X,p.Y));
+                Coordenadas.Add(p.Origem.Clonar());
             }
             if (Coordenadas.Count > 0)
             {

@@ -33,13 +33,13 @@ namespace DLM.helix
             {
                 var largs = this.GetCircunferencia() / Num_Faces;
                 double ang0 = (double)360 / (double)Num_Faces;
-                List<P3d> tamp = new List<P3d>();
+                var tamp = new List<P3d>();
                 double ang = ang0;
                 for (int i = 0; i < Num_Faces; i++)
                 {
 
-                    P3d pt = new P3d(0, 0, 0).Mover(ang, Diametro / 2);
-                    Chapa3d ch = new Chapa3d("Face");
+                    var pt = new P3d(0, 0, 0).Mover(ang, Diametro / 2);
+                    var ch = new Chapa3d("Face");
                     ch.Espessura = this.Espessura;
                     ch.Pontos.Add(new P3d(0, 0, 0));
                     ch.Pontos.Add(new P3d(0, largs/2, 0));
@@ -59,13 +59,11 @@ namespace DLM.helix
                 /*quando é um tubo fechado*/
                 if(this.Espessura<1)
                 {
-                    Chapa3d tampa = new Chapa3d("Tampa");
+                    var tampa = new Chapa3d("Tampa");
                     tampa.Pontos = tamp;
                     tampa.Espessura = 0.001;
                     //tampa.AnguloX = 90;
                     tampa.AnguloY = 90;
-                    //tampa.Origem.Z = this.Diametro;
-                    //tampa.Origem.X = this.Diametro/2;
                     var tampa2 = tampa.Clonar();
                     tampa2.Origem.X = tampa.Origem.X + this.Comprimento;
                     retorno.Add(tampa);

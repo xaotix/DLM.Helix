@@ -44,6 +44,7 @@
     <Reference Include="HelixToolkit.Wpf, Version=2.21.1.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
       <HintPath>..\..\CAM_Viewer\packages\HelixToolkit.Wpf.2.21.1\lib\net45\HelixToolkit.Wpf.dll</HintPath>
     </Reference>
+    <Reference Include="netDxfMBS, Version=0.1.6.0, Culture=neutral, PublicKeyToken=null" />
     <Reference Include="Poly2Tri">
       <HintPath>..\..\DLLS\Poly2Tri.dll</HintPath>
     </Reference>

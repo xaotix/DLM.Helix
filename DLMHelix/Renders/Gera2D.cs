@@ -114,8 +114,8 @@ namespace DLM.helix
 
         private static void AddDobra(HelixViewport3D viewPort, double espessura, P3d origem, Dobra dob)
         {
-            var p1 = dob.P1.Clonar();
-            var p2 = dob.P2.Clonar();
+            var p1 = dob.Linha.P1.Clonar();
+            var p2 = dob.Linha.P2.Clonar();
 
             var s = Linha(espessura, p1, p2, origem, Brushes.DarkGray.Color);
             viewPort.Children.Add(s);

@@ -35,7 +35,8 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Conexoes">
+    <Reference Include="Conexoes, Version=5.3.3.27, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\DLLS\Conexoes.dll</HintPath>
     </Reference>
     <Reference Include="HelixToolkit, Version=2.24.0.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
@@ -101,7 +102,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="core\Utilidades.cs" />
     <Compile Include="Renders\Gera3D.cs" />
-    <Compile Include="Renders\Gera2D.cs" />
+    <Compile Include="Renders\Render2d.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

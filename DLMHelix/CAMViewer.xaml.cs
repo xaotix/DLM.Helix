@@ -64,7 +64,9 @@ namespace DLM.helix
             this.viewPort2D.Children.Clear();
             try
             {
-                List<MeshGeometryVisual3D> desenho = new List<MeshGeometryVisual3D>();
+                this.tab_3d.Visibility = Visibility.Visible;
+
+                var desenho = new List<MeshGeometryVisual3D>();
                 this.MVC.CAM = arq.GetReadCam();
                 Recarregar();
             }
@@ -72,6 +74,15 @@ namespace DLM.helix
             {
                 Conexoes.Utilz.Alerta(ex);
             }
+        }
+
+        public void Abrir(netDxf.DxfDocument dxfDocument)
+        {
+            this.viewPort.Children.Clear();
+            this.viewPort2D.Children.Clear();
+            dxfDocument.RenderHelix(this.viewPort2D);
+            this.tab_3d.Visibility = Visibility.Collapsed;
+            this.tab_2d.IsSelected = true;
         }
         public Rect3D ?Bounds { get; private set; }
         public void Recarregar()
@@ -83,7 +94,7 @@ namespace DLM.helix
                 viewPort.Children.Clear();
                 viewPort.Children.Add(Gera3d.Luz());
                 //var readcam = readcam.GetCam();
-                Gera2D.AddUCSIcon(viewPort, this.MVC.CAM.Formato.Comprimento / 10);
+                viewPort.AddUCSIcon(this.MVC.CAM.Formato.Comprimento / 10);
                 viewPort.ShowCameraTarget = true;
 
                 //var chapas3d = Gera3d.Desenho(this.MVC.CAM);
@@ -98,7 +109,7 @@ namespace DLM.helix
                     recs.Add(rec);
                     viewPort.Children.Add(desenho);
                 }
-                Gera2D.Desenho(this.MVC.CAM, this.viewPort2D);
+                Render2d.RenderHelix(this.MVC.CAM, this.viewPort2D);
                 this.viewPort.Children.Add(DLM.helix.Gera3d.Luz());
 
                 if(recs.Count>0)
@@ -146,7 +157,8 @@ namespace DLM.helix
         private void Front()
         {
             ControleCamera.Setar(this.viewPort, ControleCamera.eCameraViews.Top, 0);
-            SetView2D();
+            ControleCamera.Setar(viewPort2D, ControleCamera.eCameraViews.Right, 0);
+
         }
 
         private void front(object sender, RoutedEventArgs e)

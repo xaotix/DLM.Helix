@@ -1,0 +1,420 @@
+﻿using Conexoes;
+using DLM.cam;
+using DLM.desenho;
+using DLM.vars;
+using HelixToolkit.Wpf;
+using netDxf.Entities;
+using Poly2Tri.Triangulation;
+using System.Collections.Generic;
+using System.Windows.Controls;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Media3D;
+using System.Linq;
+using System.Windows.Media.Imaging;
+
+namespace DLM.helix
+{
+    public static class Render2d
+    {
+        /*
+         adicionar suporte a:
+                recortes internos
+                soldas
+                projeções pontilhadas
+                croquis de furos de dxf
+                
+
+         */
+        public static void RenderHelix(this ReadCAM cam, HelixViewport3D viewPort2D)
+        {
+
+            double espessura = 1;
+            var linhas = new List<LinesVisual3D>();
+            viewPort2D.Children.Clear();
+            viewPort2D.Children.Add(Gera3d.Luz());
+            ControleCamera.Setar(viewPort2D, ControleCamera.eCameraViews.Top, 0); ;
+            P3d origem = new P3d();
+            var cor = Brushes.Green.Color;
+            var shape = cam.Formato.LIV1;
+            double ctf = cam.ContraFlecha;
+
+            double offset = 25;
+            P3d origem_Liv2 = origem.Mover(90, offset + (cam.Perfil.Faces > 2 ? cam.Formato.LIV2.Largura : 0));
+            P3d origem_Liv3 = origem.Mover(90, -cam.Formato.LIV1.Largura - cam.Formato.LIV3.Largura - offset);
+
+
+            var mchapa2 = cam.Formato.GetLIV2_MesaParaChapa();
+            var mchapa3 = cam.Formato.GetLIV3_MesaParaChapa();
+            #region CHAPAS
+            if (cam.Perfil.Tipo == CAM_PERFIL_TIPO.Barra_Chata | cam.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa | cam.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa_Xadrez)
+            {
+                linhas.AddRange(Contorno(origem, espessura, shape, cor, ctf));
+            }
+            else
+            {
+                //Liv1
+                linhas.AddRange(Contorno(origem, espessura, shape, cor, 0));
+                //LIV2
+                linhas.AddRange(Contorno(origem_Liv2, espessura, mchapa2, cor, 0));
+                //LIV3
+                linhas.AddRange(Contorno(origem_Liv3, espessura, mchapa3, cor, 0));
+
+            }
+            #endregion
+
+
+            foreach (var fr0 in cam.Formato.LIV1.Furacoes)
+            {
+                var nf = Furo2D(espessura, fr0, origem, Brushes.Red.Color);
+                linhas.AddRange(nf);
+            }
+
+            foreach (var fr0 in mchapa2.Furacoes)
+            {
+                if (cam.Perfil.Faces > 2)
+                {
+                    var nf = Furo2D(espessura, fr0, origem_Liv2, cor);
+                    linhas.AddRange(nf);
+                }
+                else
+                {
+                    var nf = Furo2D(espessura, fr0.Clonar().InverterY(), origem_Liv2, cor);
+                    linhas.AddRange(nf);
+                }
+            }
+
+
+            foreach (var fr0 in mchapa3.Furacoes)
+            {
+                var nf = Furo2D(espessura, fr0, origem_Liv3, cor);
+                linhas.AddRange(nf);
+            }
+
+            foreach (var dob in cam.Formato.LIV1.Dobras)
+            {
+                AddDobra(viewPort2D, espessura, origem, dob);
+            }
+
+
+            foreach (var l in linhas)
+            {
+                viewPort2D.Children.Add(l);
+            }
+
+            var centro = cam.Formato.LIV1.Centro;
+            var txt = Render2d.TextHelix(new P3d(centro.X, centro.Y, centro.Z), cam.Descricao);
+            viewPort2D.Children.Add(txt);
+
+            viewPort2D.AddUCSIcon(cam.Formato.Comprimento / 10);
+
+            viewPort2D.ZoomExtents();
+
+        }
+        private static void AddDobra(HelixViewport3D viewPort, double espessura, P3d origem, Dobra dob)
+        {
+            var p1 = dob.Linha.P1.Clonar();
+            var p2 = dob.Linha.P2.Clonar();
+
+            var s = LineHelix(p1, p2, origem, Brushes.DarkGray.Color, espessura);
+            viewPort.Children.Add(s);
+            var t = TextHelix(p1.Centro(p2), "Dobra " + dob.Angulo + "°");
+            viewPort.Children.Add(t);
+        }
+        public static List<LinesVisual3D> Furo2D(double espessura, DLM.cam.Furo fr0, P3d origem, Color color)
+        {
+            var linhas = new List<LinesVisual3D>();
+            var abertura = new Abertura3d(fr0.Diametro, fr0.Origem.X, fr0.Origem.Y, fr0.Oblongo, fr0.Angulo);
+            var ptsfr = abertura.GetContornoPlanificado();
+            for (int i = 1; i < ptsfr.Count; i++)
+            {
+                var p1 = ptsfr[i - 1];
+                var p2 = ptsfr[i];
+                var l = LineHelix(p1, p2, origem, color, espessura);
+                linhas.Add(l);
+            }
+            linhas.Add(LineHelix(ptsfr[ptsfr.Count - 1], ptsfr[0], origem, color, espessura));
+            return linhas;
+        }
+        public static List<LinesVisual3D> Contorno(P3d origem, double espessura, Face shape, Color cor, double ctf)
+        {
+            var retorno = new List<LinesVisual3D>();
+
+            var linhas = new List<LinhaLiv>();
+            linhas.AddRange(shape.Linhas);
+            foreach (var l in linhas)
+            {
+                retorno.Add(LineHelix(l.P1, l.P2, origem, cor, espessura));
+            }
+
+
+            foreach (var rec in shape.RecortesInternos)
+            {
+                var lrec = rec.GetLinhas();
+                foreach (var l in lrec)
+                {
+                    retorno.Add(LineHelix(l.P1, l.P2, origem, cor, espessura));
+                }
+            }
+            return retorno;
+        }
+        
+        public static void RenderHelix(this netDxf.DxfDocument dxf, HelixViewport3D viewPort2D)
+        {
+            var origem = new P3d();
+            double espessura = 1;
+            var linhas = new List<LinesVisual3D>();
+            var textos = new List<TextVisual3D>();
+            viewPort2D.Children.Clear();
+            viewPort2D.Children.Add(Gera3d.Luz());
+            ControleCamera.Setar(viewPort2D, ControleCamera.eCameraViews.Top, 0); ;
+
+            var entities = new List<netDxf.Entities.EntityObject>();
+            entities.AddRange(dxf.Lines);
+            entities.AddRange(dxf.Polylines);
+            entities.AddRange(dxf.Circles);
+            entities.AddRange(dxf.Ellipses);
+            entities.AddRange(dxf.Arcs);
+            entities.AddRange(dxf.Inserts);
+            entities.AddRange(dxf.Texts);
+            entities.AddRange(dxf.MTexts);
+
+            GetHelix(entities,origem, espessura, ref linhas, ref textos);
+
+            foreach (var l in linhas)
+            {
+                if(l == null) {  continue; }
+                viewPort2D.Children.Add(l);
+            }
+            foreach (var l in textos)
+            {
+                if (l == null) { continue; }
+                viewPort2D.Children.Add(l);
+            }
+
+
+            viewPort2D.ZoomExtents();
+        }
+        private static void GetHelix(this List<EntityObject> entities,P3d origem, double espessura, ref List<LinesVisual3D> linhas,ref List<TextVisual3D> textos)
+        {
+            foreach (var ent in entities)
+            {
+                if (ent is netDxf.Entities.Line)
+                {
+                    var l = ent as netDxf.Entities.Line;
+                    var nl = l.GetHelix(origem, espessura);
+                    linhas.Add(nl);
+                }
+                else if (ent is netDxf.Entities.Polyline)
+                {
+                    var l = ent as netDxf.Entities.Polyline;
+                    var nl = l.GetHelix(origem, espessura);
+                    linhas.AddRange(nl);
+                }
+                else if (ent is netDxf.Entities.Circle)
+                {
+                    var l = ent as netDxf.Entities.Circle;
+                    var nl = l.GetHelix(origem, espessura);
+                    linhas.AddRange(nl);
+                }
+                else if (ent is netDxf.Entities.Ellipse)
+                {
+                    var l = ent as netDxf.Entities.Ellipse;
+                    var nl = l.GetHelix(origem, espessura);
+                    linhas.AddRange(nl);
+                }
+                else if (ent is netDxf.Entities.Text | ent is netDxf.Entities.MText)
+                {
+                  
+                    var nl = GetText(ent, origem);
+
+                    
+                    textos.Add(nl);
+                }
+                else if (ent is netDxf.Entities.Arc)
+                {
+                    //todo = falta fazer
+                    var l = ent as netDxf.Entities.Arc;
+                    //var nl = l.GetHelix(origem, espessura);
+                    //linhas.AddRange(nl);
+                }
+                else if(ent is netDxf.Entities.Insert)
+                {
+                    var l = ent as netDxf.Entities.Insert;
+                    l.GetHelix(origem,ref linhas,ref textos);
+                }
+            }
+        }
+        public static void GetHelix(this netDxf.Entities.Insert insert, P3d origem,ref List<LinesVisual3D> linhas,ref List<TextVisual3D> texts, double thick = 1)
+        {
+
+            var ents = insert.Explode().ToList();
+            ents.GetHelix(origem, thick, ref linhas, ref texts);
+        }
+        public static List<LinesVisual3D> GetHelix(this netDxf.Entities.Circle circle, P3d origem, double thick = 1)
+        {
+            var linhas = (circle.Radius * 2).GetHelix(circle.Center.P3d().Mover(origem), circle.GetCor().Color, thick);
+            return linhas;
+        }
+        public static List<LinesVisual3D> GetHelix(this netDxf.Entities.Ellipse circle, P3d origem, double thick = 1)
+        {
+            var linhas = (circle.MinorAxis).GetHelix(circle.Center.P3d().Mover(origem), circle.GetCor().Color, thick,circle.MajorAxis-circle.MinorAxis,circle.StartAngle);
+            return linhas;
+        }
+        private static TextVisual3D GetText(netDxf.Entities.EntityObject entity, P3d origem)
+        {
+            if (entity is netDxf.Entities.Text | entity is netDxf.Entities.MText)
+            {
+                var position = new P3d();
+                var cor = entity.GetCor();
+                var value = "";
+                double size = 11;
+                var textalignment = netDxf.Entities.TextAlignment.MiddleCenter;
+                var rotation = 0.0;
+
+                if (entity is netDxf.Entities.Text)
+                {
+                    var txt = entity as netDxf.Entities.Text;
+                    position = txt.Position.P3d();
+                    rotation = txt.Rotation;
+                    value = txt.Value;
+                    size = txt.Height;
+                    textalignment = txt.Alignment;
+                }
+                else if (entity is netDxf.Entities.MText)
+                {
+                    var txt = entity as netDxf.Entities.MText;
+                    position = txt.Position.P3d();
+                    rotation = txt.Rotation;
+                    value = txt.PlainText();
+                    size = txt.Height;
+                    textalignment = txt.AttachmentPoint.Get();
+                }
+
+                position = position.Mover(origem);
+
+                //todo
+                //tem que adicionar a cor e a rotação
+                var vert = VerticalAlignment.Center;
+                var horiz = HorizontalAlignment.Center;
+
+                textalignment.GetAlignment(out horiz, out vert);
+
+                var nt = TextHelixV(position, value, size,horiz, vert, rotation);
+                return nt;
+            }
+            return null;
+        }
+        public static LinesVisual3D GetHelix(this netDxf.Entities.Line l, P3d origem, double thick = 1)
+        {
+            var cor = l.GetCor();
+
+            return LineHelix(l.StartPoint.P3d(), l.EndPoint.P3d(), origem, cor.Color, thick);
+        }
+        public static List<LinesVisual3D> GetHelix(this netDxf.Entities.Polyline pol,P3d origem, double thick = 1)
+        {
+
+            var cor = pol.GetCor();
+            var lines = new List<LinesVisual3D>();
+            for (int i = 0; i < pol.Vertexes.Count; i++)
+            {
+                if (i < pol.Vertexes.Count - 1)
+                {
+                    var p1 = new P3d(pol.Vertexes[i].Position.X + origem.X, pol.Vertexes[i].Position.Y + origem.Y);
+                    var p2 = new P3d(pol.Vertexes[i + 1].Position.X + origem.X, pol.Vertexes[i + 1].Position.Y + origem.Y);
+                    var linha = LineHelix(p1, p2, origem, cor.Color, thick);
+                    lines.Add(linha);
+                }
+            }
+            return lines;
+        }
+
+        public static BillboardTextVisual3D TextHelix(this P3d origin, string value, double tam = 10)
+        {
+            var test = new BillboardTextVisual3D();
+            test.Text = value;
+            test.Foreground = Brushes.Cyan;
+            test.Position = origin.GetPoint3D();
+            test.FontSize = tam;
+             
+
+            return test;
+        }
+        public static TextVisual3D TextHelixV(this P3d origin, string value, double size = 10, HorizontalAlignment horizontal = HorizontalAlignment.Center, VerticalAlignment vertical = VerticalAlignment.Center, double Rotation = 0)
+        {
+            var text = new TextVisual3D();
+            text.Foreground = Brushes.Cyan;
+
+            text.FontSize = size / 4;
+            text.Height = size * 2;
+            text.Text = value;
+            text.UpDirection = new Vector3D(0, 1, 0);
+            text.HorizontalAlignment = horizontal;
+            text.VerticalAlignment = vertical;
+            text.Position = origin.GetPoint3D();
+
+
+            if (Rotation!=0)
+            {
+                var angle = Rotation.Round(0);
+                if(angle.Abs()!=360)
+                {
+                    var axis = new Vector3D(0,0,1);
+                    var matrix = text.Transform.Value;
+
+                    //matrix = Matrix3D.Identity;
+                    matrix.Rotate(new Quaternion(axis, angle));
+                    var m3d = new MatrixTransform3D(matrix);
+                    var vx = m3d.Transform(new Vector3D(1,0,0));
+                    var vy = m3d.Transform(new Vector3D(0,1,0));
+                    text.Transform =m3d;
+                    //text.TextDirection = new Vector3D(vx.X, vy.Y, 0);
+                }
+            }
+
+            return text;
+        }
+
+        public static List<LinesVisual3D> GetHelix(this double diameter, P3d origin, Color color, double thick = 1, double oblongo = 0, double angle = 0)
+        {
+            var linhas = new List<LinesVisual3D>();
+            var abertura = new Abertura3d(diameter, origin.X, origin.Y, oblongo, angle);
+            var ptsfr = abertura.GetContornoPlanificado();
+            for (int i = 1; i < ptsfr.Count; i++)
+            {
+                var p1 = ptsfr[i - 1];
+                var p2 = ptsfr[i];
+                var l = LineHelix(p1, p2, new P3d(), color, thick);
+                linhas.Add(l);
+            }
+            linhas.Add(LineHelix(ptsfr[ptsfr.Count - 1], ptsfr[0], new P3d(), color, thick));
+            return linhas;
+        }
+        public static LinesVisual3D LineHelix(P3d p1, P3d p2, P3d origem, Color cor, double espessura = 1)
+        {
+            var l = new LinesVisual3D();
+            l.Color = new Color() { A = cor.A, B = cor.B, G = cor.G, R = cor.R };
+            l.Thickness = espessura;
+            l.Points.Add(new Point3D(p1.X + origem.X, p1.Y + origem.Y, 0 + origem.Z));
+            l.Points.Add(new Point3D(p2.X + origem.X, p2.Y + origem.Y, 0 + origem.Z));
+            return l;
+        }
+        private static LinesVisual3D LineHelix(TriangulationPoint shp0, TriangulationPoint shp, P3d origem, Color cor, double espessura)
+        {
+            return LineHelix(new P3d(shp0.X, shp0.Y, 0), new P3d(shp.X, shp.Y, 0), origem, cor, espessura);
+        }
+        public static void AddUCSIcon(this HelixViewport3D viewPort, double comp = 100, double espessura = 1)
+        {
+            comp = comp / 1000;
+            var l1 = LineHelix(new P3d(), new P3d(comp, 0), new P3d(), Colors.Red, espessura);
+            var l2 = LineHelix(new P3d(), new P3d(0, comp), new P3d(), Colors.Red, espessura);
+            var xt = TextHelix(new P3d(comp, 0), "X");
+            var yt = TextHelix(new P3d(0, comp), "Y");
+
+            viewPort.Children.Add(l1);
+            viewPort.Children.Add(l2);
+            viewPort.Children.Add(xt);
+            viewPort.Children.Add(yt);
+        }
+    }
+}

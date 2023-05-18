@@ -3,8 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-             xmlns:local="clr-namespace:DLM.helix"
-              xmlns:HelixToolkit="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf"
+			 xmlns:h="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf"
              mc:Ignorable="d" 
              xmlns:Con="clr-namespace:Conexoes;assembly=Conexoes"
              d:DesignHeight="450" d:DesignWidth="800">
@@ -15,7 +14,7 @@
             <TabItem Header="3d" Background="Transparent" Name="tab_3d">
                 <Grid>
 
-                    <HelixToolkit:HelixViewport3D 
+                    <h:HelixViewport3D 
 						
                         SizeChanged="viewport_SizeChanged"  
                         Grid.Row="1" 
@@ -32,10 +31,10 @@
                                 <AmbientLight Color="White"/>
                             </ModelVisual3D.Content>
                         </ModelVisual3D>
-                        <HelixToolkit:HelixViewport3D.Camera>
+                        <h:HelixViewport3D.Camera>
                             <PerspectiveCamera FieldOfView="60" />
-                        </HelixToolkit:HelixViewport3D.Camera>
-                    </HelixToolkit:HelixViewport3D>
+                        </h:HelixViewport3D.Camera>
+                    </h:HelixViewport3D>
                     <Border Margin="180,30,0,0"  Background="White" VerticalAlignment="Top" HorizontalAlignment="Left" Height="25" BorderThickness="1">
                         <WrapPanel>
                             <Button  Click="abrir"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Abrir Externamente">
@@ -127,7 +126,7 @@
             </TabItem>
             <TabItem Header="2d" Background="Transparent" Name="tab_2d">
                 <Grid>
-                    <HelixToolkit:HelixViewport3D 
+                    <h:HelixViewport3D 
                     SizeChanged="viewport2D_SizeChanged" 
                     Grid.Row="1" 
                     Background="Black"
@@ -142,7 +141,8 @@
                                 <AmbientLight Color="Black"/>
                             </ModelVisual3D.Content>
                         </ModelVisual3D>
-                    </HelixToolkit:HelixViewport3D>
+						
+					</h:HelixViewport3D>
                     <WrapPanel  HorizontalAlignment="Left" Margin="5,5,0,0" VerticalAlignment="Top">
 
                         <Button Click="zom_ex" Height="30" Width="30"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Zoom Extends">

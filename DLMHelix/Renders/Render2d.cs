@@ -183,7 +183,7 @@ namespace DLM.helix
             GetHelix(entities, origem, espessura, ref linhas, ref textos);
 
 
-            
+
 
 
 
@@ -356,9 +356,16 @@ namespace DLM.helix
         {
             var text = new TextVisual3D();
             text.Foreground = Brushes.Cyan;
-
-            text.FontSize = size / 4;
-            text.Height = size * 2;
+            if (size > 10)
+            {
+                text.FontSize = size / 4;
+                text.Height = size * 2;
+            }
+            else
+            {
+                text.FontSize = 11;
+                text.Height = size;
+            }
             text.Text = value;
             text.UpDirection = new Vector3D(0, 1, 0);
             text.HorizontalAlignment = horizontal;

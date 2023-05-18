@@ -30,7 +30,8 @@ namespace DLM.helix
         {
             this.viewPort.Children.Clear();
             this.viewPort2D.Children.Clear();
-           if(!File.Exists(arq))
+
+            if (!File.Exists(arq))
             {
                 return;
             }
@@ -38,13 +39,12 @@ namespace DLM.helix
             {
                 return;
             }
-            List<MeshGeometryVisual3D> desenho = new List<MeshGeometryVisual3D>();
-            if(arq.ToUpper().EndsWith(".CAM"))
+            var desenho = new List<MeshGeometryVisual3D>();
+            if (arq.ToUpper().EndsWith(".CAM"))
             {
-            this.MVC.CAM = new ReadCAM(arq);
+                this.MVC.CAM = new ReadCAM(arq);
 
-            Recarregar();
-            Front();
+                Abrir(this.MVC.CAM);
 
             }
 
@@ -54,26 +54,16 @@ namespace DLM.helix
         {
             this.viewPort.Children.Clear();
             this.viewPort2D.Children.Clear();
+            this.tab_3d.Visibility = Visibility.Visible;
+            this.tab_3d.IsSelected = true;
+
             this.MVC.CAM = arq;
             Recarregar();
         }
         public void Abrir(Cam arq)
         {
-           
-            this.viewPort.Children.Clear();
-            this.viewPort2D.Children.Clear();
-            try
-            {
-                this.tab_3d.Visibility = Visibility.Visible;
-
-                var desenho = new List<MeshGeometryVisual3D>();
-                this.MVC.CAM = arq.GetReadCam();
-                Recarregar();
-            }
-            catch (Exception ex)
-            {
-                Conexoes.Utilz.Alerta(ex);
-            }
+            this.MVC.CAM = arq.GetReadCam();
+            Abrir(this.MVC.CAM);
         }
 
         public void Abrir(netDxf.DxfDocument dxfDocument)
@@ -84,10 +74,10 @@ namespace DLM.helix
             this.tab_3d.Visibility = Visibility.Collapsed;
             this.tab_2d.IsSelected = true;
         }
-        public Rect3D ?Bounds { get; private set; }
+        public Rect3D? Bounds { get; private set; }
         public void Recarregar()
         {
-            if(this.MVC.CAM == null) { return; }
+            if (this.MVC.CAM == null) { return; }
 
             Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
             {
@@ -112,15 +102,15 @@ namespace DLM.helix
                 Render2d.RenderHelix(this.MVC.CAM, this.viewPort2D);
                 this.viewPort.Children.Add(DLM.helix.Gera3d.Luz());
 
-                if(recs.Count>0)
+                if (recs.Count > 0)
                 {
-                    List< P3d> pts = recs.Select(x => new P3d(x.X, x.Y, x.Z,false)).ToList();
+                    List<P3d> pts = recs.Select(x => new P3d(x.X, x.Y, x.Z, false)).ToList();
                     var p1 = pts.Min();
                     var p2 = pts.Max();
 
                     Bounds = new Rect3D(p1.X, p1.Y, p1.Z, p1.DistanciaX(p2).Abs(), p1.DistanciaY(p2).Abs(), p1.DistanciaZ(p2).Abs());
                 }
-            
+
 
                 this.viewPort.ShowCoordinateSystem = true;
                 this.viewPort.ShowFieldOfView = false;
@@ -143,11 +133,11 @@ namespace DLM.helix
                 ZoomExtend();
             }));
 
-         
+
 
         }
 
- 
+
 
         private void SetView2D()
         {
@@ -171,7 +161,7 @@ namespace DLM.helix
             this.Recarregar();
             ZoomExtend();
         }
-        
+
 
 
 
@@ -227,7 +217,7 @@ namespace DLM.helix
         private void abrir(object sender, RoutedEventArgs e)
         {
             if (MVC.CAM == null) { return; }
-            if(File.Exists(MVC.CAM.Arquivo))
+            if (File.Exists(MVC.CAM.Arquivo))
             {
                 try
                 {
@@ -256,20 +246,20 @@ namespace DLM.helix
                 return;
 
             var destino = Conexoes.Utilz.SalvarArquivo("dxf");
-            if(destino!=null)
+            if (destino != null)
             {
-                if(Conexoes.Utilz.Apagar(destino))
+                if (Conexoes.Utilz.Apagar(destino))
                 {
-                this.MVC.CAM.Formato.GetDxf().Save(destino);
+                    this.MVC.CAM.Formato.GetDxf().Save(destino);
                     destino.Abrir();
                 }
             }
         }
     }
 
-    public class CAMViewerMVC :Notificar
+    public class CAMViewerMVC : Notificar
     {
-        private ReadCAM _CAM { get; set; }  
+        private ReadCAM _CAM { get; set; }
         public ReadCAM CAM
         {
             get

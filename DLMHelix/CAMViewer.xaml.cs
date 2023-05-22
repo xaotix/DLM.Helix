@@ -248,7 +248,7 @@ namespace DLM.helix
             var destino = Conexoes.Utilz.SalvarArquivo("dxf");
             if (destino != null)
             {
-                if (Conexoes.Utilz.Apagar(destino))
+                if (destino.Delete())
                 {
                     this.MVC.CAM.Formato.GetDxf().Save(destino);
                     destino.Abrir();

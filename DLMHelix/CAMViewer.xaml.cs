@@ -123,8 +123,6 @@ namespace DLM.helix
                 this.viewPort2D.ShowViewCube = false;
                 this.viewPort2D.ShowCameraTarget = false;
                 this.viewPort2D.ShowCameraInfo = false;
-
-
                 this.viewPort2D.IsRotationEnabled = false;
 
                 SetView2D();

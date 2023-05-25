@@ -161,6 +161,12 @@ namespace DLM.helix
 
         public static void RenderHelix(this netDxf.DxfDocument dxf, HelixViewport3D viewPort2D)
         {
+            viewPort2D.ShowCoordinateSystem = false;
+            viewPort2D.ShowFieldOfView = false;
+            viewPort2D.ShowViewCube = false;
+            viewPort2D.ShowCameraTarget = false;
+            viewPort2D.ShowCameraInfo = false;
+            viewPort2D.IsRotationEnabled = false;
             var origem = new P3d();
             double espessura = 1;
             var linhas = new List<LinesVisual3D>();

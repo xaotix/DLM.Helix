@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // As informações gerais sobre um assembly são controladas por
 // conjunto de atributos. Altere estes valores de atributo para modificar as informações
 // associada a um assembly.
-[assembly: AssemblyTitle("BibliotecaHelix")]
-[assembly: AssemblyDescription("BibliotecaHelix")]
+[assembly: AssemblyTitle("DLM.Helix")]
+[assembly: AssemblyDescription("DLM.Helix")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("BibliotecaHelix")]
+[assembly: AssemblyProduct("DLM.Helix")]
 [assembly: AssemblyCopyright("Daniel Lins Maciel 2023")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

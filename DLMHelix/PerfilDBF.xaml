@@ -1,0 +1,43 @@
+﻿<UserControl x:Class="DLM.helix.PerfilDBF"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+			 xmlns:local="clr-namespace:DLM.helix"
+             mc:Ignorable="d" 
+             d:DesignHeight="350" d:DesignWidth="350" Name="PerfilDBF_Controle">
+    <StackPanel>
+        <!--<Button Click="set_tipo" Content="{Binding Path=Perfil.Tipo,ElementName=PerfilDBF_Controle}"/>-->
+        <local:Texto SomenteLeitura="{Binding Path=SomenteLeitura,ElementName=PerfilDBF_Controle,Mode=TwoWay}" Titulo="COMPRIMENTO " Valor="{Binding Path=Perfil.COMPRIMENTO,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+        <local:Texto SomenteLeitura="True" Valor="{Binding Path=Perfil.Descricao,ElementName=PerfilDBF_Controle,UpdateSourceTrigger=PropertyChanged}" MaxLenght="40"/>
+        <local:Texto SomenteLeitura="True" Titulo="PESO" Valor="{Binding Path=Perfil.PESO_METRO,Mode=OneWay,UpdateSourceTrigger=PropertyChanged,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+        <local:Texto SomenteLeitura="True" Titulo="SUPERFÍCIE (M³)" Valor="{Binding Path=Perfil.SUPERFICIE,Mode=OneWay,UpdateSourceTrigger=PropertyChanged,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+        <local:Texto SomenteLeitura="True" Titulo="CORTE (mm)" Valor="{Binding Path=Perfil.CORTE,Mode=OneWay,UpdateSourceTrigger=PropertyChanged,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+        <local:Texto SomenteLeitura="True" Titulo="H Alma" Valor="{Binding Path=Perfil.H_Alma,Mode=OneWay,UpdateSourceTrigger=PropertyChanged,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+
+        <Grid Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <StackPanel>
+                <local:Texto SomenteLeitura="{Binding Path=Perfil.H_En,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Titulo="H " Valor="{Binding Path=Perfil.H,Mode=TwoWay,UpdateSourceTrigger=LostFocus,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+                <local:Texto SomenteLeitura="{Binding Path=Perfil.A_En,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Titulo="A " Valor="{Binding Path=Perfil.A,Mode=TwoWay,UpdateSourceTrigger=LostFocus,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+                <local:Texto SomenteLeitura="{Binding Path=Perfil.B_En,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Titulo="B " Valor="{Binding Path=Perfil.B,Mode=TwoWay,UpdateSourceTrigger=LostFocus,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+                <local:Texto SomenteLeitura="{Binding Path=Perfil.B1_En,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Titulo="B1" Valor="{Binding Path=Perfil.B1,Mode=TwoWay,UpdateSourceTrigger=LostFocus,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+                <local:Texto SomenteLeitura="{Binding Path=Perfil.C_En,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Titulo="C " Valor="{Binding Path=Perfil.C,Mode=TwoWay,UpdateSourceTrigger=LostFocus,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+                <local:Texto SomenteLeitura="True" Titulo="Dobras" Valor="{Binding Path=Perfil.Dobras,Mode=OneWay,UpdateSourceTrigger=PropertyChanged,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+
+            </StackPanel>
+            <StackPanel Grid.Column="1">
+                <local:Texto SomenteLeitura="{Binding Path=Perfil.C1_En,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Titulo="C1" Valor="{Binding Path=Perfil.C1,Mode=TwoWay,UpdateSourceTrigger=LostFocus,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+                <local:Texto SomenteLeitura="{Binding Path=Perfil.E_En,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Titulo="E " Valor="{Binding Path=Perfil.E,Mode=TwoWay,UpdateSourceTrigger=LostFocus,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+                <local:Texto SomenteLeitura="{Binding Path=Perfil.E1_En,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Titulo="E1" Valor="{Binding Path=Perfil.E1,Mode=TwoWay,UpdateSourceTrigger=LostFocus,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+                <local:Texto SomenteLeitura="{Binding Path=Perfil.R_En,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Titulo="R " Valor="{Binding Path=Perfil.R,Mode=TwoWay,UpdateSourceTrigger=LostFocus,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+                <local:Texto SomenteLeitura="{Binding Path=Perfil.R1_En,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Titulo="R1" Valor="{Binding Path=Perfil.R1,Mode=TwoWay,UpdateSourceTrigger=LostFocus,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+                <local:Texto SomenteLeitura="{Binding Path=Perfil.R2_En,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" Titulo="R2" Valor="{Binding Path=Perfil.R2,Mode=TwoWay,UpdateSourceTrigger=LostFocus,ElementName=PerfilDBF_Controle}" MaxLenght="10"/>
+            </StackPanel>
+        </Grid>
+        <Image Grid.Column="11" Source="{Binding Path=Perfil.ImagemCadastro,ElementName=PerfilDBF_Controle}" Stretch="Uniform" MaxHeight="250"/>
+    </StackPanel>
+</UserControl>

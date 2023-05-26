@@ -69,6 +69,9 @@
       <DependentUpon>CAMViewer.xaml</DependentUpon>
     </Compile>
     <Compile Include="core\Face3d.cs" />
+    <Compile Include="PerfilDBF.xaml.cs">
+      <DependentUpon>PerfilDBF.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -78,6 +81,9 @@
     <Compile Include="core\Utilidades.cs" />
     <Compile Include="Renders\Gera3D.cs" />
     <Compile Include="Renders\Render2d.cs" />
+    <Compile Include="Texto.xaml.cs">
+      <DependentUpon>Texto.xaml</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -92,6 +98,14 @@
     <Page Include="CAMViewer.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PerfilDBF.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Texto.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
   </ItemGroup>
   <ItemGroup>
@@ -113,12 +127,6 @@
     <Resource Include="Resources\reload.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Conexoes\DLM.csproj">
-      <Project>{def82547-9fab-457e-89bf-c10ed1dd9162}</Project>
-      <Name>DLM</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <PackageReference Include="HelixToolkit">
       <Version>2.24.0</Version>
     </PackageReference>
@@ -128,6 +136,12 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions">
       <Version>6.0.0</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\DLM\DLM.csproj">
+      <Project>{def82547-9fab-457e-89bf-c10ed1dd9162}</Project>
+      <Name>DLM</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

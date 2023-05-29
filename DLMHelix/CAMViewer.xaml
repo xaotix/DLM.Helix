@@ -10,7 +10,7 @@
     <Grid>
 
 
-        <TabControl Grid.Row="1" Background="Transparent" TabStripPlacement="Bottom">
+        <TabControl Grid.Row="1" Background="Transparent" TabStripPlacement="Right" Name="tab">
             <TabItem Header="3d" Background="Transparent" Name="tab_3d">
                 <Grid>
 
@@ -35,7 +35,7 @@
                             <PerspectiveCamera FieldOfView="60" />
                         </h:HelixViewport3D.Camera>
                     </h:HelixViewport3D>
-                    <Border Margin="180,30,0,0"  Background="White" VerticalAlignment="Top" HorizontalAlignment="Left" Height="25" BorderThickness="1">
+                    <Border Margin="180,5,0,0"  Background="White" VerticalAlignment="Top" HorizontalAlignment="Left" Height="25" BorderThickness="1">
                         <WrapPanel>
                             <Button  Click="abrir"  Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Abrir Externamente">
                                 <Image Source="Resources/open.png"/>
@@ -58,7 +58,7 @@
                             <Button Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}" ToolTip="Exportar DXF..."  Content="DXF..." Click="exp_dxf"/>
                         </WrapPanel>
                     </Border>
-                    <Border Background="White"  Margin="2,30,0,0" Width="175" VerticalAlignment="Top" HorizontalAlignment="Left" BorderThickness="1">
+                    <Border Background="White"  Margin="2,5,0,0" Width="175" VerticalAlignment="Top" HorizontalAlignment="Left" BorderThickness="1">
                         <Expander Header="{Binding CAM.Posicao}" FontSize="10">
                             <ScrollViewer>
                                 <StackPanel  Margin="2">

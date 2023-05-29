@@ -73,6 +73,9 @@ namespace DLM.helix
             dxfDocument.RenderHelix(this.viewPort2D);
             this.tab_3d.Visibility = Visibility.Collapsed;
             this.tab_2d.IsSelected = true;
+            var s = new Style();
+            s.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
+            tab.ItemContainerStyle = s;
         }
         public Rect3D? Bounds { get; private set; }
         public void Recarregar()

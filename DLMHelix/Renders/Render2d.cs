@@ -108,7 +108,7 @@ namespace DLM.helix
 
             viewPort2D.AddUCSIcon(cam.Formato.Comprimento / 10);
 
-            viewPort2D.ZoomExtents();
+            //viewPort2D.ZoomExtents();
 
         }
         private static void AddDobra(HelixViewport3D viewPort, double espessura, P3d origem, Dobra dob)
@@ -167,6 +167,7 @@ namespace DLM.helix
             viewPort2D.ShowCameraTarget = false;
             viewPort2D.ShowCameraInfo = false;
             viewPort2D.IsRotationEnabled = false;
+            viewPort2D.IsChangeFieldOfViewEnabled = false;
             var origem = new P3d();
             double espessura = 1;
             var linhas = new List<LinesVisual3D>();
@@ -209,7 +210,7 @@ namespace DLM.helix
             }
 
 
-            viewPort2D.ZoomExtents();
+            //viewPort2D.ZoomExtents();
         }
 
         private static void GetHelix(this List<EntityObject> entities, P3d origem, double espessura, ref List<LinesVisual3D> linhas, ref List<TextVisual3D> textos)

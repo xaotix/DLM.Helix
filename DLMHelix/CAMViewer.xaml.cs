@@ -59,6 +59,8 @@ namespace DLM.helix
 
             this.MVC.CAM = arq;
             Recarregar();
+            ZoomExtend();
+
         }
         public void Abrir(Cam arq)
         {
@@ -73,9 +75,10 @@ namespace DLM.helix
             dxfDocument.RenderHelix(this.viewPort2D);
             this.tab_3d.Visibility = Visibility.Collapsed;
             this.tab_2d.IsSelected = true;
-            var s = new Style();
-            s.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
-            tab.ItemContainerStyle = s;
+            var st = new Style();
+            st.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
+            tab.ItemContainerStyle = st;
+            ZoomExtend();
         }
         public Rect3D? Bounds { get; private set; }
         public void Recarregar()
@@ -160,7 +163,7 @@ namespace DLM.helix
         private void recarregar(object sender, RoutedEventArgs e)
         {
             this.Recarregar();
-            ZoomExtend();
+       
         }
 
 
@@ -233,12 +236,12 @@ namespace DLM.helix
 
         private void viewport2D_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            viewPort2D.ZoomExtents();
+         
         }
 
         private void viewport_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            viewPort.ZoomExtents();
+            ZoomExtend();
         }
 
         private void exp_dxf(object sender, RoutedEventArgs e)

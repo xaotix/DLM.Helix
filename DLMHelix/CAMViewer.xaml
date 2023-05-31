@@ -205,18 +205,14 @@
 				<Grid Margin="0">
 					<h:HelixViewport3D SizeChanged="viewport_SizeChanged"
 									   Grid.Row="1"
-									   Background="Black"
+									   Background="#FF1D1D1D"
 									   ZoomExtentsWhenLoaded="True"
 									   Name="viewPort2D"
 									   IsHeadLightEnabled="True"
 									   ZoomAroundMouseDownPoint="True"
 									   RotateAroundMouseDownPoint="True"
 									   CameraRotationMode="Turntable">
-						<ModelVisual3D>
-							<ModelVisual3D.Content>
-								<AmbientLight Color="Black" />
-							</ModelVisual3D.Content>
-						</ModelVisual3D>
+						
 
 					</h:HelixViewport3D>
 					<WrapPanel  HorizontalAlignment="Left"

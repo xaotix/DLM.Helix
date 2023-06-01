@@ -204,7 +204,7 @@ namespace DLM.helix
         {
 
             this.viewPort.ZoomExtents();
-            this.viewPort2D.ZoomExtents(this.viewPort2D.Children.FindBounds());
+            this.viewPort2D.ZoomExtents();
         }
 
         private void iso(object sender, RoutedEventArgs e)

@@ -40,13 +40,21 @@ namespace DLM.helix
                 return;
             }
             var desenho = new List<MeshGeometryVisual3D>();
-            if (arq.ToUpper().EndsWith(".CAM"))
+
+            var ext = arq.getExtensao();
+
+            if (ext == "CAM")
             {
                 this.MVC.CAM = new ReadCAM(arq);
 
                 Abrir(this.MVC.CAM);
-
             }
+            else if(ext == "DXF")
+            {
+                var dxf = arq.GetDxf();
+                Abrir(dxf);
+            }
+  
 
 
         }

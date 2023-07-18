@@ -253,6 +253,17 @@ namespace DLM.helix
                     var l = ent as netDxf.Entities.Insert;
                     l.GetHelix(origem, ref linhas, ref textos);
                 }
+                else if(ent is netDxf.Entities.LwPolyline)
+                {
+                    var l = ent as netDxf.Entities.LwPolyline;
+                    var ents = l.Explode().ToList();
+                    GetHelix(ents,origem, espessura, ref linhas, ref textos);
+                   
+                }
+                else
+                {
+                    var l = ent as netDxf.Entities.Arc;
+                }
             }
         }
         public static void GetHelix(this netDxf.Entities.Insert insert, P3d origem, ref List<LinesVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)

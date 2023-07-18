@@ -73,6 +73,10 @@
       <DependentUpon>CAMViewer.xaml</DependentUpon>
     </Compile>
     <Compile Include="core\Face3d.cs" />
+    <Compile Include="Extensoes.cs" />
+    <Compile Include="OpenViewer.xaml.cs">
+      <DependentUpon>OpenViewer.xaml</DependentUpon>
+    </Compile>
     <Compile Include="PerfilDBF.xaml.cs">
       <DependentUpon>PerfilDBF.xaml</DependentUpon>
     </Compile>
@@ -100,6 +104,10 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="CAMViewer.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="OpenViewer.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

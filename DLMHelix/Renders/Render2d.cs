@@ -235,40 +235,60 @@ namespace DLM.helix
                 }
                 else if (ent is netDxf.Entities.Text | ent is netDxf.Entities.MText)
                 {
-
                     var nl = GetText(ent, origem);
-
-
                     textos.Add(nl);
                 }
                 else if (ent is netDxf.Entities.Arc)
                 {
-                    //todo = falta fazer
                     var l = ent as netDxf.Entities.Arc;
-                    //var nl = l.GetHelix(origem, espessura);
-                    //linhas.AddRange(nl);
+
+                    var nls = l.GetHelix(origem, espessura);
+                    linhas.AddRange(nls);
                 }
                 else if (ent is netDxf.Entities.Insert)
                 {
                     var l = ent as netDxf.Entities.Insert;
                     l.GetHelix(origem, ref linhas, ref textos);
                 }
-                else if(ent is netDxf.Entities.LwPolyline)
+                else if (ent is netDxf.Entities.LwPolyline)
                 {
                     var l = ent as netDxf.Entities.LwPolyline;
                     var ents = l.Explode().ToList();
-                    GetHelix(ents,origem, espessura, ref linhas, ref textos);
-                   
+                    GetHelix(ents, origem, espessura, ref linhas, ref textos);
                 }
                 else
                 {
-                    var l = ent as netDxf.Entities.Arc;
+
                 }
             }
         }
+
+        public static List<LinesVisual3D> GetHelix(this Arc l, P3d origem, double thick, int min_vertex = 16)
+        {
+            if(min_vertex<3)
+            {
+                min_vertex = 3;
+            }
+            var linhas = new List<LinesVisual3D>();
+            var vertices = (l.PolygonalVertexes(3).ToP3d().Comprimento() / 10).Int();
+            var cor = l.GetCor();
+
+
+            if (vertices < min_vertex)
+            {
+                vertices = min_vertex;
+            }
+            var pts = l.PolygonalVertexes(vertices).ToP3d().Select(x => x.Mover(l.Center.P3d())).ToList();
+            for (int i = 1; i < pts.Count; i++)
+            {
+                var nl = LineHelix(pts[i - 1], pts[i], origem, cor.Color, thick);
+                linhas.Add(nl);
+            }
+            return linhas;
+        }
+
         public static void GetHelix(this netDxf.Entities.Insert insert, P3d origem, ref List<LinesVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)
         {
-
             var ents = insert.Explode().ToList();
             ents.GetHelix(origem, thick, ref linhas, ref texts);
         }
@@ -369,7 +389,7 @@ namespace DLM.helix
 
         public static List<LinesVisual3D> GetHelix(this Rect3D rec, P3d origem = null)
         {
-            if(origem ==null)
+            if (origem == null)
             {
                 origem = new P3d();
             }

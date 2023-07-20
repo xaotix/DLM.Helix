@@ -251,7 +251,7 @@ namespace DLM.helix
                 }
                 else if (ent is netDxf.Entities.Polyline3D)
                 {
-                    var l = ent as netDxf.Entities.Polyline2D;
+                    var l = ent as netDxf.Entities.Polyline3D;
                     l.GetHelix(origem, ref linhas, ref textos);
                 }
                 else

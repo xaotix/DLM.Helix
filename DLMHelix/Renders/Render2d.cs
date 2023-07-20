@@ -208,11 +208,17 @@ namespace DLM.helix
 
         private static void GetHelix(this List<EntityObject> entities, P3d origem, double espessura, ref List<LinesVisual3D> linhas, ref List<TextVisual3D> textos)
         {
+           
             foreach (var ent in entities)
             {
+                if(!ent.Layer.IsVisible)
+                {
+                    continue;
+                }
                 if (ent is netDxf.Entities.Line)
                 {
                     var l = ent as netDxf.Entities.Line;
+                    
                     var nl = l.GetHelix(origem, espessura);
                     linhas.Add(nl);
                 }
@@ -253,6 +259,26 @@ namespace DLM.helix
                 {
                     var l = ent as netDxf.Entities.Polyline3D;
                     l.GetHelix(origem, ref linhas, ref textos);
+                }
+                else if (ent is netDxf.Entities.Dimension)
+                {
+                    var l = ent as netDxf.Entities.Dimension;
+                }
+                else if (ent is netDxf.Entities.Leader)
+                {
+                    var l = ent as netDxf.Entities.Leader;
+                }
+                else if (ent is netDxf.Entities.Solid)
+                {
+                    var l = ent as netDxf.Entities.Solid;
+                }
+                else if (ent is netDxf.Entities.Hatch)
+                {
+                    var l = ent as netDxf.Entities.Hatch;
+                }
+                else if (ent is netDxf.Entities.Point)
+                {
+                    var l = ent as netDxf.Entities.Point;
                 }
                 else
                 {

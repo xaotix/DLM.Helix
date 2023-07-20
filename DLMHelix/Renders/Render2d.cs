@@ -178,14 +178,15 @@ namespace DLM.helix
             ControleCamera.Setar(viewPort, ControleCamera.eCameraViews.Top, 0); ;
 
             var entities = new List<netDxf.Entities.EntityObject>();
-            entities.AddRange(dxf.Lines);
-            entities.AddRange(dxf.Polylines);
-            entities.AddRange(dxf.Circles);
-            entities.AddRange(dxf.Ellipses);
-            entities.AddRange(dxf.Arcs);
-            entities.AddRange(dxf.Inserts);
-            entities.AddRange(dxf.Texts);
-            entities.AddRange(dxf.MTexts);
+            entities.AddRange(dxf.Entities.Lines);
+            entities.AddRange(dxf.Entities.Polylines2D);
+            entities.AddRange(dxf.Entities.Polylines3D);
+            entities.AddRange(dxf.Entities.Circles);
+            entities.AddRange(dxf.Entities.Ellipses);
+            entities.AddRange(dxf.Entities.Arcs);
+            entities.AddRange(dxf.Entities.Inserts);
+            entities.AddRange(dxf.Entities.Texts);
+            entities.AddRange(dxf.Entities.MTexts);
 
             GetHelix(entities, origem, espessura, ref linhas, ref textos);
 
@@ -215,23 +216,17 @@ namespace DLM.helix
                     var nl = l.GetHelix(origem, espessura);
                     linhas.Add(nl);
                 }
-                else if (ent is netDxf.Entities.Polyline)
-                {
-                    var l = ent as netDxf.Entities.Polyline;
-                    var nl = l.GetHelix(origem, espessura);
-                    linhas.AddRange(nl);
-                }
                 else if (ent is netDxf.Entities.Circle)
                 {
                     var l = ent as netDxf.Entities.Circle;
-                    var nl = l.GetHelix(origem, espessura);
-                    linhas.AddRange(nl);
+                    var nls = l.GetHelix(origem, espessura);
+                    linhas.AddRange(nls);
                 }
                 else if (ent is netDxf.Entities.Ellipse)
                 {
                     var l = ent as netDxf.Entities.Ellipse;
-                    var nl = l.GetHelix(origem, espessura);
-                    linhas.AddRange(nl);
+                    var nls = l.GetHelix(origem, espessura);
+                    linhas.AddRange(nls);
                 }
                 else if (ent is netDxf.Entities.Text | ent is netDxf.Entities.MText)
                 {
@@ -241,7 +236,6 @@ namespace DLM.helix
                 else if (ent is netDxf.Entities.Arc)
                 {
                     var l = ent as netDxf.Entities.Arc;
-
                     var nls = l.GetHelix(origem, espessura);
                     linhas.AddRange(nls);
                 }
@@ -250,11 +244,15 @@ namespace DLM.helix
                     var l = ent as netDxf.Entities.Insert;
                     l.GetHelix(origem, ref linhas, ref textos);
                 }
-                else if (ent is netDxf.Entities.LwPolyline)
+                else if (ent is netDxf.Entities.Polyline2D)
                 {
-                    var l = ent as netDxf.Entities.LwPolyline;
-                    var ents = l.Explode().ToList();
-                    GetHelix(ents, origem, espessura, ref linhas, ref textos);
+                    var l = ent as netDxf.Entities.Polyline2D;
+                    l.GetHelix(origem, ref linhas, ref textos);
+                }
+                else if (ent is netDxf.Entities.Polyline3D)
+                {
+                    var l = ent as netDxf.Entities.Polyline2D;
+                    l.GetHelix(origem, ref linhas, ref textos);
                 }
                 else
                 {
@@ -290,6 +288,16 @@ namespace DLM.helix
         public static void GetHelix(this netDxf.Entities.Insert insert, P3d origem, ref List<LinesVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)
         {
             var ents = insert.Explode().ToList();
+            ents.GetHelix(origem, thick, ref linhas, ref texts);
+        }
+        public static void GetHelix(this netDxf.Entities.Polyline2D obj, P3d origem, ref List<LinesVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)
+        {
+            var ents = obj.Explode().ToList();
+            ents.GetHelix(origem, thick, ref linhas, ref texts);
+        }
+        public static void GetHelix(this netDxf.Entities.Polyline3D obj, P3d origem, ref List<LinesVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)
+        {
+            var ents = obj.Explode().ToList();
             ents.GetHelix(origem, thick, ref linhas, ref texts);
         }
         public static List<LinesVisual3D> GetHelix(this netDxf.Entities.Circle circle, P3d origem, double thick = 1)
@@ -352,23 +360,8 @@ namespace DLM.helix
 
             return LineHelix(l.StartPoint.P3d(), l.EndPoint.P3d(), origem, cor.Color, thick);
         }
-        public static List<LinesVisual3D> GetHelix(this netDxf.Entities.Polyline pol, P3d origem, double thick = 1)
-        {
 
-            var cor = pol.GetCor();
-            var lines = new List<LinesVisual3D>();
-            for (int i = 0; i < pol.Vertexes.Count; i++)
-            {
-                if (i < pol.Vertexes.Count - 1)
-                {
-                    var p1 = new P3d(pol.Vertexes[i].Position.X + origem.X, pol.Vertexes[i].Position.Y + origem.Y);
-                    var p2 = new P3d(pol.Vertexes[i + 1].Position.X + origem.X, pol.Vertexes[i + 1].Position.Y + origem.Y);
-                    var linha = LineHelix(p1, p2, origem, cor.Color, thick);
-                    lines.Add(linha);
-                }
-            }
-            return lines;
-        }
+
 
         public static List<LinesVisual3D> GetHelix(this List<P3d> rec, P3d origem = null)
         {

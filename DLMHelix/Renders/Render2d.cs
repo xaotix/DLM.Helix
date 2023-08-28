@@ -302,7 +302,7 @@ namespace DLM.helix
             {
                 vertices = min_vertex;
             }
-            var pts = l.PolygonalVertexes(vertices).ToP3d().Select(x => x.Mover(l.Center.P3d())).ToList();
+            var pts = l.PolygonalVertexes(vertices).ToP3d().Select(x => x.Mover(l.Center.ToP3d())).ToList();
             for (int i = 1; i < pts.Count; i++)
             {
                 var nl = LineHelix(pts[i - 1], pts[i], origem, cor.Color, thick);
@@ -328,12 +328,12 @@ namespace DLM.helix
         }
         public static List<LinesVisual3D> GetHelix(this netDxf.Entities.Circle circle, P3d origem, double thick = 1)
         {
-            var linhas = (circle.Radius * 2).GetHelix(circle.Center.P3d().Mover(origem), circle.GetCor().Color, thick);
+            var linhas = (circle.Radius * 2).GetHelix(circle.Center.ToP3d().Mover(origem), circle.GetCor().Color, thick);
             return linhas;
         }
         public static List<LinesVisual3D> GetHelix(this netDxf.Entities.Ellipse circle, P3d origem, double thick = 1)
         {
-            var linhas = (circle.MinorAxis).GetHelix(circle.Center.P3d().Mover(origem), circle.GetCor().Color, thick, circle.MajorAxis - circle.MinorAxis, circle.StartAngle);
+            var linhas = (circle.MinorAxis).GetHelix(circle.Center.ToP3d().Mover(origem), circle.GetCor().Color, thick, circle.MajorAxis - circle.MinorAxis, circle.StartAngle);
             return linhas;
         }
         private static TextVisual3D GetText(netDxf.Entities.EntityObject entity, P3d origem)
@@ -350,7 +350,7 @@ namespace DLM.helix
                 if (entity is netDxf.Entities.Text)
                 {
                     var txt = entity as netDxf.Entities.Text;
-                    position = txt.Position.P3d();
+                    position = txt.Position.ToP3d();
                     rotation = txt.Rotation;
                     value = txt.Value;
                     size = txt.Height;
@@ -359,7 +359,7 @@ namespace DLM.helix
                 else if (entity is netDxf.Entities.MText)
                 {
                     var txt = entity as netDxf.Entities.MText;
-                    position = txt.Position.P3d();
+                    position = txt.Position.ToP3d();
                     rotation = txt.Rotation;
                     value = txt.PlainText();
                     size = txt.Height;
@@ -384,7 +384,7 @@ namespace DLM.helix
         {
             var cor = l.GetCor();
 
-            return LineHelix(l.StartPoint.P3d(), l.EndPoint.P3d(), origem, cor.Color, thick);
+            return LineHelix(l.StartPoint.ToP3d(), l.EndPoint.ToP3d(), origem, cor.Color, thick);
         }
 
 

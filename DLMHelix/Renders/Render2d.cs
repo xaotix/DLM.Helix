@@ -236,6 +236,23 @@ namespace DLM.helix
                 }
                 else if (ent is netDxf.Entities.Text | ent is netDxf.Entities.MText)
                 {
+                    //ignorar textos muito pequenos
+                    if(ent is netDxf.Entities.Text)
+                    {
+                        var txt = ent as netDxf.Entities.Text;
+                        if(txt.Height<1)
+                        {
+                            continue;
+                        }
+                    }
+                    else if(ent is netDxf.Entities.MText)
+                    {
+                        var txt = ent as netDxf.Entities.MText;
+                        if (txt.Height < 1)
+                        {
+                            continue;
+                        }
+                    }
                     var nl = GetText(ent, origem);
                     textos.Add(nl);
                 }

@@ -23,7 +23,7 @@
 					<h:HelixViewport3D SizeChanged="viewport_SizeChanged"
 									   Grid.Row="1"
 									   ZoomExtentsWhenLoaded="True"
-									   Name="viewPort"
+									   Name="viewPort3D"
 									   IsTouchZoomEnabled="True"
 									   Background="Black"
 									   IsHeadLightEnabled="True"

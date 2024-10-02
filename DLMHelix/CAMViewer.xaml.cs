@@ -76,7 +76,7 @@ namespace DLM.helix
             Abrir(this.MVC.CAM);
         }
 
-        public void Abrir(netDxf.DxfDocument dxfDocument)
+        public void Abrir(netDxf.DxfDocument dxfDocument, bool extend = true)
         {
             this.viewPort3D.Children.Clear();
             this.viewPort2D.Children.Clear();
@@ -86,7 +86,10 @@ namespace DLM.helix
             var st = new Style();
             st.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
             tab.ItemContainerStyle = st;
-            ZoomExtend();
+            if(extend)
+            {
+                ZoomExtend();
+            }
         }
         public Rect3D? Bounds { get; private set; }
         public void Recarregar()

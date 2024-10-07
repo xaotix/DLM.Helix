@@ -392,7 +392,7 @@ namespace DLM.helix
 
                 textalignment.GetAlignment(out horiz, out vert);
 
-                var nt = value.TextVisual3D(position, size, horiz, vert, rotation);
+                var nt = value.TextVisual3D(position, cor, size, horiz, vert, rotation);
                 return nt;
             }
             return null;
@@ -468,10 +468,20 @@ namespace DLM.helix
 
             return text;
         }
-        public static TextVisual3D TextVisual3D(this string value, P3d origin, double size = 10, HorizontalAlignment horizontal = HorizontalAlignment.Center, VerticalAlignment vertical = VerticalAlignment.Center, double Rotation = 0)
+        public static TextVisual3D TextVisual3D(this string value,
+            P3d origin,
+            System.Windows.Media.Brush color =null,
+            double size = 10, 
+            HorizontalAlignment horizontal = HorizontalAlignment.Center, 
+            VerticalAlignment vertical = VerticalAlignment.Center,
+            double Rotation = 0)
         {
+            if(color ==null)
+            {
+                color = Brushes.Cyan;
+            }
             var text = new TextVisual3D();
-            text.Foreground = Brushes.Cyan;
+            text.Foreground = color;
             if (size > 10)
             {
                 text.FontSize = size / 4;

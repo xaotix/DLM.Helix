@@ -8,19 +8,19 @@
 			 xmlns:local="clr-namespace:DLM.helix"
 			 d:DesignHeight="450"
 			 d:DesignWidth="800">
-	<Grid>
+    <Grid>
 
 
-		<TabControl Grid.Row="1"
+        <TabControl Grid.Row="1"
 					Background="Transparent"
 					TabStripPlacement="Bottom"
 					Name="tab">
-			<TabItem Header="3d"
+            <TabItem Header="3d"
 					 Background="Transparent"
 					 Name="tab_3d">
-				<Grid>
+                <Grid>
 
-					<h:HelixViewport3D SizeChanged="viewport_SizeChanged"
+                    <h:HelixViewport3D SizeChanged="viewport_SizeChanged"
 									   Grid.Row="1"
 									   ZoomExtentsWhenLoaded="True"
 									   Name="viewPort3D"
@@ -29,189 +29,179 @@
 									   IsHeadLightEnabled="True"
 									   ZoomAroundMouseDownPoint="True"
 									   RotateAroundMouseDownPoint="True">
-						<ModelVisual3D>
-							<ModelVisual3D.Content>
-								<AmbientLight Color="Black" />
-							</ModelVisual3D.Content>
-						</ModelVisual3D>
-						<h:HelixViewport3D.Camera>
-							<PerspectiveCamera FieldOfView="60" />
-						</h:HelixViewport3D.Camera>
-					</h:HelixViewport3D>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="32"/>
-                            <ColumnDefinition Width="auto"/>
-                        </Grid.ColumnDefinitions>
+                        <ModelVisual3D>
+                            <ModelVisual3D.Content>
+                                <AmbientLight Color="Black" />
+                            </ModelVisual3D.Content>
+                        </ModelVisual3D>
+                        <h:HelixViewport3D.Camera>
+                            <PerspectiveCamera FieldOfView="60" />
+                        </h:HelixViewport3D.Camera>
+                    </h:HelixViewport3D>
+                    <StackPanel Orientation="Horizontal" Height="28"
+                                    Background="Transparent"
+                                    	VerticalAlignment="Bottom"
+				HorizontalAlignment="Left">
+                        <Button  Click="abrir"
+							 
+							 ToolTip="Abrir Externamente">
+                            <Image Source="Resources/open.png" />
+                        </Button>
+                        <Button Click="zom_ex"
+							
+							ToolTip="Zoom Extends">
+                            <Image Source="Resources/zoom_ex.png" />
+                        </Button>
+                        <Button Click="iso"
+							>
+                            <Image Source="Resources/isometric.png" />
+                        </Button>
+                        <Button Click="front"
+							>
+                            <Image Source="Resources/front.png" />
+                        </Button>
+                        <Button Click="top"
+							
+							ToolTip="Top">
+                            <Image Source="Resources/top.png" />
+                        </Button>
+                        <Button Click="recarregar"
+							
+							ToolTip="Recarregar">
+                            <Image Source="Resources/reload.png" />
+                        </Button>
+                        <Button 
+							ToolTip="Exportar DXF..."
+							Content="DXF"
+                            Background="White"
+                                       FontSize="11"
+							Click="exp_dxf" FontWeight="Bold" />
+                    </StackPanel>
+                    <Border Background="White"
+					Grid.Column="1"
+					Width="175"
+					VerticalAlignment="Top"
+					HorizontalAlignment="Left"
+					BorderThickness="1">
+                        <Expander Header="{Binding CAM.Posicao}"
+						  FontSize="10">
+                            <ScrollViewer>
+                                <StackPanel  Margin="2">
+                                    <local:Texto Titulo=""
+										 Valor="{Binding Path=CAM.Descricao,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+										 SomenteLeitura="True" />
 
-                        <Border 
-						Background="White"
-                            Opacity="0.7"
-						VerticalAlignment="Top"
-						HorizontalAlignment="Left"
-						
-						BorderThickness="1">
-                            <StackPanel Orientation="Vertical">
-                                <Button  Click="abrir"
-								 Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-								 ToolTip="Abrir Externamente">
-                                    <Image Source="Resources/open.png" Width="16"/>
-                                </Button>
-                                <Button Click="zom_ex"
-								Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-								ToolTip="Zoom Extends">
-                                    <Image Source="Resources/zoom_ex.png" Width="16"/>
-                                </Button>
-                                <Button Click="iso"
-								Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
-                                    <Image Source="Resources/isometric.png" Width="16"/>
-                                </Button>
-                                <Button Click="front"
-								Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
-                                    <Image Source="Resources/front.png" Width="16"/>
-                                </Button>
-                                <Button Click="top"
-								Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-								ToolTip="Top">
-                                    <Image Source="Resources/top.png" Width="16"/>
-                                </Button>
-                                <Button Click="recarregar"
-								Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-								ToolTip="Recarregar">
-                                    <Image Source="Resources/reload.png" Width="16"/>
-                                </Button>
-                                <Button Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
-								ToolTip="Exportar DXF..."
-								Content="DXF"
-								Click="exp_dxf" FontWeight="Bold" />
-                            </StackPanel>
-                        </Border>
-                        <Border Background="White"
-						Grid.Column="1"
-						Width="175"
-						VerticalAlignment="Top"
-						HorizontalAlignment="Left"
-						BorderThickness="1">
-                            <Expander Header="{Binding CAM.Posicao}"
-							  FontSize="10">
-                                <ScrollViewer>
-                                    <StackPanel  Margin="2">
-                                        <local:Texto Titulo=""
-											 Valor="{Binding Path=CAM.Descricao,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-											 SomenteLeitura="True" />
+                                    <CheckBox Content="Tem Recorte"
+									  IsEnabled="False"
+									  IsChecked="{Binding Path=CAM.Formato.Tem_Recorte,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+                                    <local:Texto Titulo="Comp:"
+										 Valor="{Binding Path=CAM.Comprimento,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+										 SomenteLeitura="True" />
+                                    <local:Texto Titulo="Trat:"
+										 Valor="{Binding Path=CAM.Tratamento,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+										 SomenteLeitura="True" />
+                                    <local:Texto Titulo="Mat:"
+										 Valor="{Binding Path=CAM.Material,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+										 SomenteLeitura="True" />
+                                    <local:Texto Titulo="Peso:"
+										 Valor="{Binding Path=CAM.Peso,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+										 SomenteLeitura="True" />
+                                    <local:Texto Titulo="Peso Calc.:"
+										 Valor="{Binding Path=CAM.Formato.PesoCalculado,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
+										 SomenteLeitura="True" />
+                                    <local:Texto Titulo="CTF:"
+										 Valor="{Binding Path=CAM.ContraFlecha,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
+										 SomenteLeitura="True" />
 
-                                        <CheckBox Content="Tem Recorte"
-										  IsEnabled="False"
-										  IsChecked="{Binding Path=CAM.Formato.Tem_Recorte,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
-                                        <local:Texto Titulo="Comp:"
-											 Valor="{Binding Path=CAM.Comprimento,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
-											 SomenteLeitura="True" />
-                                        <local:Texto Titulo="Trat:"
-											 Valor="{Binding Path=CAM.Tratamento,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-											 SomenteLeitura="True" />
-                                        <local:Texto Titulo="Mat:"
-											 Valor="{Binding Path=CAM.Material,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-											 SomenteLeitura="True" />
-                                        <local:Texto Titulo="Peso:"
-											 Valor="{Binding Path=CAM.Peso,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-											 SomenteLeitura="True" />
-                                        <local:Texto Titulo="Peso Calc.:"
-											 Valor="{Binding Path=CAM.Formato.PesoCalculado,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}"
-											 SomenteLeitura="True" />
-                                        <local:Texto Titulo="CTF:"
-											 Valor="{Binding Path=CAM.ContraFlecha,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
-											 SomenteLeitura="True" />
+                                    <Separator></Separator>
+                                    <Label Content="Furações" />
+                                    <Label Content="LIV1" />
+                                    <Label Content="Diam X  Y" />
+                                    <DataGrid AutoGenerateColumns="False"
+									  ItemsSource="{Binding CAM.Formato.LIV1.Furacoes}"
+									  IsReadOnly="True"
+									  HeadersVisibility="None">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header=""
+														Binding="{Binding Nome}" />
+                                            <DataGridTextColumn Header="X"
+														Binding="{Binding X}" />
+                                            <DataGridTextColumn Header="Y"
+														Binding="{Binding Y}" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                    <Separator />
+                                    <Label Content="LIV2" />
+                                    <Label Content="Diam X  Y" />
+                                    <DataGrid AutoGenerateColumns="False"
+									  ItemsSource="{Binding CAM.Formato.LIV2.Furacoes}"
+									  IsReadOnly="True"
+									  HeadersVisibility="None">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header=""
+														Binding="{Binding Nome}" />
+                                            <DataGridTextColumn Header="X"
+														Binding="{Binding X}" />
+                                            <DataGridTextColumn Header="Y"
+														Binding="{Binding Y}" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                    <Separator />
+                                    <Label Content="LIV3" />
+                                    <Label Content="Diam X  Y" />
+                                    <DataGrid AutoGenerateColumns="False"
+									  ItemsSource="{Binding CAM.Formato.LIV3.Furacoes}"
+									  IsReadOnly="True"
+									  HeadersVisibility="None">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header=""
+														Binding="{Binding Nome}" />
+                                            <DataGridTextColumn Header="X"
+														Binding="{Binding X}" />
+                                            <DataGridTextColumn Header="Y"
+														Binding="{Binding Y}" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                    <Separator />
+                                    <Label Content="LIV1" />
+                                    <Label Content="Diam X  Y" />
+                                    <DataGrid AutoGenerateColumns="False"
+									  ItemsSource="{Binding CAM.Formato.LIV4.Furacoes}"
+									  IsReadOnly="True"
+									  HeadersVisibility="None">
+                                        <DataGrid.Columns>
+                                            <DataGridTextColumn Header=""
+														Binding="{Binding Nome}" />
+                                            <DataGridTextColumn Header="X"
+														Binding="{Binding X}" />
+                                            <DataGridTextColumn Header="Y"
+														Binding="{Binding Y}" />
+                                        </DataGrid.Columns>
+                                    </DataGrid>
+                                    <Separator />
+                                    <Label Content="Perfil" />
+                                    <local:PerfilDBF SomenteLeitura="True"
+											 Grid.Column="10"
+											 Perfil="{Binding Path=CAM.Perfil,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
 
-                                        <Separator></Separator>
-                                        <Label Content="Furações" />
-                                        <Label Content="LIV1" />
-                                        <Label Content="Diam X  Y" />
-                                        <DataGrid AutoGenerateColumns="False"
-										  ItemsSource="{Binding CAM.Formato.LIV1.Furacoes}"
-										  IsReadOnly="True"
-										  HeadersVisibility="None">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header=""
-															Binding="{Binding Nome}" />
-                                                <DataGridTextColumn Header="X"
-															Binding="{Binding X}" />
-                                                <DataGridTextColumn Header="Y"
-															Binding="{Binding Y}" />
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-                                        <Separator />
-                                        <Label Content="LIV2" />
-                                        <Label Content="Diam X  Y" />
-                                        <DataGrid AutoGenerateColumns="False"
-										  ItemsSource="{Binding CAM.Formato.LIV2.Furacoes}"
-										  IsReadOnly="True"
-										  HeadersVisibility="None">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header=""
-															Binding="{Binding Nome}" />
-                                                <DataGridTextColumn Header="X"
-															Binding="{Binding X}" />
-                                                <DataGridTextColumn Header="Y"
-															Binding="{Binding Y}" />
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-                                        <Separator />
-                                        <Label Content="LIV3" />
-                                        <Label Content="Diam X  Y" />
-                                        <DataGrid AutoGenerateColumns="False"
-										  ItemsSource="{Binding CAM.Formato.LIV3.Furacoes}"
-										  IsReadOnly="True"
-										  HeadersVisibility="None">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header=""
-															Binding="{Binding Nome}" />
-                                                <DataGridTextColumn Header="X"
-															Binding="{Binding X}" />
-                                                <DataGridTextColumn Header="Y"
-															Binding="{Binding Y}" />
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-                                        <Separator />
-                                        <Label Content="LIV1" />
-                                        <Label Content="Diam X  Y" />
-                                        <DataGrid AutoGenerateColumns="False"
-										  ItemsSource="{Binding CAM.Formato.LIV4.Furacoes}"
-										  IsReadOnly="True"
-										  HeadersVisibility="None">
-                                            <DataGrid.Columns>
-                                                <DataGridTextColumn Header=""
-															Binding="{Binding Nome}" />
-                                                <DataGridTextColumn Header="X"
-															Binding="{Binding X}" />
-                                                <DataGridTextColumn Header="Y"
-															Binding="{Binding Y}" />
-                                            </DataGrid.Columns>
-                                        </DataGrid>
-                                        <Separator />
-                                        <Label Content="Perfil" />
-                                        <local:PerfilDBF SomenteLeitura="True"
-												 Grid.Column="10"
-												 Perfil="{Binding Path=CAM.Perfil,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
-
-                                    </StackPanel>
-                                </ScrollViewer>
-                            </Expander>
-                        </Border>
-                    </Grid>
-					<Image Grid.Row="10"
+                                </StackPanel>
+                            </ScrollViewer>
+                        </Expander>
+                    </Border>
+                    <Image Grid.Row="10"
 						   Source="{Binding CAM.Imagem}"
 						   HorizontalAlignment="Right"
 						   VerticalAlignment="Top"
 						   Height="64"
 						   Width="64"
 						   Margin="5,30,0,0" />
-				</Grid>
-			</TabItem>
-			<TabItem Header="2d"
+                </Grid>
+            </TabItem>
+            <TabItem Header="2d"
 					 Background="Transparent"
 					 Name="tab_2d">
-				<Grid Margin="0">
-					<h:HelixViewport3D SizeChanged="viewport_SizeChanged"
+                <Grid Margin="0">
+                    <h:HelixViewport3D SizeChanged="viewport_SizeChanged"
 									   Grid.Row="1"
 									   Background="#FF1D1D1D"
 									   ZoomExtentsWhenLoaded="True"
@@ -220,43 +210,43 @@
 									   ZoomAroundMouseDownPoint="True"
 									   RotateAroundMouseDownPoint="True"
 									   CameraRotationMode="Turntable">
-						<ModelVisual3D>
-							<ModelVisual3D.Content>
-								<AmbientLight Color="Black" />
-							</ModelVisual3D.Content>
-						</ModelVisual3D>
+                        <ModelVisual3D>
+                            <ModelVisual3D.Content>
+                                <AmbientLight Color="Black" />
+                            </ModelVisual3D.Content>
+                        </ModelVisual3D>
 
-					</h:HelixViewport3D>
-					<WrapPanel  HorizontalAlignment="Left"
+                    </h:HelixViewport3D>
+                    <WrapPanel  HorizontalAlignment="Left"
 								Margin="5,5,0,0"
 								VerticalAlignment="Top">
 
-						<Button Click="zom_ex"
+                        <Button Click="zom_ex"
 								Height="30"
 								Width="30"
-								Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+								
 								ToolTip="Zoom Extends">
-							<Image Source="Resources/zoom_ex.png" />
-						</Button>
-						<Button Click="top"
+                            <Image Source="Resources/zoom_ex.png" />
+                        </Button>
+                        <Button Click="top"
 								Height="30"
 								Width="30"
-								Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}"
+								
 								ToolTip="Top">
-							<Image Source="Resources/top.png" />
-						</Button>
-						<Button Click="front"
+                            <Image Source="Resources/top.png" />
+                        </Button>
+                        <Button Click="front"
 								Height="30"
 								Width="30"
-								Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
-							<Image Source="Resources/front.png" />
-						</Button>
-					</WrapPanel>
+								>
+                            <Image Source="Resources/front.png" />
+                        </Button>
+                    </WrapPanel>
 
-				</Grid>
-			</TabItem>
-		</TabControl>
+                </Grid>
+            </TabItem>
+        </TabControl>
 
 
-	</Grid>
+    </Grid>
 </UserControl>

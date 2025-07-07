@@ -112,78 +112,79 @@
                                     <local:Texto Titulo="CTF:"
 										 Valor="{Binding Path=CAM.ContraFlecha,Mode=TwoWay,UpdateSourceTrigger=PropertyChanged}"
 										 SomenteLeitura="True" />
-
-                                    <Separator></Separator>
-                                    <Label Content="Furações" />
-                                    <Label Content="LIV1" />
-                                    <Label Content="Diam X  Y" />
-                                    <DataGrid AutoGenerateColumns="False"
-									  ItemsSource="{Binding CAM.Formato.LIV1.Furacoes}"
-									  IsReadOnly="True"
-									  HeadersVisibility="None">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header=""
-														Binding="{Binding Nome}" />
-                                            <DataGridTextColumn Header="X"
-														Binding="{Binding X}" />
-                                            <DataGridTextColumn Header="Y"
-														Binding="{Binding Y}" />
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                    <Separator />
-                                    <Label Content="LIV2" />
-                                    <Label Content="Diam X  Y" />
-                                    <DataGrid AutoGenerateColumns="False"
-									  ItemsSource="{Binding CAM.Formato.LIV2.Furacoes}"
-									  IsReadOnly="True"
-									  HeadersVisibility="None">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header=""
-														Binding="{Binding Nome}" />
-                                            <DataGridTextColumn Header="X"
-														Binding="{Binding X}" />
-                                            <DataGridTextColumn Header="Y"
-														Binding="{Binding Y}" />
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                    <Separator />
-                                    <Label Content="LIV3" />
-                                    <Label Content="Diam X  Y" />
-                                    <DataGrid AutoGenerateColumns="False"
-									  ItemsSource="{Binding CAM.Formato.LIV3.Furacoes}"
-									  IsReadOnly="True"
-									  HeadersVisibility="None">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header=""
-														Binding="{Binding Nome}" />
-                                            <DataGridTextColumn Header="X"
-														Binding="{Binding X}" />
-                                            <DataGridTextColumn Header="Y"
-														Binding="{Binding Y}" />
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                    <Separator />
-                                    <Label Content="LIV1" />
-                                    <Label Content="Diam X  Y" />
-                                    <DataGrid AutoGenerateColumns="False"
-									  ItemsSource="{Binding CAM.Formato.LIV4.Furacoes}"
-									  IsReadOnly="True"
-									  HeadersVisibility="None">
-                                        <DataGrid.Columns>
-                                            <DataGridTextColumn Header=""
-														Binding="{Binding Nome}" />
-                                            <DataGridTextColumn Header="X"
-														Binding="{Binding X}" />
-                                            <DataGridTextColumn Header="Y"
-														Binding="{Binding Y}" />
-                                        </DataGrid.Columns>
-                                    </DataGrid>
-                                    <Separator />
+                                    <Separator/>
                                     <Label Content="Perfil" />
                                     <local:PerfilDBF SomenteLeitura="True"
 											 Grid.Column="10"
 											 Perfil="{Binding Path=CAM.Perfil,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
-
+                                    <Expander Header="Furações">
+                                        <StackPanel>
+                                            <Label Content="LIV1" />
+                                            <Label Content="Diam X  Y" />
+                                            <DataGrid AutoGenerateColumns="False"
+  ItemsSource="{Binding CAM.Formato.LIV1.Furacoes}"
+  IsReadOnly="True"
+  HeadersVisibility="None">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header=""
+											Binding="{Binding Nome}" />
+                                                    <DataGridTextColumn Header="X"
+											Binding="{Binding Origem.X}" />
+                                                    <DataGridTextColumn Header="Y"
+											Binding="{Binding Origem.Y}" />
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                            <Separator />
+                                            <Label Content="LIV2" />
+                                            <Label Content="Diam X  Y" />
+                                            <DataGrid AutoGenerateColumns="False"
+  ItemsSource="{Binding CAM.Formato.LIV2.Furacoes}"
+  IsReadOnly="True"
+  HeadersVisibility="None">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header=""
+											Binding="{Binding Nome}" />
+                                                    <DataGridTextColumn Header="X"
+											Binding="{Binding Origem.X}" />
+                                                    <DataGridTextColumn Header="Y"
+											Binding="{Binding Origem.Y}" />
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                            <Separator />
+                                            <Label Content="LIV3" />
+                                            <Label Content="Diam X  Y" />
+                                            <DataGrid AutoGenerateColumns="False"
+  ItemsSource="{Binding CAM.Formato.LIV3.Furacoes}"
+  IsReadOnly="True"
+  HeadersVisibility="None">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header=""
+											Binding="{Binding Nome}" />
+                                                    <DataGridTextColumn Header="X"
+											Binding="{Binding Origem.X}" />
+                                                    <DataGridTextColumn Header="Y"
+											Binding="{Binding Origem.Y}" />
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                            <Separator />
+                                            <Label Content="LIV4" />
+                                            <Label Content="Diam X  Y" />
+                                            <DataGrid AutoGenerateColumns="False"
+  ItemsSource="{Binding CAM.Formato.LIV4.Furacoes}"
+  IsReadOnly="True"
+  HeadersVisibility="None">
+                                                <DataGrid.Columns>
+                                                    <DataGridTextColumn Header=""
+											Binding="{Binding Nome}" />
+                                                    <DataGridTextColumn Header="X"
+											Binding="{Binding Origem.X}" />
+                                                    <DataGridTextColumn Header="Y"
+											Binding="{Binding Origem.Y}" />
+                                                </DataGrid.Columns>
+                                            </DataGrid>
+                                            <Separator />
+                                        </StackPanel>
+                                    </Expander>
                                 </StackPanel>
                             </ScrollViewer>
                         </Expander>

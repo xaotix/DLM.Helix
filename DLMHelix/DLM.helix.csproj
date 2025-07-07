@@ -35,13 +35,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="HelixToolkit, Version=2.24.0.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
+    <Reference Include="DLM, Version=5.3.3.128, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>E:\Fontes\DLLS\HelixToolkit.dll</HintPath>
-    </Reference>
-    <Reference Include="HelixToolkit.Wpf, Version=2.24.0.0, Culture=neutral, PublicKeyToken=52aa3500039caf0d, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>E:\Fontes\DLLS\HelixToolkit.Wpf.dll</HintPath>
+      <HintPath>..\..\DLLS\DLM.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Extensions.Logging, Version=2.1.1.0, Culture=neutral, PublicKeyToken=adb9793829ddae60, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -145,12 +141,6 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\reload.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\DLM\DLM.csproj">
-      <Project>{def82547-9fab-457e-89bf-c10ed1dd9162}</Project>
-      <Name>DLM</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="HelixToolkit">

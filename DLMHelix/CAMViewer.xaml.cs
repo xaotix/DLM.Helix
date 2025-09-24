@@ -11,6 +11,7 @@ using System.Windows.Threading;
 using System.Windows.Media.Media3D;
 using System.Linq;
 using DLM.desenho;
+using DLM.vars;
 
 namespace DLM.helix
 {
@@ -49,12 +50,12 @@ namespace DLM.helix
 
                 Abrir(this.MVC.CAM);
             }
-            else if(ext == "DXF")
+            else if (ext == "DXF")
             {
                 var dxf = arq.GetDxf();
                 Abrir(dxf);
             }
-  
+
 
 
         }
@@ -86,7 +87,7 @@ namespace DLM.helix
             var st = new Style();
             st.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
             tab.ItemContainerStyle = st;
-            if(extend)
+            if (extend)
             {
                 ZoomExtend();
             }
@@ -178,7 +179,7 @@ namespace DLM.helix
         private void recarregar(object sender, RoutedEventArgs e)
         {
             this.Recarregar();
-       
+
         }
 
 
@@ -236,6 +237,20 @@ namespace DLM.helix
         private void abrir(object sender, RoutedEventArgs e)
         {
             if (MVC.CAM == null) { return; }
+
+            if (!File.Exists(MVC.CAM.Arquivo))
+            {
+                var dest = $"{Cfg.Init.DIR_APPDATA_TEMP}{MVC.CAM.Nome}.CAM";
+                MVC.CAM.Salvar(dest);
+                try
+                {
+                    Process.Start(dest);
+                }
+                catch (Exception)
+                {
+                }
+            }
+
             if (File.Exists(MVC.CAM.Arquivo))
             {
                 try
@@ -251,7 +266,7 @@ namespace DLM.helix
 
         private void viewport2D_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-         
+
         }
 
         private void viewport_SizeChanged(object sender, SizeChangedEventArgs e)

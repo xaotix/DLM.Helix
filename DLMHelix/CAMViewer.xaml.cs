@@ -64,6 +64,7 @@ namespace DLM.helix
             this.viewPort3D.Children.Clear();
             this.viewPort2D.Children.Clear();
             this.tab_3d.Visibility = Visibility.Visible;
+            this.tab_3d.IsSelected = true;
             //this.tab_3d.IsSelected = true;
 
             this.MVC.CAM = arq;

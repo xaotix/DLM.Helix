@@ -219,6 +219,7 @@ namespace DLM.helix
 
         public void ZoomExtend()
         {
+            this.viewPort3D.ZoomExtentsWhenLoaded = true;
 
             this.viewPort3D.ZoomExtents();
             this.viewPort2D.ZoomExtents();

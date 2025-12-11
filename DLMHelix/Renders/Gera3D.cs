@@ -196,9 +196,32 @@ namespace DLM.helix
 
         public static ModelVisual3D Luz()
         {
-            ModelVisual3D mm = new ModelVisual3D();
-            mm.Content = new AmbientLight(Colors.White);
-            return mm;
+            ////ModelVisual3D mm = new ModelVisual3D();
+            ////mm.Content = new AmbientLight(Colors.White);
+            ////return mm;
+
+            var group = new Model3DGroup();
+
+            // Luz ambiente bem forte (quase branca)
+            group.Children.Add(new AmbientLight(Color.FromRgb(200, 200, 200)));
+
+            // Luz direcional principal super clara
+            group.Children.Add(new DirectionalLight(
+                Colors.White,
+                new Vector3D(-1, -1, -1)));
+
+            // Luz direcional secundária clara
+            group.Children.Add(new DirectionalLight(
+                Color.FromRgb(220, 220, 220),
+                new Vector3D(1, -0.2, 0.5)));
+
+            // Luz de preenchimento por trás (clareia sombras)
+            group.Children.Add(new DirectionalLight(
+                Color.FromRgb(180, 180, 180),
+                new Vector3D(0, 1, -1)));
+
+            return new ModelVisual3D { Content = group };
+
         }
     }
 

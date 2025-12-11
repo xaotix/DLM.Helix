@@ -144,10 +144,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="HelixToolkit">
-      <Version>2.25.0</Version>
+      <Version>3.1.2</Version>
     </PackageReference>
     <PackageReference Include="HelixToolkit.Wpf">
-      <Version>2.25.0</Version>
+      <Version>3.1.2</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

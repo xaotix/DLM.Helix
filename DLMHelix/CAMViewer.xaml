@@ -83,8 +83,7 @@
 					VerticalAlignment="Top"
 					HorizontalAlignment="Left"
 					BorderThickness="1">
-                        <Expander Header="{Binding CAM.Posicao}"
-						  FontSize="10">
+                        <Expander Header="{Binding CAM.Posicao}" FontSize="10" MaxHeight="350">
                             <ScrollViewer>
                                 <StackPanel  Margin="2">
                                     <local:Texto Titulo=""

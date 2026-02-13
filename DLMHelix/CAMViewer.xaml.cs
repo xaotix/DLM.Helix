@@ -32,7 +32,7 @@ namespace DLM.helix
             this.viewPort3D.Children.Clear();
             this.viewPort2D.Children.Clear();
 
-            if (!File.Exists(arq))
+            if (!arq.Exists())
             {
                 return;
             }
@@ -240,7 +240,7 @@ namespace DLM.helix
         {
             if (MVC.CAM == null) { return; }
 
-            if (!File.Exists(MVC.CAM.Arquivo))
+            if (!MVC.CAM.Arquivo.Exists())
             {
                 var dest = $"{Cfg.Init.DIR_APPDATA_TEMP}{MVC.CAM.Nome}.CAM";
                 MVC.CAM.Salvar(dest);
@@ -253,7 +253,7 @@ namespace DLM.helix
                 }
             }
 
-            if (File.Exists(MVC.CAM.Arquivo))
+            if (MVC.CAM.Arquivo.Exists())
             {
                 try
                 {

@@ -1,17 +1,19 @@
-﻿using HelixToolkit.Wpf;
+﻿using Conexoes;
+using Conexoes.WPF;
+using DLM.cam;
+using DLM.desenho;
+using DLM.vars;
+using HelixToolkit.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using DLM.cam;
-using Conexoes;
-using System.Windows.Threading;
+using System.Windows.Media;
 using System.Windows.Media.Media3D;
-using System.Linq;
-using DLM.desenho;
-using DLM.vars;
+using System.Windows.Threading;
 
 namespace DLM.helix
 {
@@ -20,6 +22,37 @@ namespace DLM.helix
     /// </summary>
     public partial class CAMViewer : UserControl
     {
+        public HelixViewport3D View2D => this.viewPort2D;
+        public HelixViewport3D View3D => this.viewPort3D;
+
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="center">Centro do clique</param>
+        /// <param name="radius">Raio</param>
+        /// <param name="step">Densidade da amostragem</param>
+        /// <returns></returns>
+        public LinhaVisual3D GetLinhaSelecao(Point center, int radius = 10, int step = 1)
+        {
+            for (int dx = -radius; dx <= radius; dx += step)
+            {
+                for (int dy = -radius; dy <= radius; dy += step)
+                {
+                    var p = new Point(center.X + dx, center.Y + dy);
+
+                    var result = VisualTreeHelper.HitTest(this.View2D, p);
+
+                    if (result?.VisualHit is LinhaVisual3D line)
+                        return line;
+                }
+            }
+
+            return null;
+        }
+
+
+
 
         public CAMViewerMVC MVC { get; set; } = new CAMViewerMVC();
         public CAMViewer()
@@ -31,6 +64,7 @@ namespace DLM.helix
         {
             this.viewPort3D.Children.Clear();
             this.viewPort2D.Children.Clear();
+
 
             if (!arq.Exists())
             {

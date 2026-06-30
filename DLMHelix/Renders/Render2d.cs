@@ -52,7 +52,7 @@ namespace DLM.helix
             var mchapa2 = cam.Formato.GetLIV2_MesaParaChapa();
             var mchapa3 = cam.Formato.GetLIV3_MesaParaChapa();
             #region CHAPAS
-            if (cam.Perfil.Tipo == CAM_PERFIL_TIPO.Barra_Chata | cam.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa | cam.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa_Xadrez)
+            if (cam.Perfil.Tipo == CAM_PERFIL_TIPO.Barra_Chata || cam.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa || cam.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa_Xadrez)
             {
                 linhas.AddRange(Contorno(origem, espessura, shape, cor, ctf));
             }
@@ -239,7 +239,7 @@ namespace DLM.helix
                     var nls = l.GetHelix(origem, espessura);
                     linhas.AddRange(nls);
                 }
-                else if (ent is netDxf.Entities.Text | ent is netDxf.Entities.MText)
+                else if (ent is netDxf.Entities.Text || ent is netDxf.Entities.MText)
                 {
                     //ignorar textos muito pequenos
                     if (ent is netDxf.Entities.Text)
@@ -372,7 +372,7 @@ namespace DLM.helix
         }
         private static TextVisual3D GetText(netDxf.Entities.EntityObject entity, P3d origem)
         {
-            if (entity is netDxf.Entities.Text | entity is netDxf.Entities.MText)
+            if (entity is netDxf.Entities.Text || entity is netDxf.Entities.MText)
             {
                 var position = new P3d();
                 var cor = entity.GetCor();

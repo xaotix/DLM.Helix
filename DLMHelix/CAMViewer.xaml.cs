@@ -70,10 +70,6 @@ namespace DLM.helix
             {
                 return;
             }
-            if (arq == "" | arq == null)
-            {
-                return;
-            }
             var desenho = new List<MeshGeometryVisual3D>();
 
             var ext = arq.getExtensao();

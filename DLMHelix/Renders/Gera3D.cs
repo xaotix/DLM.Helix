@@ -54,7 +54,7 @@ namespace DLM.helix
             if (readcam.Perfil.Faces > 1)
             {
                 chliv2 = readcam.Formato.GetLIV2_MesaParaChapa();
-                if(chliv2.Comprimento == 0 | chliv2.Largura == 0)
+                if(chliv2.Comprimento == 0 || chliv2.Largura == 0)
                 {
                     chliv2 = new Face(readcam.Comprimento, readcam.Perfil.Largura_MS, readcam.Perfil.Esp_MS, readcam.Formato, FaceNum.LIV2);
                 }
@@ -107,7 +107,7 @@ namespace DLM.helix
             if (readcam.Perfil.Faces > 2)
             {
                 var chliv3 = readcam.Formato.GetLIV3_MesaParaChapa();
-                if (chliv3.Largura == 0 | chliv3.Comprimento == 0)
+                if (chliv3.Largura == 0 || chliv3.Comprimento == 0)
                 {
                     chliv3 = new Face(readcam.Comprimento, readcam.Perfil.Largura_MI, readcam.Perfil.Esp_MI, readcam.Formato, FaceNum.LIV3);
                 }
@@ -133,7 +133,7 @@ namespace DLM.helix
                     {
                         liv3.Origem.Z = liv3.GetLargura() - (liv1.Espessura / 2);
                     }
-                    if (readcam.Perfil.Tipo == CAM_PERFIL_TIPO.C_Enrigecido | readcam.Perfil.Tipo == CAM_PERFIL_TIPO.Z_Purlin)
+                    if (readcam.Perfil.Tipo == CAM_PERFIL_TIPO.C_Enrigecido || readcam.Perfil.Tipo == CAM_PERFIL_TIPO.Z_Purlin)
                     {
                         var aba1 = readcam.Formato.LIV2_Aba_Menor(false);
                         var aba2 = readcam.Formato.LIV3_Aba_Menor(false);

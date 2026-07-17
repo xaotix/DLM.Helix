@@ -35,7 +35,7 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DLM, Version=5.3.3.128, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="DLM, Version=6.0.0.27, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\DLLS\DLM.dll</HintPath>
     </Reference>

@@ -35,7 +35,7 @@
                             </ModelVisual3D.Content>
                         </ModelVisual3D>
                         <h:HelixViewport3D.Camera>
-                            <PerspectiveCamera FieldOfView="60" />
+                            <PerspectiveCamera FieldOfView="30" />
                         </h:HelixViewport3D.Camera>
                     </h:HelixViewport3D>
                     <StackPanel Orientation="Horizontal" Height="28"
@@ -113,9 +113,7 @@
 										 SomenteLeitura="True" />
                                     <Separator/>
                                     <Label Content="Perfil" />
-                                    <local:PerfilDBF SomenteLeitura="True"
-											 Grid.Column="10"
-											 Perfil="{Binding Path=CAM.Perfil,Mode=OneWay,UpdateSourceTrigger=PropertyChanged}" />
+
                                     <Expander Header="Furações">
                                         <StackPanel>
                                             <Label Content="LIV1" />

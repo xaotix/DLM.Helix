@@ -133,7 +133,7 @@ namespace DLM.helix
                 viewPort3D.Children.Clear();
                 viewPort3D.Children.Add(Gera3d.Luz());
                 //var readcam = readcam.GetCam();
-                viewPort3D.AddUCSIcon(this.MVC.CAM.Formato.Comprimento / 10);
+                viewPort3D.AddUCSIcon(this.MVC.CAM.Formato.GetComprimento() / 10);
                 viewPort3D.ShowCameraTarget = true;
 
                 //var chapas3d = Gera3d.Desenho(this.MVC.CAM);

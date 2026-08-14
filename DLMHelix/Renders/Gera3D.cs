@@ -19,20 +19,20 @@ namespace DLM.helix
 
              */
             double folga = 0.5;
-            var perfil = readcam.Perfil;
+            var perfil = readcam.Formato.Perfil;
           
 
             List<Chapa3d> chapas = new List<Chapa3d>();
 
             var chliv1 = readcam.Formato.LIV1_SemBordas();
-            var liv1 = new Chapa3d(chliv1, readcam.Perfil.Esp);
-            if (readcam.Perfil.Tipo == CAM_PERFIL_TIPO.Tubo_Redondo)
+            var liv1 = new Chapa3d(chliv1, perfil.Esp);
+            if (perfil.Tipo == CAM_PERFIL_TIPO.Tubo_Redondo)
             {
                 /*não pega recortes*/
                 var ms = new Tubo3d(perfil.Altura, perfil.Esp, readcam.Comprimento);
                 chapas.AddRange(ms.getContorno());
             }
-            else if (readcam.Perfil.Tipo == CAM_PERFIL_TIPO.Barra_Redonda)
+            else if (perfil.Tipo == CAM_PERFIL_TIPO.Barra_Redonda)
             {
                 var ms = new Tubo3d(perfil.Altura, 0.001, readcam.Comprimento);
                 chapas.AddRange(ms.getContorno());
@@ -42,28 +42,28 @@ namespace DLM.helix
                 chapas.Add(liv1);
             }
 
-            Face chliv2 = new Face();
-            Chapa3d liv2 = new Chapa3d();
+            var chliv2 = new Face();
+            var liv2 = new Chapa3d();
 
             //desloca a LIV1
-            var oliv1 = readcam.Perfil.GetOrigemLIV(FaceNum.LIV1);
-            var oliv2 = readcam.Perfil.GetOrigemLIV(FaceNum.LIV2);
-            var oliv3 = readcam.Perfil.GetOrigemLIV(FaceNum.LIV3);
+            var oliv1 = perfil.GetOrigemLIV(FaceNum.LIV1);
+            var oliv2 = perfil.GetOrigemLIV(FaceNum.LIV2);
+            var oliv3 = perfil.GetOrigemLIV(FaceNum.LIV3);
 
 
-            if (readcam.Perfil.Faces > 1)
+            if (perfil.Faces > 1)
             {
                 chliv2 = readcam.Formato.GetLIV2_MesaParaChapa();
                 if(chliv2.Comprimento == 0 || chliv2.Largura == 0)
                 {
-                    chliv2 = new Face(readcam.Comprimento, readcam.Perfil.Largura_MS, readcam.Perfil.Esp_MS, readcam.Formato, FaceNum.LIV2);
+                    chliv2 = new Face(readcam.Comprimento, perfil.Largura_MS, perfil.Esp_MS, readcam.Formato, FaceNum.LIV2);
                 }
-                liv2 = new Chapa3d(chliv2, readcam.Perfil.Esp_MS);
+                liv2 = new Chapa3d(chliv2, perfil.Esp_MS);
                 liv2.AnguloX = 90;
-                liv2.Origem.Y = -readcam.Perfil.Esp_MS / 2;
-                if (readcam.Perfil.Faces != 2)
+                liv2.Origem.Y = -perfil.Esp_MS / 2;
+                if (perfil.Faces != 2)
                 {
-                    liv1.Origem.Y = -readcam.Perfil.Esp_MS - folga;
+                    liv1.Origem.Y = -perfil.Esp_MS - folga;
                 }
 
 
@@ -73,29 +73,29 @@ namespace DLM.helix
                 }
                 else if (oliv1 == OrigemLiv.Cima_Baixo)
                 {
-                    liv2.Origem.Z = readcam.Perfil.Esp_MS / 2;
+                    liv2.Origem.Z = perfil.Esp_MS / 2;
                 }
                 else if (oliv1 == OrigemLiv.Baixo_Cima)
                 {
-                    liv2.Origem.Z = readcam.Perfil.Esp_MS / 2 - chliv2.Largura;
+                    liv2.Origem.Z = perfil.Esp_MS / 2 - chliv2.Largura;
                 }
                 chapas.Add(liv2);
 
 
-                if (readcam.Perfil.Tipo == CAM_PERFIL_TIPO.Caixao)
+                if (perfil.Tipo == CAM_PERFIL_TIPO.Caixao)
                 {
                     var liv11 = liv1.Clonar();
                     liv11.Origem.Z = perfil.Caixao_Entre_Almas / 2 - liv11.Espessura / 2;
                     liv1.Origem.Z = -perfil.Caixao_Entre_Almas / 2 + liv11.Espessura / 2;
                     chapas.Add(liv11);
                 }
-                else if (readcam.Perfil.Tipo == CAM_PERFIL_TIPO.Tubo_Quadrado)
+                else if (perfil.Tipo == CAM_PERFIL_TIPO.Tubo_Quadrado)
                 {
                     var liv11 = liv1.Clonar();
                     liv11.Origem.Z = -liv2.GetLargura() + liv1.Espessura;
                     chapas.Add(liv11);
                 }
-                else if (readcam.Perfil.Tipo == CAM_PERFIL_TIPO.Cartola)
+                else if (perfil.Tipo == CAM_PERFIL_TIPO.Cartola)
                 {
                     var liv11 = liv1.Clonar();
                     liv11.Origem.Z = -liv2.GetLargura() / 2 + liv1.Espessura / 2;
@@ -104,18 +104,18 @@ namespace DLM.helix
                 }
 
             }
-            if (readcam.Perfil.Faces > 2)
+            if (perfil.Faces > 2)
             {
                 var chliv3 = readcam.Formato.GetLIV3_MesaParaChapa();
                 if (chliv3.Largura == 0 || chliv3.Comprimento == 0)
                 {
-                    chliv3 = new Face(readcam.Comprimento, readcam.Perfil.Largura_MI, readcam.Perfil.Esp_MI, readcam.Formato, FaceNum.LIV3);
+                    chliv3 = new Face(readcam.Comprimento, perfil.Largura_MI, perfil.Esp_MI, readcam.Formato, FaceNum.LIV3);
                 }
                 if (chliv3.Largura > 0 && chliv3.Comprimento > 0)
                 {
-                    var liv3 = new Chapa3d(chliv3, readcam.Perfil.Esp_MI);
+                    var liv3 = new Chapa3d(chliv3, perfil.Esp_MI);
                     liv3.AnguloX = 90;
-                    liv3.Origem.Y = -readcam.Perfil.Esp_MI / 2 - chliv1.Largura - readcam.Perfil.Esp_MS - 2 * folga;
+                    liv3.Origem.Y = -perfil.Esp_MI / 2 - chliv1.Largura - perfil.Esp_MS - 2 * folga;
 
                     if (oliv2 == OrigemLiv.Centro)
                     {
@@ -129,27 +129,30 @@ namespace DLM.helix
                     {
                         liv3.Origem.Z = liv3.Espessura / 2 + chliv2.Largura;
                     }
-                    if (readcam.Perfil.Tipo == CAM_PERFIL_TIPO.Z_Dobrado)
+                    if (perfil.Tipo == CAM_PERFIL_TIPO.Z_Dobrado)
                     {
                         liv3.Origem.Z = liv3.GetLargura() - (liv1.Espessura / 2);
                     }
-                    if (readcam.Perfil.Tipo == CAM_PERFIL_TIPO.C_Enrigecido || readcam.Perfil.Tipo == CAM_PERFIL_TIPO.Z_Purlin)
+                    if (
+                        perfil.Tipo == CAM_PERFIL_TIPO.C_Enrigecido || 
+                        perfil.Tipo == CAM_PERFIL_TIPO.Z_Purlin
+                        )
                     {
                         var aba1 = readcam.Formato.LIV2_Aba_Menor(false);
                         var aba2 = readcam.Formato.LIV3_Aba_Menor(false);
 
-                        var ab1 = new Chapa3d(aba1, readcam.Perfil.Esp_MS);
-                        var ab2 = new Chapa3d(aba2, readcam.Perfil.Esp_MI);
+                        var ab1 = new Chapa3d(aba1, perfil.Esp_MS);
+                        var ab2 = new Chapa3d(aba2, perfil.Esp_MI);
 
                         ab1.Origem.Y = -liv3.Espessura - folga;
                         ab2.Origem.Y = -liv1.GetLargura() + ab2.GetLargura() - liv3.Espessura - folga;
 
-                        if (readcam.Perfil.Tipo == CAM_PERFIL_TIPO.C_Enrigecido)
+                        if (perfil.Tipo == CAM_PERFIL_TIPO.C_Enrigecido)
                         {
                             ab1.Origem.Z = -liv3.GetLargura() + liv3.Espessura;
                             ab2.Origem.Z = -liv3.GetLargura() + liv3.Espessura;
                         }
-                        else if (readcam.Perfil.Tipo == CAM_PERFIL_TIPO.Z_Purlin)
+                        else if (perfil.Tipo == CAM_PERFIL_TIPO.Z_Purlin)
                         {
                             ab1.Origem.Z = -liv3.GetLargura() + liv3.Espessura;
                             ab2.Origem.Z = +liv3.GetLargura() - liv3.Espessura;
@@ -159,7 +162,7 @@ namespace DLM.helix
                         chapas.Add(ab1);
                         chapas.Add(ab2);
                     }
-                    if (readcam.Perfil.Tipo != CAM_PERFIL_TIPO.Cartola)
+                    if (perfil.Tipo != CAM_PERFIL_TIPO.Cartola)
                     {
                         chapas.Add(liv3);
                     }
@@ -167,8 +170,8 @@ namespace DLM.helix
                     {
                         var chliv3_1 = readcam.Formato.LIV3_Cartola2();
                         var chliv3_2 = readcam.Formato.LIV3_Cartola1();
-                        var liv3_1 = new Chapa3d(chliv3_1, readcam.Perfil.Esp_MI);
-                        var liv3_2 = new Chapa3d(chliv3_2, readcam.Perfil.Esp_MI);
+                        var liv3_1 = new Chapa3d(chliv3_1, perfil.Esp_MI);
+                        var liv3_2 = new Chapa3d(chliv3_2, perfil.Esp_MI);
 
                         liv3_1.Origem.Z = -liv2.GetLargura() / 2 + liv1.Espessura;
                         liv3_2.Origem.Z = liv2.GetLargura() / 2 - liv1.Espessura + liv3_2.GetLargura();

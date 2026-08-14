@@ -45,14 +45,18 @@ namespace DLM.helix
             double ctf = cam.ContraFlecha;
 
             double offset = 25;
-            P3d origem_Liv2 = origem.Mover(90, offset + (cam.Perfil.Faces > 2 ? cam.Formato.LIV2.Largura : 0));
+            P3d origem_Liv2 = origem.Mover(90, offset + (cam.Formato.Perfil.Faces > 2 ? cam.Formato.LIV2.Largura : 0));
             P3d origem_Liv3 = origem.Mover(90, -cam.Formato.LIV1.Largura - cam.Formato.LIV3.Largura - offset);
 
 
             var mchapa2 = cam.Formato.GetLIV2_MesaParaChapa();
             var mchapa3 = cam.Formato.GetLIV3_MesaParaChapa();
             #region CHAPAS
-            if (cam.Perfil.Tipo == CAM_PERFIL_TIPO.Barra_Chata || cam.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa || cam.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa_Xadrez)
+            if (
+                cam.Formato.Perfil.Tipo == CAM_PERFIL_TIPO.Barra_Chata || 
+                cam.Formato.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa || 
+                cam.Formato.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa_Xadrez
+                )
             {
                 linhas.AddRange(Contorno(origem, espessura, shape, cor, ctf));
             }
@@ -77,7 +81,7 @@ namespace DLM.helix
 
             foreach (var fr0 in mchapa2.Furacoes)
             {
-                if (cam.Perfil.Faces > 2)
+                if (cam.Formato.Perfil.Faces > 2)
                 {
                     var nf = AddFuro(espessura, fr0, origem_Liv2, cor);
                     linhas.AddRange(nf);
@@ -111,7 +115,7 @@ namespace DLM.helix
             var txt = BillboardTextVisual3D(new P3d(centro.X, centro.Y, centro.Z), cam.Descricao);
             viewPort2D.Children.Add(txt);
 
-            viewPort2D.AddUCSIcon(cam.Formato.Comprimento / 10);
+            viewPort2D.AddUCSIcon(cam.Formato.GetComprimento() / 10);
 
             //viewPort2D.ZoomExtents();
 

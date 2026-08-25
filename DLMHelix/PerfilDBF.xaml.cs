@@ -53,13 +53,13 @@ namespace DLM.helix
             InitializeComponent();
         }
 
-        private void set_tipo(object sender, RoutedEventArgs e)
-        {
-            if(this.SomenteLeitura)
-            {
-                return;
-            }
-            this.Perfil.Tipo = Conexoes.Utilz.GetLista_Enumeradores<DLM.vars.CAM_PERFIL_TIPO>().ToList().ListaSelecionar();
-        }
+        //private void set_tipo(object sender, RoutedEventArgs e)
+        //{
+        //    if(this.SomenteLeitura)
+        //    {
+        //        return;
+        //    }
+        //    this.Perfil.Tipo = Conexoes.Utilz.GetLista_Enumeradores<DLM.vars.CAM_PERFIL_TIPO>().ToList().ListaSelecionar();
+        //}
     }
 }

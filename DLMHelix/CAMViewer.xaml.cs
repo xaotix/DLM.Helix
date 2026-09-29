@@ -113,8 +113,7 @@ namespace DLM.helix
             this.viewPort3D.Children.Clear();
             this.viewPort2D.Children.Clear();
             dxfDocument.RenderHelix(this.viewPort2D);
-            this.tab_3d.Visibility = Visibility.Collapsed;
-            this.tab_2d.IsSelected = true;
+            Set2D();
             var st = new Style();
             st.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
             tab.ItemContainerStyle = st;
@@ -123,6 +122,13 @@ namespace DLM.helix
                 ZoomExtend();
             }
         }
+
+        public void Set2D()
+        {
+            this.tab_3d.Visibility = Visibility.Collapsed;
+            this.tab_2d.IsSelected = true;
+        }
+
         public Rect3D? Bounds { get; private set; }
         public void Recarregar()
         {

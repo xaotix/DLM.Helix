@@ -1,17 +1,18 @@
 ﻿using Conexoes;
 using DLM.cam;
+using DLM.db;
 using DLM.desenho;
 using DLM.vars;
 using HelixToolkit.Wpf;
 using netDxf.Entities;
 using Poly2Tri.Triangulation;
 using System.Collections.Generic;
-using System.Windows.Controls;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Media3D;
 using System.Linq;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
 
 namespace DLM.helix
 {
@@ -53,8 +54,8 @@ namespace DLM.helix
             var mchapa3 = cam.Formato.GetLIV3_MesaParaChapa();
             #region CHAPAS
             if (
-                cam.Formato.Perfil.Tipo == CAM_PERFIL_TIPO.Barra_Chata || 
-                cam.Formato.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa || 
+                cam.Formato.Perfil.Tipo == CAM_PERFIL_TIPO.Barra_Chata ||
+                cam.Formato.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa ||
                 cam.Formato.Perfil.Tipo == CAM_PERFIL_TIPO.Chapa_Xadrez
                 )
             {
@@ -227,20 +228,22 @@ namespace DLM.helix
                 if (ent is netDxf.Entities.Line)
                 {
                     var l = ent as netDxf.Entities.Line;
-
-                    var nl = l.GetHelix(origem, espessura);
-                    linhas.Add(nl);
+                    var nls = l.GetHelix(origem, espessura);
+                    l.ObjetoHelix = nls;
+                    linhas.Add(nls);
                 }
                 else if (ent is netDxf.Entities.Circle)
                 {
                     var l = ent as netDxf.Entities.Circle;
                     var nls = l.GetHelix(origem, espessura);
+                    l.ObjetoHelix = nls;
                     linhas.AddRange(nls);
                 }
                 else if (ent is netDxf.Entities.Ellipse)
                 {
                     var l = ent as netDxf.Entities.Ellipse;
                     var nls = l.GetHelix(origem, espessura);
+                    l.ObjetoHelix = nls;
                     linhas.AddRange(nls);
                 }
                 else if (ent is netDxf.Entities.Text || ent is netDxf.Entities.MText)
@@ -262,13 +265,15 @@ namespace DLM.helix
                             continue;
                         }
                     }
-                    var nl = GetText(ent, origem);
-                    textos.Add(nl);
+                    var nls = GetText(ent, origem);
+
+                    textos.Add(nls);
                 }
                 else if (ent is netDxf.Entities.Arc)
                 {
                     var l = ent as netDxf.Entities.Arc;
                     var nls = l.GetHelix(origem, espessura);
+                    l.ObjetoHelix = nls;
                     linhas.AddRange(nls);
                 }
                 else if (ent is netDxf.Entities.Insert)
@@ -413,18 +418,19 @@ namespace DLM.helix
 
                 textalignment.GetAlignment(out horiz, out vert);
 
-                var nt = value.TextVisual3D(position, cor, size, horiz, vert, rotation);
-                return nt;
+                var nls = value.TextVisual3D(position, cor, size, horiz, vert, rotation);
+                entity.ObjetoHelix = nls;
+                return nls;
             }
             return null;
         }
         public static LinhaVisual3D GetHelix(this netDxf.Entities.Line linha, P3d origem, double thick = 1)
         {
             var cor = linha.GetCor();
-
-            var nv = LineHelix(linha.StartPoint.ToP3d(), linha.EndPoint.ToP3d(), origem, cor.Color, thick);
-            nv.Objeto = linha;
-            return nv;
+            var nls = LineHelix(linha.StartPoint.ToP3d(), linha.EndPoint.ToP3d(), origem, cor.Color, thick);
+            nls.Objeto = linha;
+            linha.ObjetoHelix = nls;
+            return nls;
         }
 
 

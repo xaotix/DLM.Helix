@@ -7,6 +7,7 @@
 			 mc:Ignorable="d"
 			 xmlns:local="clr-namespace:DLM.helix"
 			 d:DesignHeight="450"
+             Loaded="CAMViewer_Loaded"
 			 d:DesignWidth="800">
     <Grid>
 

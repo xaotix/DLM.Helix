@@ -60,7 +60,7 @@ namespace DLM.helix
             InitializeComponent();
             this.DataContext = MVC;
         }
-        public void Abrir(string arq)
+        public void Abrir(string arq, bool extend = true)
         {
             this.viewPort3D.Children.Clear();
             this.viewPort2D.Children.Clear();
@@ -78,18 +78,15 @@ namespace DLM.helix
             {
                 this.MVC.CAM = new ReadCAM(arq);
 
-                Abrir(this.MVC.CAM);
+                Abrir(this.MVC.CAM, extend);
             }
             else if (ext == "DXF")
             {
                 var dxf = arq.GetDxf();
-                Abrir(dxf);
+                Abrir(dxf, extend);
             }
-
-
-
         }
-        public void Abrir(ReadCAM arq)
+        public void Abrir(ReadCAM arq, bool extend = true)
         {
             this.viewPort3D.Children.Clear();
             this.viewPort2D.Children.Clear();
@@ -99,13 +96,14 @@ namespace DLM.helix
 
             this.MVC.CAM = arq;
             Recarregar();
-            ZoomExtend();
+            if (extend)
+                this.ZoomExtend();
 
         }
-        public void Abrir(Cam arq)
+        public void Abrir(Cam arq, bool extend = true)
         {
             this.MVC.CAM = arq.GetReadCam();
-            Abrir(this.MVC.CAM);
+            Abrir(this.MVC.CAM, extend);
         }
 
         public void Abrir(netDxf.DxfDocument dxfDocument, bool extend = true)
@@ -117,10 +115,10 @@ namespace DLM.helix
             var st = new Style();
             st.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
             tab.ItemContainerStyle = st;
+
+
             if (extend)
-            {
-                ZoomExtend();
-            }
+                this.ZoomExtend();
         }
 
         public void Set2D()
@@ -253,12 +251,74 @@ namespace DLM.helix
             ZoomExtend();
         }
 
+        private double _larguraMaxima2D = double.MaxValue;
+        private double _larguraMaxima3D = double.MaxValue;
+
         public void ZoomExtend()
         {
-            this.viewPort3D.ZoomExtentsWhenLoaded = true;
+            // 1. Desvincula o evento para evitar chamadas em loop durante o ZoomExtend
+            this.viewPort2D.CameraChanged -= ViewPort2D_CameraChanged;
+            this.viewPort3D.CameraChanged -= ViewPort3D_CameraChanged;
 
-            this.viewPort3D.ZoomExtents();
-            this.viewPort2D.ZoomExtents();
+            // 2. Executa o ZoomExtents padrão do Helix (0 = instantâneo)
+            this.viewPort3D.ZoomExtents(0);
+            this.viewPort2D.ZoomExtents(0);
+
+            // 3. Aplica o seu fator de aproximação (0.50)
+            AjustarEscalaCamera(this.viewPort2D, 0.50);
+            AjustarEscalaCamera(this.viewPort3D, 0.50);
+
+            // 4. Captura o valor limite exato do Width e ativa a trava
+            if (this.viewPort2D?.Camera is OrthographicCamera ortho2D)
+            {
+                _larguraMaxima2D = ortho2D.Width;
+                this.viewPort2D.CameraChanged += ViewPort2D_CameraChanged;
+            }
+
+            if (this.viewPort3D?.Camera is OrthographicCamera ortho3D)
+            {
+                _larguraMaxima3D = ortho3D.Width;
+                this.viewPort3D.CameraChanged += ViewPort3D_CameraChanged;
+            }
+        }
+
+        private void AjustarEscalaCamera(HelixViewport3D viewport, double fatorAproximacao)
+        {
+            if (viewport == null) return;
+
+            if (viewport.Camera is OrthographicCamera orthoCam)
+            {
+                orthoCam.Width *= fatorAproximacao;
+            }
+            else if (viewport.Camera is PerspectiveCamera persCam)
+            {
+                persCam.Position += persCam.LookDirection * (1.0 - fatorAproximacao);
+            }
+        }
+
+        private void ViewPort2D_CameraChanged(object sender, System.Windows.RoutedEventArgs e)
+        {
+            TravarZoomOut(this.viewPort2D, _larguraMaxima2D);
+        }
+
+        private void ViewPort3D_CameraChanged(object sender, System.Windows.RoutedEventArgs e)
+        {
+            TravarZoomOut(this.viewPort3D, _larguraMaxima3D);
+        }
+
+        private void TravarZoomOut(HelixViewport3D viewport, double limiteMaximo)
+        {
+            if (viewport?.Camera is OrthographicCamera orthoCam && orthoCam.Width > limiteMaximo)
+            {
+                // Força o ajuste no ciclo de renderização do WPF (evita o override do Helix)
+                viewport.Dispatcher.BeginInvoke(new System.Action(() =>
+                {
+                    if (viewport.Camera is OrthographicCamera cam)
+                    {
+                        cam.Width = limiteMaximo;
+                    }
+                }), System.Windows.Threading.DispatcherPriority.Render);
+            }
         }
 
         private void iso(object sender, RoutedEventArgs e)
@@ -326,6 +386,14 @@ namespace DLM.helix
                     destino.Abrir();
                 }
             }
+        }
+
+        private void CAMViewer_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.Dispatcher.BeginInvoke(new System.Action(() =>
+            {
+                this.ZoomExtend();
+            }), System.Windows.Threading.DispatcherPriority.ContextIdle);
         }
     }
 

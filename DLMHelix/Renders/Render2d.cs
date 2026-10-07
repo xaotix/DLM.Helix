@@ -260,19 +260,16 @@ namespace DLM.helix
                 if (ent is netDxf.Entities.Line line)
                 {
                     var nls = line.GetHelix(origem, espessura);
-                    line.ObjetoHelix = nls;
                     linhas.Add(nls);
                 }
                 else if (ent is netDxf.Entities.Circle circle)
                 {
                     var nls = circle.GetHelix(origem, espessura);
-                    circle.ObjetoHelix = nls;
                     linhas.AddRange(nls);
                 }
                 else if (ent is netDxf.Entities.Ellipse ellipse)
                 {
                     var nls = ellipse.GetHelix(origem, espessura);
-                    ellipse.ObjetoHelix = nls;
                     linhas.AddRange(nls);
                 }
                 else if (ent is netDxf.Entities.Text || ent is netDxf.Entities.MText)
@@ -377,7 +374,9 @@ namespace DLM.helix
         public static void GetHelix(this netDxf.Entities.Insert insert, P3d origem, ref List<LinhaVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)
         {
             var ents = insert.Explode().ToList();
+
             ents.GetHelix(origem, thick, ref linhas, ref texts);
+
         }
 
         public static void GetHelix(this netDxf.Entities.Polyline2D obj, P3d origem, ref List<LinhaVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)
@@ -395,7 +394,10 @@ namespace DLM.helix
         public static List<LinhaVisual3D> GetHelix(this netDxf.Entities.Circle circle, P3d origem, double thick = 1)
         {
             var linhas = (circle.Radius * 2).GetHelix(circle.Center.ToP3d().Mover(origem), circle.GetCor().Color, thick);
-            foreach (var item in linhas) item.Objeto = circle;
+            foreach (var item in linhas)
+            {
+                item.Objeto = circle;
+            }
             return linhas;
         }
 
@@ -439,6 +441,7 @@ namespace DLM.helix
                 textalignment.GetAlignment(out HorizontalAlignment horiz, out VerticalAlignment vert);
 
                 var nls = value.TextVisual3D(position, cor, size, horiz, vert, rotation);
+
                 entity.ObjetoHelix = nls;
                 return nls;
             }

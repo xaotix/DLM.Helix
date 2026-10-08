@@ -373,9 +373,11 @@ namespace DLM.helix
 
         public static void GetHelix(this netDxf.Entities.Insert insert, P3d origem, ref List<LinhaVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)
         {
-            var ents = insert.Explode().ToList();
+            var entsA = insert.Explode().ToList();
 
-            ents.GetHelix(origem, thick, ref linhas, ref texts);
+            var entsB = insert.Block.Entities.ToList();
+
+            entsB.GetHelix(origem, thick, ref linhas, ref texts);
 
         }
 

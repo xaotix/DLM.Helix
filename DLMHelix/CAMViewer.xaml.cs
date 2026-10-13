@@ -369,7 +369,7 @@ namespace DLM.helix
 
         private void viewport_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            ZoomExtend();
+            this.ZoomExtend();
         }
 
         private void exp_dxf(object sender, RoutedEventArgs e)

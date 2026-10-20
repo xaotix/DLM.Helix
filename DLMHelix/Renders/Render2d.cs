@@ -17,12 +17,6 @@ using System.Windows.Media.Media3D;
 
 namespace DLM.helix
 {
-    public class LinhaVisual3D : LinesVisual3D
-    {
-        public object Objeto { get; set; }
-        public Rect3D Bounds { get; set; }
-        public LinhaVisual3D() { }
-    }
 
     public static class Render2d
     {

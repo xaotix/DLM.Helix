@@ -492,11 +492,11 @@ namespace DLM.helix
             };
         }
 
-        public static TextVisual3D TextVisual3D(this string value, P3d origin, System.Windows.Media.Brush color = null, double size = 10, HorizontalAlignment horizontal = HorizontalAlignment.Center, VerticalAlignment vertical = VerticalAlignment.Center, double Rotation = 0)
+        public static TextoVisual3D TextVisual3D(this string value, P3d origin, System.Windows.Media.Brush color = null, double size = 10, HorizontalAlignment horizontal = HorizontalAlignment.Center, VerticalAlignment vertical = VerticalAlignment.Center, double Rotation = 0)
         {
             if (color == null) color = Brushes.Cyan;
 
-            var text = new TextVisual3D
+            var text = new TextoVisual3D
             {
                 Foreground = color,
                 Text = value,

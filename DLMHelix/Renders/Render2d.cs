@@ -404,7 +404,7 @@ namespace DLM.helix
             return linhas;
         }
 
-        private static TextVisual3D GetText(netDxf.Entities.EntityObject entity, P3d origem)
+        private static TextoVisual3D GetText(netDxf.Entities.EntityObject entity, P3d origem)
         {
             if (entity is netDxf.Entities.Text || entity is netDxf.Entities.MText)
             {

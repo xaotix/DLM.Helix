@@ -1,4 +1,4 @@
-﻿using Conexoes;
+using Conexoes;
 using Conexoes.WPF;
 using DLM.cam;
 using DLM.desenho;
@@ -166,11 +166,113 @@ namespace DLM.helix
         private double _ultimoTick = 0;
 
         /// <summary>
-        /// Procura uma linha próxima ao ponto, partindo do centro e expandindo em anéis.
-        /// Retorna a mais próxima e interrompe assim que encontra (antes varria sempre a área toda).
+        /// Procura uma linha próxima ao ponto no View2D.
+        /// Com câmera ortográfica, calcula diretamente a distância ponto-segmento em 2D usando Bounds
+        /// para filtrar rapidamente, evitando centenas de chamadas custosas ao VisualTreeHelper.HitTest.
         /// </summary>
         public LinhaVisual3D GetLinhaSelecao(Point center, int radius = 10, int step = 1)
         {
+            var vp = this.View2D;
+            if (vp != null && vp.ActualWidth > 0 && vp.ActualHeight > 0)
+            {
+                var orthoCam = vp.Camera as OrthographicCamera;
+                if (orthoCam != null && orthoCam.Width > 0 && ObterEixosTela(orthoCam, out Vector3D right, out Vector3D up))
+                {
+                    double unidadesPorPixel = orthoCam.Width / vp.ActualWidth;
+                    double cx = center.X - (vp.ActualWidth * 0.5);
+                    double cy = center.Y - (vp.ActualHeight * 0.5);
+
+                    Point3D cursorMundo = orthoCam.Position + (right * (cx * unidadesPorPixel)) - (up * (cy * unidadesPorPixel));
+
+                    bool vistaTopPadrao = Math.Abs(right.X - 1.0) < 1e-6 && Math.Abs(up.Y - 1.0) < 1e-6;
+                    double cursorX = vistaTopPadrao ? cursorMundo.X : (right.X * cursorMundo.X + right.Y * cursorMundo.Y + right.Z * cursorMundo.Z);
+                    double cursorY = vistaTopPadrao ? cursorMundo.Y : (up.X * cursorMundo.X + up.Y * cursorMundo.Y + up.Z * cursorMundo.Z);
+
+                    double raioMundoBase = Math.Max(radius, 1) * unidadesPorPixel;
+                    double tolEmpateQuad = (1.5 * unidadesPorPixel) * (1.5 * unidadesPorPixel);
+
+                    LinhaVisual3D melhorLinha = null;
+                    double melhorDistQuad = double.MaxValue;
+                    double melhorTamanhoBounds = double.MaxValue;
+
+                    var children = vp.Children;
+                    int count = children.Count;
+                    for (int i = 0; i < count; i++)
+                    {
+                        var linha = children[i] as LinhaVisual3D;
+                        if (linha == null) continue;
+
+                        var pts = linha.Points;
+                        if (pts == null || pts.Count < 2) continue;
+
+                        double margemExtra = (linha.Thickness * 0.5) * unidadesPorPixel;
+                        double limiteMundo = raioMundoBase + margemExtra;
+                        double limiteQuad = limiteMundo * limiteMundo;
+
+                        Rect3D b = linha.Bounds;
+                        double tamBounds = b.IsEmpty ? double.MaxValue : (b.SizeX + b.SizeY);
+
+                        if (vistaTopPadrao)
+                        {
+                            if (!b.IsEmpty)
+                            {
+                                if (cursorX < b.X - limiteMundo || cursorX > b.X + b.SizeX + limiteMundo ||
+                                    cursorY < b.Y - limiteMundo || cursorY > b.Y + b.SizeY + limiteMundo)
+                                {
+                                    continue;
+                                }
+                            }
+
+                            int ptCount = pts.Count;
+                            for (int j = 0; j + 1 < ptCount; j += 2)
+                            {
+                                Point3D p1 = pts[j];
+                                Point3D p2 = pts[j + 1];
+                                double dQuad = DistanciaPontoSegmentoQuad2D(cursorX, cursorY, p1.X, p1.Y, p2.X, p2.Y);
+                                if (dQuad <= limiteQuad)
+                                {
+                                    bool maisPerto = dQuad < melhorDistQuad;
+                                    if (melhorLinha != null && dQuad <= tolEmpateQuad && melhorDistQuad <= tolEmpateQuad)
+                                    {
+                                        maisPerto = tamBounds <= melhorTamanhoBounds;
+                                    }
+
+                                    if (maisPerto)
+                                    {
+                                        melhorDistQuad = dQuad;
+                                        melhorLinha = linha;
+                                        melhorTamanhoBounds = tamBounds;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            int ptCount = pts.Count;
+                            for (int j = 0; j + 1 < ptCount; j += 2)
+                            {
+                                Point3D p1 = pts[j];
+                                Point3D p2 = pts[j + 1];
+                                double x1 = right.X * p1.X + right.Y * p1.Y + right.Z * p1.Z;
+                                double y1 = up.X * p1.X + up.Y * p1.Y + up.Z * p1.Z;
+                                double x2 = right.X * p2.X + right.Y * p2.Y + right.Z * p2.Z;
+                                double y2 = up.X * p2.X + up.Y * p2.Y + up.Z * p2.Z;
+
+                                double dQuad = DistanciaPontoSegmentoQuad2D(cursorX, cursorY, x1, y1, x2, y2);
+                                if (dQuad <= limiteQuad && dQuad <= melhorDistQuad)
+                                {
+                                    melhorDistQuad = dQuad;
+                                    melhorLinha = linha;
+                                    melhorTamanhoBounds = tamBounds;
+                                }
+                            }
+                        }
+                    }
+
+                    return melhorLinha;
+                }
+            }
+
             if (step < 1) step = 1;
 
             var hit = TestarLinha(center);
@@ -199,6 +301,24 @@ namespace DLM.helix
                 }
             }
             return null;
+        }
+
+        private static double DistanciaPontoSegmentoQuad2D(double px, double py, double x1, double y1, double x2, double y2)
+        {
+            double dx = x2 - x1;
+            double dy = y2 - y1;
+            double lenQuad = dx * dx + dy * dy;
+            if (lenQuad > 1e-12)
+            {
+                double t = ((px - x1) * dx + (py - y1) * dy) / lenQuad;
+                if (t < 0.0) t = 0.0;
+                else if (t > 1.0) t = 1.0;
+                x1 += t * dx;
+                y1 += t * dy;
+            }
+            double ex = px - x1;
+            double ey = py - y1;
+            return ex * ex + ey * ey;
         }
 
         private LinhaVisual3D TestarLinha(Point p)
@@ -287,8 +407,12 @@ namespace DLM.helix
 
         private void AtualizarBounds()
         {
-            _est2D.Bounds = Visual3DHelper.FindBounds(this.viewPort2D.Children);
-            _est3D.Bounds = Visual3DHelper.FindBounds(this.viewPort3D.Children);
+            _est2D.Bounds = this.viewPort2D.Children.Count > 0
+                ? Visual3DHelper.FindBounds(this.viewPort2D.Children)
+                : Rect3D.Empty;
+            _est3D.Bounds = this.viewPort3D.Children.Count > 0
+                ? Visual3DHelper.FindBounds(this.viewPort3D.Children)
+                : Rect3D.Empty;
             _est2D.CacheValido = false;
             _est3D.CacheValido = false;
             _boundsSujos = false;
@@ -296,8 +420,8 @@ namespace DLM.helix
 
         private void LimparViewports()
         {
-            this.viewPort3D.Children.Clear();
-            this.viewPort2D.Children.Clear();
+            Render2d.LimparViewport(this.viewPort3D);
+            Render2d.LimparViewport(this.viewPort2D);
             _boundsSujos = true;
             _est2D.Resetar();
             _est3D.Resetar();
@@ -573,7 +697,7 @@ namespace DLM.helix
 
             Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
             {
-                viewPort3D.Children.Clear();
+                Render2d.LimparViewport(viewPort3D);
                 viewPort3D.Children.Add(Gera3d.Luz());
                 viewPort3D.AddUCSIcon(this.MVC.CAM.Formato.GetComprimento() / 10);
                 viewPort3D.ShowCameraTarget = true;
@@ -642,8 +766,19 @@ namespace DLM.helix
             _est2D.Resetar();
             _est3D.Resetar();
 
-            this.viewPort3D.ZoomExtents(0);
-            this.viewPort2D.ZoomExtents(0);
+            // FindBounds percorre todos os filhos: calcula uma única vez e reaproveita no ZoomExtents
+            if (_boundsSujos)
+                AtualizarBounds();
+
+            if (!_est3D.Bounds.IsEmpty)
+                this.viewPort3D.ZoomExtents(_est3D.Bounds, 0);
+            else if (this.viewPort3D.Children.Count > 0)
+                this.viewPort3D.ZoomExtents(0);
+
+            if (!_est2D.Bounds.IsEmpty)
+                this.viewPort2D.ZoomExtents(_est2D.Bounds, 0);
+            else if (this.viewPort2D.Children.Count > 0)
+                this.viewPort2D.ZoomExtents(0);
 
             AjustarEscalaCamera(this.viewPort2D, 0.50);
             AjustarEscalaCamera(this.viewPort3D, 0.50);
@@ -657,10 +792,6 @@ namespace DLM.helix
             {
                 _est3D.LarguraBase = ortho3D.Width > 0 ? ortho3D.Width : 100;
             }
-
-            // FindBounds percorre todos os filhos: só refaz quando o conteúdo mudou
-            if (_boundsSujos)
-                AtualizarBounds();
 
             _isInitializedZoom = true;
         }

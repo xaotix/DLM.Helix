@@ -1,4 +1,4 @@
-﻿using DLM.desenho;
+using DLM.desenho;
 using HelixToolkit.Wpf;
 using Poly2Tri.Triangulation.Polygon;
 using System;
@@ -68,7 +68,6 @@ namespace DLM.helix._3d
             List<Poly2Tri.Triangulation.Delaunay.DelaunayTriangle> retorno = new List<Poly2Tri.Triangulation.Delaunay.DelaunayTriangle>();
             try
             {
-                GetPoligono().ClearTriangles();
                 Poly2Tri.Triangulation.Polygon.Polygon pTemp = this.GetPoligono();
                 Poly2Tri.P2T.Triangulate(pTemp);
                 retorno.AddRange(pTemp.Triangles);
@@ -137,3 +136,4 @@ namespace DLM.helix._3d
 
 
 }
+

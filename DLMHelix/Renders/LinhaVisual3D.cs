@@ -1,5 +1,7 @@
-﻿using Conexoes;
+using Conexoes;
 using HelixToolkit.Wpf;
+using System.Collections.Concurrent;
+using System.Windows.Media;
 using System.Windows.Media.Media3D;
 
 namespace DLM.helix
@@ -14,22 +16,41 @@ namespace DLM.helix
         {
             if (_cor != null)
             {
-                this.Color = _cor.Value;
+                var alvo = _cor.Value;
                 _cor = null;
+                if (this.Color != alvo)
+                {
+                    this.Color = alvo;
+                }
             }
         }
         public void SetCor(System.Windows.Media.Color cor)
         {
-            if(_cor==null)
+            if (_cor == null)
             {
                 _cor = this.Color;
             }
-            this.Color = cor;
+            if (this.Color != cor)
+            {
+                this.Color = cor;
+            }
         }
         public LinhaVisual3D() { }
     }
     public class TextoVisual3D : TextVisual3D
     {
+        private static readonly ConcurrentDictionary<Color, SolidColorBrush> _brushCache = new ConcurrentDictionary<Color, SolidColorBrush>();
+
+        internal static SolidColorBrush GetBrush(Color cor)
+        {
+            return _brushCache.GetOrAdd(cor, c =>
+            {
+                var b = new SolidColorBrush(c);
+                b.Freeze();
+                return b;
+            });
+        }
+
         public object Objeto { get; set; }
         public Rect3D Bounds { get; set; }
 
@@ -39,24 +60,36 @@ namespace DLM.helix
         {
             if (_cor != null)
             {
-                this.Foreground = _cor.Value.ToBrush();
+                var alvo = _cor.Value;
                 _cor = null;
+                if (this.Foreground.ToColor() != alvo)
+                {
+                    this.Foreground = GetBrush(alvo);
+                }
             }
         }
         public void SetCor(System.Windows.Media.Color cor)
         {
+            var atual = this.Foreground.ToColor();
             if (_cor == null)
             {
-                _cor = this.Foreground.ToColor();
+                _cor = atual;
             }
-            this.Foreground = cor.ToBrush();
+            if (atual != cor)
+            {
+                this.Foreground = GetBrush(cor);
+            }
         }
         public void ResetTexto()
         {
             if (_texto != null)
             {
-                this.Text = _texto;
+                var alvo = _texto;
                 _texto = null;
+                if (this.Text != alvo)
+                {
+                    this.Text = alvo;
+                }
             }
         }
         public void SetTexto(string txt)
@@ -65,7 +98,10 @@ namespace DLM.helix
             {
                 _texto = this.Text;
             }
-            this.Text = txt;
+            if (this.Text != txt)
+            {
+                this.Text = txt;
+            }
         }
         public TextoVisual3D() { }
     }

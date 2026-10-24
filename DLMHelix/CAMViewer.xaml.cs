@@ -70,6 +70,9 @@ namespace DLM.helix
             {
                 _inercia = Math.Max(0, Math.Min(0.99, value));
                 ConfigurarNavegacao(this.viewPort2D);
+            this.viewPort2D.IsRotationEnabled = false;
+            this.viewPort2D.RotateGesture = null;
+            this.viewPort2D.RotateGesture2 = null;
                 ConfigurarNavegacao(this.viewPort3D);
             }
         }
@@ -321,6 +324,117 @@ namespace DLM.helix
             return ex * ex + ey * ey;
         }
 
+        public static bool SegmentoInterceptaRetangulo2D(double x1, double y1, double x2, double y2, double minX, double minY, double maxX, double maxY)
+        {
+            if (x1 >= minX && x1 <= maxX && y1 >= minY && y1 <= maxY) return true;
+            if (x2 >= minX && x2 <= maxX && y2 >= minY && y2 <= maxY) return true;
+
+            if (x1 < minX && x2 < minX) return false;
+            if (x1 > maxX && x2 > maxX) return false;
+            if (y1 < minY && y2 < minY) return false;
+            if (y1 > maxY && y2 > maxY) return false;
+
+            double dx = x2 - x1;
+            double dy = y2 - y1;
+
+            double[] p = { -dx, dx, -dy, dy };
+            double[] q = { x1 - minX, maxX - x1, y1 - minY, maxY - y1 };
+
+            double t0 = 0.0;
+            double t1 = 1.0;
+
+            for (int i = 0; i < 4; i++)
+            {
+                if (Math.Abs(p[i]) < 1e-12)
+                {
+                    if (q[i] < 0) return false;
+                }
+                else
+                {
+                    double t = q[i] / p[i];
+                    if (p[i] < 0)
+                    {
+                        if (t > t1) return false;
+                        if (t > t0) t0 = t;
+                    }
+                    else
+                    {
+                        if (t < t0) return false;
+                        if (t < t1) t1 = t;
+                    }
+                }
+            }
+
+            return t0 <= t1;
+        }
+
+        public List<LinhaVisual3D> GetLinhasSelecaoRetangulo(Rect rectTela)
+        {
+            var retorno = new List<LinhaVisual3D>();
+            var vp = this.View2D;
+            if (vp == null || vp.ActualWidth <= 0 || vp.ActualHeight <= 0) return retorno;
+
+            var orthoCam = vp.Camera as OrthographicCamera;
+            if (orthoCam == null || orthoCam.Width <= 0 || !ObterEixosTela(orthoCam, out Vector3D right, out Vector3D up))
+                return retorno;
+
+            double unidadesPorPixel = orthoCam.Width / vp.ActualWidth;
+
+            double xMinTela = rectTela.Left - (vp.ActualWidth * 0.5);
+            double xMaxTela = rectTela.Right - (vp.ActualWidth * 0.5);
+            double yMinTela = rectTela.Top - (vp.ActualHeight * 0.5);
+            double yMaxTela = rectTela.Bottom - (vp.ActualHeight * 0.5);
+
+            double rLeft = xMinTela * unidadesPorPixel;
+            double rRight = xMaxTela * unidadesPorPixel;
+            double rTop = -yMinTela * unidadesPorPixel;
+            double rBottom = -yMaxTela * unidadesPorPixel;
+
+            Point3D pMundoMin = orthoCam.Position + (right * rLeft) + (up * rBottom);
+            Point3D pMundoMax = orthoCam.Position + (right * rRight) + (up * rTop);
+
+            double boxMinX = Math.Min(pMundoMin.X, pMundoMax.X);
+            double boxMaxX = Math.Max(pMundoMin.X, pMundoMax.X);
+            double boxMinY = Math.Min(pMundoMin.Y, pMundoMax.Y);
+            double boxMaxY = Math.Max(pMundoMin.Y, pMundoMax.Y);
+
+            var children = vp.Children;
+            int count = children.Count;
+            for (int i = 0; i < count; i++)
+            {
+                var linha = children[i] as LinhaVisual3D;
+                if (linha == null) continue;
+
+                var pts = linha.Points;
+                if (pts == null || pts.Count < 2) continue;
+
+                Rect3D b = linha.Bounds;
+                if (!b.IsEmpty)
+                {
+                    if (b.X + b.SizeX < boxMinX || b.X > boxMaxX ||
+                        b.Y + b.SizeY < boxMinY || b.Y > boxMaxY)
+                    {
+                        continue;
+                    }
+                }
+
+                int ptCount = pts.Count;
+                for (int j = 0; j + 1 < ptCount; j += 2)
+                {
+                    Point3D p1 = pts[j];
+                    Point3D p2 = pts[j + 1];
+
+                    if (SegmentoInterceptaRetangulo2D(p1.X, p1.Y, p2.X, p2.Y, boxMinX, boxMinY, boxMaxX, boxMaxY))
+                    {
+                        retorno.Add(linha);
+                        break;
+                    }
+                }
+            }
+
+            return retorno;
+        }
+
         private LinhaVisual3D TestarLinha(Point p)
         {
             var result = VisualTreeHelper.HitTest(this.View2D, p);
@@ -338,6 +452,9 @@ namespace DLM.helix
             GarantirCameraOrtografica(this.viewPort3D);
 
             ConfigurarNavegacao(this.viewPort2D);
+            this.viewPort2D.IsRotationEnabled = false;
+            this.viewPort2D.RotateGesture = null;
+            this.viewPort2D.RotateGesture2 = null;
             ConfigurarNavegacao(this.viewPort3D);
 
             this.viewPort2D.PreviewMouseWheel += ViewPort_PreviewMouseWheel;
@@ -679,6 +796,9 @@ namespace DLM.helix
         {
             this.tab_3d.Visibility = Visibility.Collapsed;
             this.tab_2d.IsSelected = true;
+            this.viewPort2D.IsRotationEnabled = false;
+            this.viewPort2D.RotateGesture = null;
+            this.viewPort2D.RotateGesture2 = null;
         }
 
         public Rect3D? Bounds { get; private set; }

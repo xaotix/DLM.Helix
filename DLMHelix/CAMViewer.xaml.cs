@@ -1,4 +1,4 @@
-using Conexoes;
+﻿using Conexoes;
 using Conexoes.WPF;
 using DLM.cam;
 using DLM.desenho;
@@ -460,7 +460,20 @@ namespace DLM.helix
             this.viewPort2D.PreviewMouseWheel += ViewPort_PreviewMouseWheel;
             this.viewPort3D.PreviewMouseWheel += ViewPort_PreviewMouseWheel;
 
+            this.viewPort2D.LostMouseCapture += ViewPort_LimparCursor;
+            this.viewPort2D.PreviewMouseUp += ViewPort_LimparCursor;
+            this.viewPort3D.LostMouseCapture += ViewPort_LimparCursor;
+            this.viewPort3D.PreviewMouseUp += ViewPort_LimparCursor;
+
             this.Unloaded += CAMViewer_Unloaded;
+        }
+
+        private void ViewPort_LimparCursor(object sender, MouseEventArgs e)
+        {
+            if (Mouse.OverrideCursor != null)
+            {
+                Mouse.OverrideCursor = null;
+            }
         }
 
         private void IniciarMonitoramento()
@@ -787,9 +800,20 @@ namespace DLM.helix
             st.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
             tab.ItemContainerStyle = st;
 
-            _isInitializedZoom = false;
             if (extend)
+            {
+                _isInitializedZoom = false;
                 this.ZoomExtend();
+            }
+            else
+            {
+                AtualizarBounds();
+                if (this.viewPort2D?.Camera is OrthographicCamera ortho2D && _est2D.LarguraBase <= 1.0 && ortho2D.Width > 0)
+                {
+                    _est2D.LarguraBase = ortho2D.Width;
+                }
+                _isInitializedZoom = true;
+            }
         }
 
         public void Set2D()
@@ -879,6 +903,11 @@ namespace DLM.helix
 
         public void ZoomExtend()
         {
+            if (Mouse.OverrideCursor != null)
+            {
+                Mouse.OverrideCursor = null;
+            }
+
             GarantirCameraOrtografica(this.viewPort3D);
             GarantirCameraOrtografica(this.viewPort2D);
 
@@ -887,8 +916,7 @@ namespace DLM.helix
             _est3D.Resetar();
 
             // FindBounds percorre todos os filhos: calcula uma única vez e reaproveita no ZoomExtents
-            if (_boundsSujos)
-                AtualizarBounds();
+            AtualizarBounds();
 
             if (!_est3D.Bounds.IsEmpty)
                 this.viewPort3D.ZoomExtents(_est3D.Bounds, 0);

@@ -791,8 +791,9 @@ namespace DLM.helix
             Abrir(this.MVC.CAM, extend);
         }
 
-        public void Abrir(netDxf.DxfDocument dxfDocument, bool extend = true)
+        public void Abrir(netDxf.DxfDocument dxfDocument, bool extend = true, int maxZoom = 15)
         {
+            this.PassosZoomIn = maxZoom;
             LimparViewports();
             dxfDocument.RenderHelix(this.viewPort2D);
             Set2D();

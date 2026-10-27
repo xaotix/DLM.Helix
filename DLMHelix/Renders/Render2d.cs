@@ -475,6 +475,7 @@ namespace DLM.helix
                 Position = pos,
                 FontSize = fontSize,
                 Height = height,
+                Angle = Rotation,
                 Bounds = new Rect3D(pos.X, pos.Y, pos.Z, 0, 0, 0),
                 Text = value
             };

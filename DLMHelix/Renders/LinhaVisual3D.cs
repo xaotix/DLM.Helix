@@ -26,9 +26,9 @@ namespace DLM.helix
         }
         public void SetCor(System.Windows.Media.Color cor)
         {
-            if (_cor == null)
+            if (this._cor == null)
             {
-                _cor = this.Color;
+                this._cor = this.Color;
             }
             if (this.Color != cor)
             {
@@ -71,9 +71,9 @@ namespace DLM.helix
         public void SetCor(System.Windows.Media.Color cor)
         {
             var atual = this.Foreground.ToColor();
-            if (_cor == null)
+            if (this._cor == null)
             {
-                _cor = atual;
+                this._cor = atual;
             }
             if (atual != cor)
             {
@@ -85,7 +85,7 @@ namespace DLM.helix
             if (_texto != null)
             {
                 var alvo = _texto;
-                _texto = null;
+                this._texto = null;
                 if (this.Text != alvo)
                 {
                     this.Text = alvo;
@@ -94,9 +94,9 @@ namespace DLM.helix
         }
         public void SetTexto(string txt)
         {
-            if (_texto == null)
+            if (this._texto == null)
             {
-                _texto = this.Text;
+                this._texto = this.Text;
             }
             if (this.Text != txt)
             {

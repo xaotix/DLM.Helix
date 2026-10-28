@@ -476,6 +476,7 @@ namespace DLM.helix
                 FontSize = fontSize,
                 Height = height,
                 Angle = Rotation,
+                Background = System.Windows.Media.Brushes.Black,
                 Bounds = new Rect3D(pos.X, pos.Y, pos.Z, 0, 0, 0),
                 Text = value
             };

@@ -67,6 +67,14 @@
     <Reference Include="System.Xml" />
     <Reference Include="WindowsBase" />
     <Reference Include="WindowsFormsIntegration" />
+    <Reference Include="HelixToolkit">
+      <HintPath>$(USERPROFILE)\.nuget\packages\helixtoolkit\3.1.2\lib\net48\HelixToolkit.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="HelixToolkit.Wpf">
+      <HintPath>$(USERPROFILE)\.nuget\packages\helixtoolkit.wpf\3.1.2\lib\net48\HelixToolkit.Wpf.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="3d\Abertura3d.cs" />

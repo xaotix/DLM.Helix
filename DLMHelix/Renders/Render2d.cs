@@ -1,4 +1,4 @@
-using Conexoes;
+﻿using Conexoes;
 using DLM.cam;
 using DLM.db;
 using DLM.desenho;
@@ -288,7 +288,29 @@ namespace DLM.helix
         public static void GetHelix(this netDxf.Entities.Insert insert, P3d origem, ref List<LinhaVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)
         {
             if (insert?.Block?.Entities == null) return;
-            ((IEnumerable<EntityObject>)insert.Block.Entities).GetHelix(origem, thick, ref linhas, ref texts);
+            try
+            {
+                var exploded = insert.Explode();
+                if (exploded != null && exploded.Count > 0)
+                {
+                    if (insert.Color != null && !insert.Color.IsByBlock)
+                    {
+                        for (int i = 0; i < exploded.Count; i++)
+                        {
+                            if (exploded[i].Color.IsByBlock)
+                            {
+                                exploded[i].Color = insert.Color;
+                            }
+                        }
+                    }
+
+                    ((IEnumerable<EntityObject>)exploded).GetHelix(origem, thick, ref linhas, ref texts);
+                }
+            }
+            catch
+            {
+                ((IEnumerable<EntityObject>)insert.Block.Entities).GetHelix(origem, thick, ref linhas, ref texts);
+            }
         }
 
         public static void GetHelix(this netDxf.Entities.Polyline2D obj, P3d origem, ref List<LinhaVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)

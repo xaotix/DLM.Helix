@@ -30,6 +30,7 @@ namespace DLM.helix
         /// Quantas vezes (passos de scroll) o usuário pode aproximar (Zoom In) a partir da base.
         /// </summary>
         public int PassosZoomIn { get; set; } = 15;
+        public double FatorAproximacao { get; set; } = 0.5;
 
         /// <summary>
         /// Quantas vezes (passos de scroll) o usuário pode afastar (Zoom Out) a partir da base.
@@ -791,9 +792,10 @@ namespace DLM.helix
             Abrir(this.MVC.CAM, extend);
         }
 
-        public void Abrir(netDxf.DxfDocument dxfDocument, bool extend = true, int maxZoom = 15)
+        public void Abrir(netDxf.DxfDocument dxfDocument, bool extend = true, int maxZoom = 15, double fatorAproximacao = 0.5)
         {
             this.PassosZoomIn = maxZoom;
+            this.FatorAproximacao = fatorAproximacao;
             LimparViewports();
             dxfDocument.RenderHelix(this.viewPort2D);
             Set2D();
@@ -929,8 +931,8 @@ namespace DLM.helix
             else if (this.viewPort2D.Children.Count > 0)
                 this.viewPort2D.ZoomExtents(0);
 
-            AjustarEscalaCamera(this.viewPort2D, 0.50);
-            AjustarEscalaCamera(this.viewPort3D, 0.50);
+            AjustarEscalaCamera(this.viewPort2D, this.FatorAproximacao);
+            AjustarEscalaCamera(this.viewPort3D, this.FatorAproximacao);
 
             if (this.viewPort2D?.Camera is OrthographicCamera ortho2D)
             {

@@ -1,4 +1,4 @@
-﻿using Conexoes;
+using Conexoes;
 using DLM.cam;
 using DLM.db;
 using DLM.desenho;
@@ -100,18 +100,102 @@ namespace DLM.helix
 
             var origem = new P3d();
             double espessura = 1;
-            var linhas = new List<LinhaVisual3D>(256);
-            var textos = new List<TextVisual3D>(64);
+            var linhas = new List<LinhaVisual3D>(2048);
+            var textos = new List<TextVisual3D>(128);
 
-            if (dxf.Entities.Lines != null) GetHelix(dxf.Entities.Lines, origem, espessura, ref linhas, ref textos);
-            if (dxf.Entities.Polylines2D != null) GetHelix(dxf.Entities.Polylines2D, origem, espessura, ref linhas, ref textos);
-            if (dxf.Entities.Polylines3D != null) GetHelix(dxf.Entities.Polylines3D, origem, espessura, ref linhas, ref textos);
-            if (dxf.Entities.Circles != null) GetHelix(dxf.Entities.Circles, origem, espessura, ref linhas, ref textos);
-            if (dxf.Entities.Ellipses != null) GetHelix(dxf.Entities.Ellipses, origem, espessura, ref linhas, ref textos);
-            if (dxf.Entities.Arcs != null) GetHelix(dxf.Entities.Arcs, origem, espessura, ref linhas, ref textos);
-            if (dxf.Entities.Inserts != null) GetHelix(dxf.Entities.Inserts, origem, espessura, ref linhas, ref textos);
-            if (dxf.Entities.Texts != null) GetHelix(dxf.Entities.Texts, origem, espessura, ref linhas, ref textos);
-            if (dxf.Entities.MTexts != null) GetHelix(dxf.Entities.MTexts, origem, espessura, ref linhas, ref textos);
+            if (dxf.Entities.Lines != null)
+            {
+                foreach (var ent in dxf.Entities.Lines)
+                {
+                    if (ent != null && (ent.Layer == null || ent.Layer.IsVisible))
+                    {
+                        var hl = ent.GetHelix(origem, espessura);
+                        if (hl != null) linhas.Add(hl);
+                    }
+                }
+            }
+            if (dxf.Entities.Polylines2D != null)
+            {
+                foreach (var ent in dxf.Entities.Polylines2D)
+                {
+                    if (ent != null && (ent.Layer == null || ent.Layer.IsVisible))
+                    {
+                        ent.GetHelix(origem, ref linhas, ref textos, espessura);
+                    }
+                }
+            }
+            if (dxf.Entities.Polylines3D != null)
+            {
+                foreach (var ent in dxf.Entities.Polylines3D)
+                {
+                    if (ent != null && (ent.Layer == null || ent.Layer.IsVisible))
+                    {
+                        ent.GetHelix(origem, ref linhas, ref textos, espessura);
+                    }
+                }
+            }
+            if (dxf.Entities.Circles != null)
+            {
+                foreach (var ent in dxf.Entities.Circles)
+                {
+                    if (ent != null && (ent.Layer == null || ent.Layer.IsVisible))
+                    {
+                        linhas.AddRange(ent.GetHelix(origem, espessura));
+                    }
+                }
+            }
+            if (dxf.Entities.Arcs != null)
+            {
+                foreach (var ent in dxf.Entities.Arcs)
+                {
+                    if (ent != null && (ent.Layer == null || ent.Layer.IsVisible))
+                    {
+                        linhas.AddRange(ent.GetHelix(origem, espessura));
+                    }
+                }
+            }
+            if (dxf.Entities.Ellipses != null)
+            {
+                foreach (var ent in dxf.Entities.Ellipses)
+                {
+                    if (ent != null && (ent.Layer == null || ent.Layer.IsVisible))
+                    {
+                        linhas.AddRange(ent.GetHelix(origem, espessura));
+                    }
+                }
+            }
+            if (dxf.Entities.Inserts != null)
+            {
+                foreach (var ent in dxf.Entities.Inserts)
+                {
+                    if (ent != null && (ent.Layer == null || ent.Layer.IsVisible))
+                    {
+                        ent.GetHelix(origem, ref linhas, ref textos, espessura);
+                    }
+                }
+            }
+            if (dxf.Entities.Texts != null)
+            {
+                foreach (var ent in dxf.Entities.Texts)
+                {
+                    if (ent != null && ent.Height >= 1 && (ent.Layer == null || ent.Layer.IsVisible))
+                    {
+                        var tv = GetText(ent, origem);
+                        if (tv != null) textos.Add(tv);
+                    }
+                }
+            }
+            if (dxf.Entities.MTexts != null)
+            {
+                foreach (var ent in dxf.Entities.MTexts)
+                {
+                    if (ent != null && ent.Height >= 1 && (ent.Layer == null || ent.Layer.IsVisible))
+                    {
+                        var tv = GetText(ent, origem);
+                        if (tv != null) textos.Add(tv);
+                    }
+                }
+            }
 
             var children = viewPort.Children;
             for (int i = 0; i < linhas.Count; i++)
@@ -168,56 +252,72 @@ namespace DLM.helix
 
         #region Conversores Helix
 
+        private static void RenderEntidadeHelix(EntityObject ent, P3d origem, double thick, List<LinhaVisual3D> linhas, List<TextVisual3D> texts)
+        {
+            if (ent == null || (ent.Layer != null && !ent.Layer.IsVisible)) return;
+
+            if (ent is netDxf.Entities.Line line)
+            {
+                var l = line.GetHelix(origem, thick);
+                if (l != null) linhas.Add(l);
+            }
+            else if (ent is netDxf.Entities.Polyline2D p2d)
+            {
+                p2d.GetHelix(origem, ref linhas, ref texts, thick);
+            }
+            else if (ent is netDxf.Entities.Polyline3D p3d)
+            {
+                p3d.GetHelix(origem, ref linhas, ref texts, thick);
+            }
+            else if (ent is netDxf.Entities.Circle circle)
+            {
+                linhas.AddRange(circle.GetHelix(origem, thick));
+            }
+            else if (ent is netDxf.Entities.Arc arc)
+            {
+                var nls = arc.GetHelix(origem, thick);
+                linhas.AddRange(nls);
+            }
+            else if (ent is netDxf.Entities.Ellipse ellipse)
+            {
+                linhas.AddRange(ellipse.GetHelix(origem, thick));
+            }
+            else if (ent is netDxf.Entities.Text txt)
+            {
+                if (txt.Height >= 1)
+                {
+                    var nls = GetText(txt, origem);
+                    if (nls != null) texts.Add(nls);
+                }
+            }
+            else if (ent is netDxf.Entities.MText mtxt)
+            {
+                if (mtxt.Height >= 1)
+                {
+                    var nls = GetText(mtxt, origem);
+                    if (nls != null) texts.Add(nls);
+                }
+            }
+            else if (ent is netDxf.Entities.Insert ins)
+            {
+                ins.GetHelix(origem, ref linhas, ref texts, thick);
+            }
+        }
+
         private static void GetHelix(this IEnumerable<EntityObject> entities, P3d origem, double espessura, ref List<LinhaVisual3D> linhas, ref List<TextVisual3D> textos)
         {
             foreach (var ent in entities)
             {
-                if (ent == null || (ent.Layer != null && !ent.Layer.IsVisible)) continue;
-
-                if (ent is netDxf.Entities.Line line)
-                {
-                    linhas.Add(line.GetHelix(origem, espessura));
-                }
-                else if (ent is netDxf.Entities.Circle circle)
-                {
-                    linhas.AddRange(circle.GetHelix(origem, espessura));
-                }
-                else if (ent is netDxf.Entities.Ellipse ellipse)
-                {
-                    linhas.AddRange(ellipse.GetHelix(origem, espessura));
-                }
-                else if (ent is netDxf.Entities.Text || ent is netDxf.Entities.MText)
-                {
-                    if (ent is netDxf.Entities.Text txt && txt.Height < 1) continue;
-                    if (ent is netDxf.Entities.MText mtxt && mtxt.Height < 1) continue;
-
-                    var nls = GetText(ent, origem);
-                    if (nls != null) textos.Add(nls);
-                }
-                else if (ent is netDxf.Entities.Arc arc)
-                {
-                    var nls = arc.GetHelix(origem, espessura);
-                    arc.ObjetoHelix = nls.Count == 1 ? (object)nls[0] : nls;
-                    linhas.AddRange(nls);
-                }
-                else if (ent is netDxf.Entities.Insert insert)
-                {
-                    insert.GetHelix(origem, ref linhas, ref textos, espessura);
-                }
-                else if (ent is netDxf.Entities.Polyline2D p2d)
-                {
-                    p2d.GetHelix(origem, ref linhas, ref textos, espessura);
-                }
-                else if (ent is netDxf.Entities.Polyline3D p3d)
-                {
-                    p3d.GetHelix(origem, ref linhas, ref textos, espessura);
-                }
+                RenderEntidadeHelix(ent, origem, espessura, linhas, textos);
             }
         }
 
         private static void GetHelix(this List<EntityObject> entities, P3d origem, double espessura, ref List<LinhaVisual3D> linhas, ref List<TextVisual3D> textos)
         {
-            ((IEnumerable<EntityObject>)entities).GetHelix(origem, espessura, ref linhas, ref textos);
+            for (int i = 0; i < entities.Count; i++)
+            {
+                RenderEntidadeHelix(entities[i], origem, espessura, linhas, textos);
+            }
         }
 
         private static void AddDobra(HelixViewport3D viewPort, double espessura, P3d origem, Dobra dob)
@@ -270,11 +370,22 @@ namespace DLM.helix
         {
             if (min_vertex < 3) min_vertex = 3;
             var linhas = new List<LinhaVisual3D>(1);
-            var vertices = (arc.PolygonalVertexes(3).ToP3d().Comprimento() / 10).Int();
+
+            double diffAngle = arc.EndAngle >= arc.StartAngle ? (arc.EndAngle - arc.StartAngle) : (360.0 - arc.StartAngle + arc.EndAngle);
+            double arcLength = (Math.PI / 180.0) * diffAngle * arc.Radius;
+            int vertices = (int)(arcLength / 10.0);
             if (vertices < min_vertex) vertices = min_vertex;
+            if (vertices > 64) vertices = 64;
 
             var centro = arc.Center.ToP3d();
-            var pts = arc.PolygonalVertexes(vertices).ToP3d().Select(x => x.Mover(centro)).ToList();
+            var polyVertexes = arc.PolygonalVertexes(vertices);
+            var pts = new List<P3d>(polyVertexes.Count);
+            for (int i = 0; i < polyVertexes.Count; i++)
+            {
+                var v = polyVertexes[i];
+                pts.Add(new P3d(v.X + centro.X, v.Y + centro.Y, centro.Z));
+            }
+
             var nl = LinesHelix(pts, origem, arc.GetCor().Color, thick, false);
             if (nl != null)
             {
@@ -285,37 +396,243 @@ namespace DLM.helix
             return linhas;
         }
 
+        public static List<LinhaVisual3D> GetHelix(this netDxf.Entities.Insert insert, P3d origem, double thick = 1)
+        {
+            var linhas = new List<LinhaVisual3D>();
+            var texts = new List<TextVisual3D>();
+            insert.GetHelix(origem, ref linhas, ref texts, thick);
+            return linhas;
+        }
+
         public static void GetHelix(this netDxf.Entities.Insert insert, P3d origem, ref List<LinhaVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)
         {
             if (insert?.Block?.Entities == null) return;
+
+            insert.Bloco = insert;
+            int startLinhasIdx = linhas.Count;
+            int startTextosIdx = texts.Count;
+
             try
             {
-                var exploded = insert.Explode();
-                if (exploded != null && exploded.Count > 0)
+                bool hasTransform = (insert.Position.X != 0 || insert.Position.Y != 0 || insert.Position.Z != 0)
+                                 || Math.Abs(insert.Rotation) > 1e-4
+                                 || (insert.Scale.X != 1 || insert.Scale.Y != 1 || insert.Scale.Z != 1)
+                                 || (insert.Block.Origin.X != 0 || insert.Block.Origin.Y != 0 || insert.Block.Origin.Z != 0);
+
+                var blockEntities = insert.Block.Entities;
+
+                if (!hasTransform)
                 {
-                    if (insert.Color != null && !insert.Color.IsByBlock)
+                    for (int eIdx = 0; eIdx < blockEntities.Count; eIdx++)
                     {
-                        for (int i = 0; i < exploded.Count; i++)
+                        var entity = blockEntities[eIdx];
+                        if (entity == null || (entity.Layer != null && !entity.Layer.IsVisible)) continue;
+
+                        entity.Bloco = insert;
+                        if (entity.Objeto == null && insert.Objeto != null)
                         {
-                            if (exploded[i].Color.IsByBlock)
-                            {
-                                exploded[i].Color = insert.Color;
-                            }
+                            entity.Objeto = insert.Objeto;
+                        }
+
+                        int entStartLinhas = linhas.Count;
+                        int entStartTexts = texts.Count;
+
+                        RenderEntidadeHelix(entity, origem, thick, linhas, texts);
+
+                        int entLinhasCount = linhas.Count - entStartLinhas;
+                        int entTextsCount = texts.Count - entStartTexts;
+
+                        if (entLinhasCount == 1)
+                            entity.ObjetoHelix = linhas[entStartLinhas];
+                        else if (entLinhasCount > 1)
+                        {
+                            var subL = new List<LinhaVisual3D>(entLinhasCount);
+                            for (int k = entStartLinhas; k < linhas.Count; k++) subL.Add(linhas[k]);
+                            entity.ObjetoHelix = subL;
+                        }
+                        else if (entTextsCount == 1)
+                            entity.ObjetoHelix = texts[entStartTexts];
+                        else if (entTextsCount > 1)
+                        {
+                            var subT = new List<TextVisual3D>(entTextsCount);
+                            for (int k = entStartTexts; k < texts.Count; k++) subT.Add(texts[k]);
+                            entity.ObjetoHelix = subT;
                         }
                     }
+                }
+                else
+                {
+                    netDxf.Matrix3 transformation = insert.GetTransformation();
+                    netDxf.Vector3 translation = insert.Position - transformation * insert.Block.Origin;
 
-                    ((IEnumerable<EntityObject>)exploded).GetHelix(origem, thick, ref linhas, ref texts);
+                    for (int eIdx = 0; eIdx < blockEntities.Count; eIdx++)
+                    {
+                        var entity = blockEntities[eIdx];
+                        if (entity == null || (entity.Layer != null && !entity.Layer.IsVisible)) continue;
+
+                        entity.Bloco = insert;
+                        if (entity.Objeto == null && insert.Objeto != null)
+                        {
+                            entity.Objeto = insert.Objeto;
+                        }
+
+                        var exploded = insert.Explode(entity, transformation, translation);
+                        if (exploded == null || exploded.Count == 0) continue;
+
+                        if (insert.Color != null && !insert.Color.IsByBlock)
+                        {
+                            for (int i = 0; i < exploded.Count; i++)
+                            {
+                                if (exploded[i].Color.IsByBlock)
+                                {
+                                    exploded[i].Color = insert.Color;
+                                }
+                            }
+                        }
+
+                        int entStartLinhas = linhas.Count;
+                        int entStartTexts = texts.Count;
+
+                        for (int i = 0; i < exploded.Count; i++)
+                        {
+                            RenderEntidadeHelix(exploded[i], origem, thick, linhas, texts);
+                        }
+
+                        int entLinhasCount = linhas.Count - entStartLinhas;
+                        int entTextsCount = texts.Count - entStartTexts;
+
+                        if (entLinhasCount == 1)
+                            entity.ObjetoHelix = linhas[entStartLinhas];
+                        else if (entLinhasCount > 1)
+                        {
+                            var subL = new List<LinhaVisual3D>(entLinhasCount);
+                            for (int k = entStartLinhas; k < linhas.Count; k++) subL.Add(linhas[k]);
+                            entity.ObjetoHelix = subL;
+                        }
+                        else if (entTextsCount == 1)
+                            entity.ObjetoHelix = texts[entStartTexts];
+                        else if (entTextsCount > 1)
+                        {
+                            var subT = new List<TextVisual3D>(entTextsCount);
+                            for (int k = entStartTexts; k < texts.Count; k++) subT.Add(texts[k]);
+                            entity.ObjetoHelix = subT;
+                        }
+                    }
                 }
             }
             catch
             {
-                ((IEnumerable<EntityObject>)insert.Block.Entities).GetHelix(origem, thick, ref linhas, ref texts);
+                for (int eIdx = 0; eIdx < insert.Block.Entities.Count; eIdx++)
+                {
+                    RenderEntidadeHelix(insert.Block.Entities[eIdx], origem, thick, linhas, texts);
+                }
+            }
+
+            int totalLinhasInsert = linhas.Count - startLinhasIdx;
+            int totalTextosInsert = texts.Count - startTextosIdx;
+
+            if (totalLinhasInsert > 0)
+            {
+                var linhasInsert = new List<LinhaVisual3D>(totalLinhasInsert);
+                for (int i = startLinhasIdx; i < linhas.Count; i++)
+                {
+                    var sl = linhas[i];
+                    if (sl != null)
+                    {
+                        sl.Objeto = insert;
+                        linhasInsert.Add(sl);
+                    }
+                }
+
+                if (linhasInsert.Count == 1)
+                    insert.ObjetoHelix = linhasInsert[0];
+                else
+                    insert.ObjetoHelix = linhasInsert;
+            }
+            else if (totalTextosInsert > 0)
+            {
+                var textosInsert = new List<TextVisual3D>(totalTextosInsert);
+                for (int i = startTextosIdx; i < texts.Count; i++)
+                {
+                    var st = texts[i];
+                    if (st != null)
+                    {
+                        if (st is TextoVisual3D tv) tv.Objeto = insert;
+                        textosInsert.Add(st);
+                    }
+                }
+
+                if (textosInsert.Count == 1)
+                    insert.ObjetoHelix = textosInsert[0];
+                else
+                    insert.ObjetoHelix = textosInsert;
             }
         }
 
         public static void GetHelix(this netDxf.Entities.Polyline2D obj, P3d origem, ref List<LinhaVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)
         {
-            if (obj == null) return;
+            if (obj == null || obj.Vertexes == null || obj.Vertexes.Count < 2) return;
+
+            bool hasBulge = false;
+            for (int i = 0; i < obj.Vertexes.Count; i++)
+            {
+                if (Math.Abs(obj.Vertexes[i].Bulge) > 1e-4)
+                {
+                    hasBulge = true;
+                    break;
+                }
+            }
+
+            if (!hasBulge)
+            {
+                int count = obj.Vertexes.Count;
+                int segCount = obj.IsClosed ? count : count - 1;
+                var pts = new Point3DCollection(segCount * 2);
+
+                double ox = origem.X, oy = origem.Y, oz = origem.Z;
+                double minX = double.MaxValue, minY = double.MaxValue;
+                double maxX = double.MinValue, maxY = double.MinValue;
+
+                for (int i = 0; i < count; i++)
+                {
+                    var v = obj.Vertexes[i].Position;
+                    double vx = v.X + ox;
+                    double vy = v.Y + oy;
+                    if (vx < minX) minX = vx;
+                    if (vy < minY) minY = vy;
+                    if (vx > maxX) maxX = vx;
+                    if (vy > maxY) maxY = vy;
+                }
+
+                for (int i = 1; i < count; i++)
+                {
+                    var v0 = obj.Vertexes[i - 1].Position;
+                    var v1 = obj.Vertexes[i].Position;
+                    pts.Add(new Point3D(v0.X + ox, v0.Y + oy, oz));
+                    pts.Add(new Point3D(v1.X + ox, v1.Y + oy, oz));
+                }
+
+                if (obj.IsClosed)
+                {
+                    var vLast = obj.Vertexes[count - 1].Position;
+                    var vFirst = obj.Vertexes[0].Position;
+                    pts.Add(new Point3D(vLast.X + ox, vLast.Y + oy, oz));
+                    pts.Add(new Point3D(vFirst.X + ox, vFirst.Y + oy, oz));
+                }
+
+                var visual = new LinhaVisual3D
+                {
+                    Color = obj.GetCor().Color,
+                    Thickness = thick,
+                    Points = pts,
+                    Objeto = obj,
+                    Bounds = new Rect3D(minX, minY, oz, Math.Max(maxX - minX, 0.001), Math.Max(maxY - minY, 0.001), 0.001)
+                };
+                obj.ObjetoHelix = visual;
+                linhas.Add(visual);
+                return;
+            }
+
             var exploded = obj.Explode();
             if (exploded == null || exploded.Count == 0) return;
 
@@ -326,13 +643,56 @@ namespace DLM.helix
 
         public static void GetHelix(this netDxf.Entities.Polyline3D obj, P3d origem, ref List<LinhaVisual3D> linhas, ref List<TextVisual3D> texts, double thick = 1)
         {
-            if (obj == null) return;
-            var exploded = obj.Explode();
-            if (exploded == null || exploded.Count == 0) return;
+            if (obj == null || obj.Vertexes == null || obj.Vertexes.Count < 2) return;
 
-            var subLinhas = new List<LinhaVisual3D>(exploded.Count);
-            ((IEnumerable<EntityObject>)exploded).GetHelix(origem, thick, ref subLinhas, ref texts);
-            ConsolidarSegmentosEntidade(obj, obj.GetCor().Color, thick, subLinhas, ref linhas);
+            int count = obj.Vertexes.Count;
+            int segCount = obj.IsClosed ? count : count - 1;
+            var pts = new Point3DCollection(segCount * 2);
+
+            double ox = origem.X, oy = origem.Y, oz = origem.Z;
+            double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue;
+            double maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
+
+            for (int i = 0; i < count; i++)
+            {
+                var v = obj.Vertexes[i];
+                double vx = v.X + ox;
+                double vy = v.Y + oy;
+                double vz = v.Z + oz;
+                if (vx < minX) minX = vx;
+                if (vy < minY) minY = vy;
+                if (vz < minZ) minZ = vz;
+                if (vx > maxX) maxX = vx;
+                if (vy > maxY) maxY = vy;
+                if (vz > maxZ) maxZ = vz;
+            }
+
+            for (int i = 1; i < count; i++)
+            {
+                var v0 = obj.Vertexes[i - 1];
+                var v1 = obj.Vertexes[i];
+                pts.Add(new Point3D(v0.X + ox, v0.Y + oy, v0.Z + oz));
+                pts.Add(new Point3D(v1.X + ox, v1.Y + oy, v1.Z + oz));
+            }
+
+            if (obj.IsClosed)
+            {
+                var vLast = obj.Vertexes[count - 1];
+                var vFirst = obj.Vertexes[0];
+                pts.Add(new Point3D(vLast.X + ox, vLast.Y + oy, vLast.Z + oz));
+                pts.Add(new Point3D(vFirst.X + ox, vFirst.Y + oy, vFirst.Z + oz));
+            }
+
+            var visual = new LinhaVisual3D
+            {
+                Color = obj.GetCor().Color,
+                Thickness = thick,
+                Points = pts,
+                Objeto = obj,
+                Bounds = new Rect3D(minX, minY, minZ, Math.Max(maxX - minX, 0.001), Math.Max(maxY - minY, 0.001), Math.Max(maxZ - minZ, 0.001))
+            };
+            obj.ObjetoHelix = visual;
+            linhas.Add(visual);
         }
 
         private static void ConsolidarSegmentosEntidade(EntityObject entidade, Color cor, double thick, List<LinhaVisual3D> subLinhas, ref List<LinhaVisual3D> destino)
@@ -382,7 +742,11 @@ namespace DLM.helix
                 Thickness = thick,
                 Points = pts,
                 Objeto = entidade,
-                Bounds = new Rect3D(minX, minY, minZ, maxX - minX, maxY - minY, maxZ - minZ)
+                Bounds = new Rect3D(
+                    minX, minY, minZ,
+                    Math.Max(maxX - minX, 0.001),
+                    Math.Max(maxY - minY, 0.001),
+                    Math.Max(maxZ - minZ, 0.001))
             };
             entidade.ObjetoHelix = unificada;
             destino.Add(unificada);
@@ -421,6 +785,7 @@ namespace DLM.helix
 
             if (entity is netDxf.Entities.Text txt)
             {
+                if (txt.Height < 1) return null;
                 position = txt.Position.ToP3d();
                 rotation = txt.Rotation;
                 value = txt.Value;
@@ -429,6 +794,7 @@ namespace DLM.helix
             }
             else if (entity is netDxf.Entities.MText mtxt)
             {
+                if (mtxt.Height < 1) return null;
                 position = mtxt.Position.ToP3d();
                 rotation = mtxt.Rotation;
                 value = mtxt.PlainText();
@@ -436,7 +802,7 @@ namespace DLM.helix
                 textalignment = mtxt.AttachmentPoint.Get();
             }
 
-            if (string.IsNullOrEmpty(value)) return null;
+            if (string.IsNullOrEmpty(value) || size < 1) return null;
 
             position = position.Mover(origem);
             textalignment.GetAlignment(out HorizontalAlignment horiz, out VerticalAlignment vert);
@@ -550,9 +916,9 @@ namespace DLM.helix
                     minX,
                     minY,
                     minZ,
-                    (x1 > x2 ? x1 : x2) - minX,
-                    (y1 > y2 ? y1 : y2) - minY,
-                    (z1 > z2 ? z1 : z2) - minZ)
+                    Math.Max(Math.Abs(x2 - x1), 0.001),
+                    Math.Max(Math.Abs(y2 - y1), 0.001),
+                    Math.Max(Math.Abs(z2 - z1), 0.001))
             };
             return l;
         }
@@ -603,7 +969,11 @@ namespace DLM.helix
                 Color = cor,
                 Thickness = espessura,
                 Points = col,
-                Bounds = new Rect3D(minX, minY, minZ, maxX - minX, maxY - minY, maxZ - minZ)
+                Bounds = new Rect3D(
+                    minX, minY, minZ,
+                    Math.Max(maxX - minX, 0.001),
+                    Math.Max(maxY - minY, 0.001),
+                    Math.Max(maxZ - minZ, 0.001))
             };
         }
 
@@ -650,7 +1020,11 @@ namespace DLM.helix
                 Color = cor,
                 Thickness = espessura,
                 Points = col,
-                Bounds = new Rect3D(minX, minY, oz, maxX - minX, maxY - minY, 0)
+                Bounds = new Rect3D(
+                    minX, minY, oz,
+                    Math.Max(maxX - minX, 0.001),
+                    Math.Max(maxY - minY, 0.001),
+                    0.001)
             };
         }
 

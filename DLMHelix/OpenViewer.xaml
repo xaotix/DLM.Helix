@@ -7,6 +7,6 @@
 		mc:Ignorable="d" 
              >
     <Grid>
-		<local1:CAMViewer x:Name="Viewer"/>
+		<local1:CAMViewer x:Name="Viewer" x:FieldModifier="public"/>
 	</Grid>
 </Window>

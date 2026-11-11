@@ -29,6 +29,15 @@ namespace DLM.helix
         /// <summary>
         /// Quantas vezes (passos de scroll) o usuário pode aproximar (Zoom In) a partir da base.
         /// </summary>
+        /// <summary>
+        /// Escala de distanciamento para tipos de linha no Helix (DashDot, Hidden, Dashed, etc.). Padrao: 50.0.
+        /// </summary>
+        public double LineTypeScale
+        {
+            get => Render2d.LineTypeScale;
+            set => Render2d.LineTypeScale = value;
+        }
+
         public int PassosZoomIn { get; set; } = 15;
         public double FatorAproximacao { get; set; } = 0.5;
 

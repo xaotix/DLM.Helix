@@ -1,17 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using DLM.cam;
+using System;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace DLM.Helix
 {
@@ -20,9 +9,26 @@ namespace DLM.Helix
     /// </summary>
     public partial class OpenViewer : Window
     {
+        public DLM.helix.CAMViewer CAMViewer => this.Viewer;
+
         public OpenViewer()
         {
             InitializeComponent();
+        }
+
+        public void Abrir(string arq, bool extend = true)
+        {
+            this.Viewer?.Abrir(arq, extend);
+        }
+
+        public void Abrir(netDxf.DxfDocument doc, bool extend = true)
+        {
+            this.Viewer?.Abrir(doc, extend);
+        }
+
+        public void Abrir(ReadCAM cam, bool extend = true)
+        {
+            this.Viewer?.Abrir(cam, extend);
         }
     }
 }

@@ -38,6 +38,9 @@ namespace DLM.helix
             set => Render2d.LineTypeScale = value;
         }
 
+        public string ArquivoCarregado { get; private set; }
+        public netDxf.DxfDocument DxfCarregado { get; private set; }
+
         public int PassosZoomIn { get; set; } = 15;
         public double FatorAproximacao { get; set; } = 0.5;
 
@@ -476,6 +479,8 @@ namespace DLM.helix
             this.viewPort3D.PreviewMouseUp += ViewPort_LimparCursor;
 
             this.Unloaded += CAMViewer_Unloaded;
+
+            AtualizarBotoesDXF(false);
         }
 
         private void ViewPort_LimparCursor(object sender, MouseEventArgs e)
@@ -770,13 +775,19 @@ namespace DLM.helix
             var ext = arq.getExtensao();
             if (ext == "CAM")
             {
+                ArquivoCarregado = arq;
+                DxfCarregado = null;
+                AtualizarBotoesDXF(false);
                 this.MVC.CAM = new ReadCAM(arq);
                 Abrir(this.MVC.CAM, extend);
             }
             else if (ext == "DXF")
             {
                 var dxf = arq.GetDxf();
+                ArquivoCarregado = arq;
+                DxfCarregado = dxf;
                 Abrir(dxf, extend);
+                AtualizarBotoesDXF(System.IO.File.Exists(arq));
             }
         }
 
@@ -803,6 +814,7 @@ namespace DLM.helix
 
         public void Abrir(netDxf.DxfDocument dxfDocument, bool extend = true, int maxZoom = 15, double fatorAproximacao = 0.5)
         {
+            this.DxfCarregado = dxfDocument;
             this.PassosZoomIn = maxZoom;
             this.FatorAproximacao = fatorAproximacao;
             LimparViewports();
@@ -811,6 +823,9 @@ namespace DLM.helix
             var st = new Style();
             st.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
             tab.ItemContainerStyle = st;
+
+            bool arqExiste = !string.IsNullOrEmpty(ArquivoCarregado) && System.IO.File.Exists(ArquivoCarregado);
+            AtualizarBotoesDXF(arqExiste);
 
             if (extend)
             {
@@ -912,6 +927,60 @@ namespace DLM.helix
         private void left(object sender, RoutedEventArgs e) { ControleCamera.Setar(this.viewPort3D, ControleCamera.eCameraViews.Back, 0); SetView2D(); }
         private void right(object sender, RoutedEventArgs e) { ControleCamera.Setar(this.viewPort3D, ControleCamera.eCameraViews.Bottom, 0); SetView2D(); }
         private void zom_ex(object sender, RoutedEventArgs e) => ZoomExtend();
+
+        public void AtualizarBotoesDXF(bool arquivoExiste)
+        {
+            if (bt_abrir_externamente != null)
+            {
+                bt_abrir_externamente.IsEnabled = arquivoExiste;
+            }
+            if (bt_exportar_dxf != null)
+            {
+                bt_exportar_dxf.Visibility = (DxfCarregado != null && !arquivoExiste) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        private void abrir_externamente_click(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrEmpty(ArquivoCarregado) && System.IO.File.Exists(ArquivoCarregado))
+            {
+                try
+                {
+                    Process.Start(new ProcessStartInfo(ArquivoCarregado) { UseShellExecute = true });
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Não foi possível abrir o arquivo externamente:\n" + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private void exportar_dxf_click(object sender, RoutedEventArgs e)
+        {
+            if (DxfCarregado == null) return;
+
+            var sfd = new Microsoft.Win32.SaveFileDialog
+            {
+                Filter = "Arquivo DXF (*.dxf)|*.dxf",
+                DefaultExt = ".dxf",
+                FileName = "desenho.dxf"
+            };
+
+            if (sfd.ShowDialog() == true)
+            {
+                try
+                {
+                    DxfCarregado.Save(sfd.FileName);
+                    ArquivoCarregado = sfd.FileName;
+                    AtualizarBotoesDXF(true);
+                    MessageBox.Show("Arquivo exportado com sucesso!", "Exportar DXF", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Erro ao salvar arquivo DXF:\n" + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
 
         public void ZoomExtend()
         {

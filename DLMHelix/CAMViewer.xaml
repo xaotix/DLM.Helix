@@ -11,7 +11,6 @@
 			 d:DesignWidth="800">
     <Grid>
 
-
         <TabControl Grid.Row="1"
 					Background="Transparent"
 					TabStripPlacement="Bottom"
@@ -223,29 +222,29 @@
                         <Button Click="zom_ex"
 								Height="30"
 								Width="30"
-								
 								ToolTip="Zoom Extends">
                             <Image Source="Resources/zoom_ex.png" />
                         </Button>
-                        <Button Click="top"
+                        <Button x:Name="bt_abrir_externamente"
+								Click="abrir_externamente_click"
 								Height="30"
 								Width="30"
-								
-								ToolTip="Top">
-                            <Image Source="Resources/top.png" />
+								Margin="5,0,0,0"
+								ToolTip="Abrir Externamente">
+                            <Image Source="Resources/open.png" />
                         </Button>
-                        <Button Click="front"
+                        <Button x:Name="bt_exportar_dxf"
+								Click="exportar_dxf_click"
 								Height="30"
-								Width="30"
-								>
-                            <Image Source="Resources/front.png" />
-                        </Button>
+								Padding="8,0"
+								Margin="5,0,0,0"
+								Content="Exportar"
+								ToolTip="Exportar arquivo DXF..." />
                     </WrapPanel>
 
                 </Grid>
             </TabItem>
         </TabControl>
-
 
     </Grid>
 </UserControl>

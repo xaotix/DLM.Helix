@@ -940,19 +940,30 @@ namespace DLM.helix
             }
         }
 
+        public static void AbrirArquivoSeguro(string caminho)
+        {
+            if (string.IsNullOrEmpty(caminho) || !System.IO.File.Exists(caminho)) return;
+
+            try
+            {
+                var psi = new ProcessStartInfo
+                {
+                    FileName = "explorer.exe",
+                    Arguments = $"\"{caminho}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+                Process.Start(psi);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Não foi possível abrir o arquivo externamente:\n" + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private void abrir_externamente_click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(ArquivoCarregado) && System.IO.File.Exists(ArquivoCarregado))
-            {
-                try
-                {
-                    Process.Start(new ProcessStartInfo(ArquivoCarregado) { UseShellExecute = true });
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Não foi possível abrir o arquivo externamente:\n" + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
-                }
-            }
+            AbrirArquivoSeguro(ArquivoCarregado);
         }
 
         private void exportar_dxf_click(object sender, RoutedEventArgs e)
@@ -1052,12 +1063,11 @@ namespace DLM.helix
             {
                 var dest = $"{Cfg.Init.DIR_APPDATA_TEMP}{MVC.CAM.Nome}.CAM";
                 MVC.CAM.Salvar(dest);
-                try { Process.Start(dest); } catch (Exception) { }
+                AbrirArquivoSeguro(dest);
             }
-
-            if (MVC.CAM.Arquivo.Exists())
+            else
             {
-                try { Process.Start(MVC.CAM.Arquivo); } catch (Exception) { }
+                AbrirArquivoSeguro(MVC.CAM.Arquivo);
             }
         }
 

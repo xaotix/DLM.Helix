@@ -1,0 +1,52 @@
+﻿<Window x:Class="DLM.Helix.Visualizador_DXF"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local1="clr-namespace:DLM.helix"
+        Title="Visualizador de DXF"
+        Width="1200" Height="760"
+        WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Barra de ferramentas -->
+        <DockPanel Grid.Row="0" Margin="4">
+            <Button DockPanel.Dock="Left" Content="Abrir arquivo..." Click="bt_abrir_arquivo" Padding="10,3" Margin="0,0,4,0"/>
+            <Button DockPanel.Dock="Left" Content="Abrir pasta..." Click="bt_abrir_pasta" Padding="10,3" Margin="0,0,4,0"/>
+            <Button DockPanel.Dock="Left" Content="Atualizar pasta" Click="bt_atualizar" Padding="10,3" Margin="0,0,4,0"/>
+            <CheckBox DockPanel.Dock="Left" x:Name="ck_subpastas" Content="Incluir subpastas" VerticalAlignment="Center" Margin="8,0" Click="ck_subpastas_Click"/>
+            <Button DockPanel.Dock="Right" Content="Zoom" Click="bt_zoom" Padding="10,3" Margin="4,0,0,0"/>
+            <TextBlock x:Name="txt_pasta" VerticalAlignment="Center" Margin="8,0" TextTrimming="CharacterEllipsis"/>
+        </DockPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="col_lista" Width="300" MinWidth="0"/>
+                <ColumnDefinition x:Name="col_split" Width="5"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Lista de arquivos -->
+            <Grid Grid.Column="0" x:Name="gr_lista">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <TextBox x:Name="txt_filtro" Grid.Row="0" Margin="4,0,4,4" TextChanged="txt_filtro_TextChanged" ToolTip="Filtrar arquivos"/>
+                <ListBox x:Name="lst_arquivos" Grid.Row="1" Margin="4,0,0,4" SelectionChanged="lst_arquivos_SelectionChanged" DisplayMemberPath="Nome"/>
+            </Grid>
+
+            <GridSplitter x:Name="split" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ShowsPreview="False"/>
+
+            <!-- Visualizador -->
+            <local1:CAMViewer x:Name="Viewer" Grid.Column="2"/>
+        </Grid>
+
+        <StatusBar Grid.Row="2">
+            <TextBlock x:Name="txt_status" Text="Abra um arquivo ou uma pasta com DXFs."/>
+        </StatusBar>
+    </Grid>
+</Window>

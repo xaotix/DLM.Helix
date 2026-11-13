@@ -78,6 +78,9 @@
     </Compile>
     <Compile Include="core\Face3d.cs" />
     <Compile Include="Extensoes.cs" />
+    <Compile Include="Visualizador_DXF.xaml.cs">
+      <DependentUpon>Visualizador_DXF.xaml</DependentUpon>
+    </Compile>
     <Compile Include="OpenViewer.xaml.cs">
       <DependentUpon>OpenViewer.xaml</DependentUpon>
     </Compile>
@@ -109,6 +112,10 @@
   </ItemGroup>
   <ItemGroup>
     <Page Include="CAMViewer.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Visualizador_DXF.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

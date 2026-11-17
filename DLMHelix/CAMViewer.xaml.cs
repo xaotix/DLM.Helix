@@ -479,6 +479,7 @@ namespace DLM.helix
             this.viewPort3D.PreviewMouseUp += ViewPort_LimparCursor;
 
             this.Unloaded += CAMViewer_Unloaded;
+            LigarObservacaoCamera();
 
             AtualizarBotoesDXF(false);
         }

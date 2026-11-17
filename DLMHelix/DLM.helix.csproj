@@ -73,6 +73,9 @@
     <Compile Include="3d\Chapa3D.cs" />
     <Compile Include="3d\Tubo3d.cs" />
     <Compile Include="core\ControleCamera.cs" />
+    <Compile Include="CAMViewer.Camera.cs">
+      <DependentUpon>CAMViewer.xaml</DependentUpon>
+    </Compile>
     <Compile Include="CAMViewer.xaml.cs">
       <DependentUpon>CAMViewer.xaml</DependentUpon>
     </Compile>

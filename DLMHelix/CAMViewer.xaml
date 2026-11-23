@@ -106,9 +106,16 @@
     <Grid>
         <TabControl Grid.Row="1"
 					Background="Transparent"
+					BorderThickness="0"
+					Padding="0"
 					TabStripPlacement="Bottom"
 					SelectionChanged="tab_SelectionChanged"
 					Name="tab">
+            <TabControl.ItemContainerStyle>
+                <Style TargetType="TabItem">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </Style>
+            </TabControl.ItemContainerStyle>
             <TabItem Header="3D"
 					 Background="Transparent"
 					 Name="tab_3d">
@@ -472,6 +479,46 @@
                         Padding="12,3"
                         FontSize="11"
                         Click="cancelar_ifc_click" />
+            </StackPanel>
+        </Border>
+
+        <!-- Barra unificada 3D / 2D no mesmo padrão dos ícones do visualizador 3D -->
+        <Border x:Name="bd_seletor_modo"
+                VerticalAlignment="Bottom"
+                HorizontalAlignment="Right"
+                Margin="0,0,8,8"
+                Padding="3"
+                CornerRadius="4"
+                Background="#B8111827"
+                BorderBrush="#334155"
+                BorderThickness="1">
+            <StackPanel Orientation="Horizontal">
+                <ToggleButton x:Name="bt_modo_3d"
+                              Style="{StaticResource ToggleViewer3D}"
+                              IsChecked="True"
+                              Click="bt_modo_3d_Click"
+                              ToolTip="Visualização 3D">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0"
+                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}"
+                              StrokeThickness="1.5" StrokeLineJoin="Round"
+                              Data="M7,1.5 L12.5,4.5 L12.5,10.5 L7,13.5 L1.5,10.5 L1.5,4.5 Z M1.5,4.5 L7,7.5 L12.5,4.5 M7,7.5 L7,13.5" />
+                        <TextBlock Text="3D" VerticalAlignment="Center" />
+                    </StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="bt_modo_2d"
+                              Style="{StaticResource ToggleViewer3D}"
+                              IsChecked="False"
+                              Click="bt_modo_2d_Click"
+                              ToolTip="Visualização Técnica 2D">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0"
+                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}"
+                              StrokeThickness="1.5" StrokeLineJoin="Round"
+                              Data="M1.5,2.5 L12.5,2.5 L12.5,11.5 L1.5,11.5 Z M4.5,5.5 L9.5,5.5 M4.5,8.5 L8,8.5" />
+                        <TextBlock Text="2D" VerticalAlignment="Center" />
+                    </StackPanel>
+                </ToggleButton>
             </StackPanel>
         </Border>
     </Grid>

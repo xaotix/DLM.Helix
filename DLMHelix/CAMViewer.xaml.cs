@@ -43,11 +43,14 @@ namespace DLM.helix
             finally
             {
                 _trocandoAbaProgramaticamente = false;
+                AtualizarBotoesModo();
             }
         }
 
         private void AplicarAbaPreferida(bool suporta3D, bool suporta2D)
         {
+            _suporta3DAtual = suporta3D;
+            _suporta2DAtual = suporta2D;
             if (this.tab_3d == null || this.tab_2d == null) return;
             _trocandoAbaProgramaticamente = true;
             try
@@ -74,9 +77,37 @@ namespace DLM.helix
             finally
             {
                 _trocandoAbaProgramaticamente = false;
+                AtualizarBotoesModo();
             }
         }
 
+        private bool _suporta3DAtual = true;
+        private bool _suporta2DAtual = true;
+
+        private void AtualizarBotoesModo()
+        {
+            if (bt_modo_3d == null || bt_modo_2d == null) return;
+            bt_modo_3d.Visibility = _suporta3DAtual ? Visibility.Visible : Visibility.Collapsed;
+            bt_modo_2d.Visibility = _suporta2DAtual ? Visibility.Visible : Visibility.Collapsed;
+            bt_modo_3d.IsChecked = this.tab_3d != null && this.tab_3d.IsSelected;
+            bt_modo_2d.IsChecked = this.tab_2d != null && this.tab_2d.IsSelected;
+            if (bd_seletor_modo != null)
+            {
+                bd_seletor_modo.Visibility = (_suporta3DAtual && _suporta2DAtual) ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        private void bt_modo_3d_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_suporta3DAtual) return;
+            SelecionarAba2D(false);
+        }
+
+        private void bt_modo_2d_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_suporta2DAtual) return;
+            SelecionarAba2D(true);
+        }
         private void tab_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!ReferenceEquals(e.OriginalSource, this.tab)) return;
@@ -88,6 +119,7 @@ namespace DLM.helix
                 _preferirAba2D = this.tab_2d.IsSelected;
             }
 
+            AtualizarBotoesModo();
             if (this.tab_2d != null && this.tab_2d.IsSelected &&
                 this.MVC != null && this.MVC.CAM != null &&
                 grid_cam_2d_visual != null && grid_cam_2d_visual.Visibility == Visibility.Visible)
@@ -1313,7 +1345,7 @@ namespace DLM.helix
                     token.ThrowIfCancellationRequested();
                     string textoIfc = null;
                     string arqCacheIfc = null;
-                    string sufixoCache = planificado ? "PLAN_V3" : "3D_V3";
+                    string sufixoCache = planificado ? "PLAN_V4" : "3D_V4";
                     if (!string.IsNullOrWhiteSpace(camAtual.Arquivo) &&
                         CachePreview.ExisteCacheValido(camAtual.Arquivo, ".ifc", out arqCacheIfc, sufixoCache))
                     {

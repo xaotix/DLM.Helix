@@ -86,6 +86,24 @@ namespace DLM.helix
                         destinoArestas.Add(new Point3D(ar.P2.X * ESCALA_MM_PARA_M, ar.P2.Y * ESCALA_MM_PARA_M, ar.P2.Z * ESCALA_MM_PARA_M));
                     }
                 }
+                if (adicionarArestas && el.ArestasFuros != null && el.ArestasFuros.Count > 0)
+                {
+                    for (int i = 0; i < el.ArestasFuros.Count; i++)
+                    {
+                        var ar = el.ArestasFuros[i];
+                        pontosArestasFuro.Add(new Point3D(ar.P1.X * ESCALA_MM_PARA_M, ar.P1.Y * ESCALA_MM_PARA_M, ar.P1.Z * ESCALA_MM_PARA_M));
+                        pontosArestasFuro.Add(new Point3D(ar.P2.X * ESCALA_MM_PARA_M, ar.P2.Y * ESCALA_MM_PARA_M, ar.P2.Z * ESCALA_MM_PARA_M));
+                    }
+                }
+                if (adicionarArestas && el.ArestasRecortes != null && el.ArestasRecortes.Count > 0)
+                {
+                    for (int i = 0; i < el.ArestasRecortes.Count; i++)
+                    {
+                        var ar = el.ArestasRecortes[i];
+                        pontosArestasRecorte.Add(new Point3D(ar.P1.X * ESCALA_MM_PARA_M, ar.P1.Y * ESCALA_MM_PARA_M, ar.P1.Z * ESCALA_MM_PARA_M));
+                        pontosArestasRecorte.Add(new Point3D(ar.P2.X * ESCALA_MM_PARA_M, ar.P2.Y * ESCALA_MM_PARA_M, ar.P2.Z * ESCALA_MM_PARA_M));
+                    }
+                }
             }
 
             var modelGroup = new Model3DGroup();

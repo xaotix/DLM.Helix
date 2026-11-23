@@ -369,58 +369,86 @@
 					 Background="Transparent"
 					 Name="tab_2d">
                 <Grid Margin="0">
-                    <h:HelixViewport3D SizeChanged="viewport_SizeChanged"
-									   Grid.Row="1"
-									   Background="Black"
-									   ZoomExtentsWhenLoaded="True"
-									   Name="viewPort2D"
-									   IsHeadLightEnabled="True"
-									   ZoomAroundMouseDownPoint="True"
-									   RotateAroundMouseDownPoint="True"
-									   CameraRotationMode="Turntable">
-                        <ModelVisual3D>
-                            <ModelVisual3D.Content>
-                                <AmbientLight Color="Black" />
-                            </ModelVisual3D.Content>
-                        </ModelVisual3D>
-                    </h:HelixViewport3D>
-                    <Border HorizontalAlignment="Left"
-                            VerticalAlignment="Top"
-                            Margin="6,6,0,0"
-                            Padding="3"
-                            CornerRadius="4"
-                            Background="#B8111827"
-                            BorderBrush="#334155"
-                            BorderThickness="1">
-                        <StackPanel Orientation="Horizontal">
-                            <Button Style="{StaticResource BotaoViewer3D}" Click="zom_ex" ToolTip="Enquadrar (Zoom Extents)">
-                                <Path Width="12" Height="12" Stretch="Uniform"
-                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                      StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                      Data="M2,5 L2,2 L5,2 M9,2 L12,2 L12,5 M12,9 L12,12 L9,12 M5,12 L2,12 L2,9" />
-                            </Button>
-                            <Button x:Name="bt_abrir_externamente"
-                                    Style="{StaticResource BotaoViewer3D}"
-                                    Click="abrir_externamente_click"
-                                    ToolTip="Abrir externamente">
-                                <Path Width="12" Height="12" Stretch="Uniform"
-                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                      StrokeThickness="1.6" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                      Data="M9,2 L13,2 L13,6 M13,2 L7,8 M6,3 L3,3 C2.4,3 2,3.4 2,4 L2,12 C2,12.6 2.4,13 3,13 L11,13 C11.6,13 12,12.6 12,12 L12,9" />
-                            </Button>
-                            <Button x:Name="bt_exportar_dxf"
-                                    Style="{StaticResource BotaoViewer3D}"
-                                    Click="exportar_dxf_click"
-                                    ToolTip="Exportar arquivo DXF">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0"
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Visualizador 2D técnico rico para CAMs (fora de escala, estilo Purlin/Banzo/Arremate) -->
+                    <Grid x:Name="grid_cam_2d_visual" Grid.Row="0" Visibility="Collapsed" Background="#FFFFFF">
+                        <Canvas x:Name="canvas_cam_2d"
+                                Background="#FFFFFF"
+                                ClipToBounds="True"
+                                SizeChanged="canvas_cam_2d_SizeChanged" />
+                    </Grid>
+
+                    <!-- Visualizador 2D Helix para DXF / DWG (com suporte a Layouts e MViews) -->
+                    <Grid x:Name="grid_dxf_2d_helix" Grid.Row="0">
+                        <h:HelixViewport3D SizeChanged="viewport_SizeChanged"
+										   Background="Black"
+										   ZoomExtentsWhenLoaded="True"
+										   Name="viewPort2D"
+										   IsHeadLightEnabled="True"
+										   ZoomAroundMouseDownPoint="True"
+										   RotateAroundMouseDownPoint="True"
+										   CameraRotationMode="Turntable">
+                            <ModelVisual3D>
+                                <ModelVisual3D.Content>
+                                    <AmbientLight Color="Black" />
+                                </ModelVisual3D.Content>
+                            </ModelVisual3D>
+                        </h:HelixViewport3D>
+                        <Border HorizontalAlignment="Left"
+                                VerticalAlignment="Top"
+                                Margin="6,6,0,0"
+                                Padding="3"
+                                CornerRadius="4"
+                                Background="#B8111827"
+                                BorderBrush="#334155"
+                                BorderThickness="1">
+                            <StackPanel Orientation="Horizontal">
+                                <Button Style="{StaticResource BotaoViewer3D}" Click="zom_ex" ToolTip="Enquadrar (Zoom Extents)">
+                                    <Path Width="12" Height="12" Stretch="Uniform"
                                           Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                          StrokeThickness="1.5" StrokeLineJoin="Round"
-                                          Data="M3,1.5 L9,1.5 L12,4.5 L12,12.5 L3,12.5 Z M9,1.5 L9,4.5 L12,4.5" />
-                                    <TextBlock Text="Exportar" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
+                                          StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          Data="M2,5 L2,2 L5,2 M9,2 L12,2 L12,5 M12,9 L12,12 L9,12 M5,12 L2,12 L2,9" />
+                                </Button>
+                                <Button x:Name="bt_abrir_externamente"
+                                        Style="{StaticResource BotaoViewer3D}"
+                                        Click="abrir_externamente_click"
+                                        ToolTip="Abrir externamente">
+                                    <Path Width="12" Height="12" Stretch="Uniform"
+                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                          StrokeThickness="1.6" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          Data="M9,2 L13,2 L13,6 M13,2 L7,8 M6,3 L3,3 C2.4,3 2,3.4 2,4 L2,12 C2,12.6 2.4,13 3,13 L11,13 C11.6,13 12,12.6 12,12 L12,9" />
+                                </Button>
+                                <Button x:Name="bt_exportar_dxf"
+                                        Style="{StaticResource BotaoViewer3D}"
+                                        Click="exportar_dxf_click"
+                                        ToolTip="Exportar arquivo DXF">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0"
+                                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                                              StrokeThickness="1.5" StrokeLineJoin="Round"
+                                              Data="M3,1.5 L9,1.5 L12,4.5 L12,12.5 L3,12.5 Z M9,1.5 L9,4.5 L12,4.5" />
+                                        <TextBlock Text="Exportar" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- Barra de abas de Layouts (DXF / DWG com múltiplos layouts/MViews) -->
+                    <Border x:Name="bd_layouts_dxf"
+                            Grid.Row="1"
+                            Visibility="Collapsed"
+                            Background="#1E293B"
+                            BorderBrush="#334155"
+                            BorderThickness="0,1,0,0"
+                            Padding="4,3">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <StackPanel x:Name="painel_layouts_dxf" Orientation="Horizontal" />
+                        </ScrollViewer>
                     </Border>
                 </Grid>
             </TabItem>

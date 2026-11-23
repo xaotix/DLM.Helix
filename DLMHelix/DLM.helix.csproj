@@ -99,6 +99,8 @@
     <Compile Include="core\Utilidades.cs" />
     <Compile Include="Renders\Gera3D.cs" />
     <Compile Include="Renders\RenderIFC.cs" />
+    <Compile Include="Renders\Render2d.Layouts.cs" />
+    <Compile Include="Renders\CAMDesenho2DCanvas.cs" />
     <Compile Include="Renders\LinhaVisual3D.cs" />
     <Compile Include="Renders\Render2d.cs" />
     <Compile Include="Texto.xaml.cs">

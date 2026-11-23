@@ -810,6 +810,7 @@ namespace DLM.helix
 
         private CancellationTokenSource _ctsIfc;
         private bool _modoPlanificado = false;
+        private string _layoutDxfAtivo = "Model";
 
         /// <summary>
         /// Carrega qualquer arquivo .IFC de forma assíncrona no View3D, exibindo barra de progresso e opção de cancelar.
@@ -1020,10 +1021,18 @@ namespace DLM.helix
         public void Abrir(netDxf.DxfDocument dxfDocument, bool extend = true, int maxZoom = 15, double fatorAproximacao = 0.5)
         {
             this.DxfCarregado = dxfDocument;
+            this.MVC.CAM = null;
             this.PassosZoomIn = maxZoom;
             this.FatorAproximacao = fatorAproximacao;
             LimparViewports();
-            dxfDocument.RenderHelix(this.viewPort2D);
+
+            if (grid_cam_2d_visual != null) grid_cam_2d_visual.Visibility = Visibility.Collapsed;
+            if (grid_dxf_2d_helix != null) grid_dxf_2d_helix.Visibility = Visibility.Visible;
+
+            var layouts = Render2dLayouts.ObterLayouts(dxfDocument);
+            _layoutDxfAtivo = Render2dLayouts.EscolherLayoutPrioritario(layouts);
+            AtualizarBarraLayoutsDXF(layouts, _layoutDxfAtivo);
+            Render2dLayouts.RenderizarLayout(dxfDocument, this.viewPort2D, _layoutDxfAtivo);
             Set2D();
             var st = new Style();
             st.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
@@ -1081,13 +1090,32 @@ namespace DLM.helix
 
                 AtualizarBotaoPlanificado();
 
-                // Pipeline unificado: ReadCAM -> IFC (DLM.IFCEngine) -> RenderIFC (Helix)
-                string textoIfc = this.MVC.CAM.GerarTextoIFC(_modoPlanificado);
+                // Pipeline unificado com cache em AppData: ReadCAM -> IFC -> RenderIFC (Helix)
+                string textoIfc = null;
+                string arqCacheIfc = null;
+                string sufixoCache = _modoPlanificado ? "PLAN" : "3D";
+                if (!string.IsNullOrWhiteSpace(this.MVC.CAM.Arquivo) &&
+                    CachePreview.ExisteCacheValido(this.MVC.CAM.Arquivo, ".ifc", out arqCacheIfc, sufixoCache))
+                {
+                    try { textoIfc = File.ReadAllText(arqCacheIfc); } catch { textoIfc = null; }
+                }
+                if (string.IsNullOrEmpty(textoIfc))
+                {
+                    textoIfc = this.MVC.CAM.GerarTextoIFC(_modoPlanificado);
+                    if (!string.IsNullOrWhiteSpace(this.MVC.CAM.Arquivo))
+                    {
+                        string destCache = CachePreview.ObterCaminhoCache(this.MVC.CAM.Arquivo, ".ifc", sufixoCache);
+                        CachePreview.SalvarTextoAtomico(destCache, textoIfc);
+                    }
+                }
                 var modeloIfc = IfcLeitor.LerTexto(textoIfc);
                 RenderIFC.Renderizar(viewPort3D, modeloIfc, true);
 
-                var dxf = this.MVC.CAM.Formato.GetDxf();
-                dxf.RenderHelix(this.viewPort2D);
+                // Aba 2D para CAMs: detalhamento técnico visual rico fora de escala
+                if (bd_layouts_dxf != null) bd_layouts_dxf.Visibility = Visibility.Collapsed;
+                if (grid_dxf_2d_helix != null) grid_dxf_2d_helix.Visibility = Visibility.Collapsed;
+                if (grid_cam_2d_visual != null) grid_cam_2d_visual.Visibility = Visibility.Visible;
+                CAMDesenho2DCanvas.Desenhar(canvas_cam_2d, this.MVC.CAM);
 
                 this.viewPort3D.ShowCoordinateSystem = true;
                 this.viewPort3D.ShowFieldOfView = false;
@@ -1280,6 +1308,63 @@ namespace DLM.helix
             else
             {
                 AbrirArquivoSeguro(MVC.CAM.Arquivo);
+            }
+        }
+
+        private void AtualizarBarraLayoutsDXF(List<DxfLayoutInfo> layouts, string layoutAtivo)
+        {
+            if (bd_layouts_dxf == null || painel_layouts_dxf == null) return;
+            painel_layouts_dxf.Children.Clear();
+
+            if (layouts == null || layouts.Count <= 1)
+            {
+                bd_layouts_dxf.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            var estiloBtn = TryFindResource("BotaoViewer3D") as Style;
+            foreach (var lay in layouts)
+            {
+                bool ativo = string.Equals(lay.Nome, layoutAtivo, StringComparison.OrdinalIgnoreCase);
+                var bt = new Button
+                {
+                    Content = lay.Rotulo,
+                    Tag = lay.Nome,
+                    Style = estiloBtn,
+                    Margin = new Thickness(0, 0, 3, 0),
+                    Padding = new Thickness(8, 0, 8, 0),
+                    Background = ativo
+                        ? new SolidColorBrush(Color.FromRgb(37, 99, 235))
+                        : new SolidColorBrush(Color.FromArgb(217, 35, 47, 62))
+                };
+                bt.Click += (s, e) =>
+                {
+                    var nome = (s as Button)?.Tag as string;
+                    if (!string.IsNullOrEmpty(nome))
+                    {
+                        SelecionarLayoutDXF(nome);
+                    }
+                };
+                painel_layouts_dxf.Children.Add(bt);
+            }
+            bd_layouts_dxf.Visibility = Visibility.Visible;
+        }
+
+        private void SelecionarLayoutDXF(string nomeLayout)
+        {
+            if (this.DxfCarregado == null) return;
+            _layoutDxfAtivo = nomeLayout;
+            Render2dLayouts.RenderizarLayout(this.DxfCarregado, this.viewPort2D, nomeLayout);
+            AtualizarBarraLayoutsDXF(Render2dLayouts.ObterLayouts(this.DxfCarregado), _layoutDxfAtivo);
+            _isInitializedZoom = false;
+            ZoomExtend();
+        }
+
+        private void canvas_cam_2d_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (this.MVC.CAM != null && grid_cam_2d_visual != null && grid_cam_2d_visual.Visibility == Visibility.Visible)
+            {
+                CAMDesenho2DCanvas.Desenhar(canvas_cam_2d, this.MVC.CAM);
             }
         }
 

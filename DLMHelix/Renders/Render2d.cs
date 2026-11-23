@@ -885,7 +885,7 @@ int totalLinhasInsert = linhas.Count - startLinhasIdx;
             }
             return linhas;
         }
-        private static TextoVisual3D GetText(netDxf.Entities.EntityObject entity, P3d origem)
+        internal static TextoVisual3D GetText(netDxf.Entities.EntityObject entity, P3d origem)
         {
             var position = new P3d();
             var cor = entity.GetCor();
@@ -936,7 +936,7 @@ int totalLinhasInsert = linhas.Count - startLinhasIdx;
 
             return nls;
         }
-        private static TextoVisual3D GetText(netDxf.Entities.Attribute att, P3d origem)
+        internal static TextoVisual3D GetText(netDxf.Entities.Attribute att, P3d origem)
         {
             if (att == null || !att.IsVisible || string.IsNullOrEmpty(att.Value) || att.Height < 1) return null;
             if (att.Layer != null && !att.Layer.IsVisible) return null;
@@ -953,7 +953,7 @@ int totalLinhasInsert = linhas.Count - startLinhasIdx;
             nls.Objeto = att;
             return nls;
         }
-        private static TextoVisual3D GetText(netDxf.Entities.AttributeDefinition attDef, P3d origem)
+        internal static TextoVisual3D GetText(netDxf.Entities.AttributeDefinition attDef, P3d origem)
         {
             if (attDef == null || !attDef.IsVisible || string.IsNullOrEmpty(attDef.Value) || attDef.Height < 1) return null;
             if (attDef.Layer != null && !attDef.Layer.IsVisible) return null;

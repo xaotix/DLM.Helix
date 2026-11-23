@@ -744,15 +744,25 @@ namespace DLM.helix
             double baseWidth = est.LarguraBase;
             if (baseWidth <= 0) baseWidth = 100;
 
+            double fatorPasso = FATOR_ZOOM;
             double larguraMinima = baseWidth / Math.Pow(FATOR_ZOOM, Math.Max(PassosZoomIn, 1));
             double larguraMaxima = baseWidth * Math.Pow(FATOR_ZOOM, Math.Max(PassosZoomOut, 1));
+
+            // Para modelos 3D grandes (IFC / TecnoMetal 3D), amplia o range de zoom para permitir
+            // aproximar ate detalhes de conexao (~50mm) e afastar com folga do modelo inteiro.
+            if (viewport == this.viewPort3D && (baseWidth > 5.0 || _modeloIfcAtual != null))
+            {
+                larguraMinima = Math.Min(larguraMinima, Math.Max(0.05, baseWidth / 600.0));
+                larguraMaxima = Math.Max(larguraMaxima, baseWidth * 10.0);
+                if (baseWidth > 10.0) fatorPasso = 1.15;
+            }
 
             // Parte do alvo atual (se estiver animando) para que vários cliques seguidos acumulem
             double referencia = est.Animando ? est.LarguraAlvo : orthoCam.Width;
 
             // Delta positivo = aproximar. Touchpads enviam deltas menores que 120 e geram passos proporcionais.
             double passos = e.Delta / 120.0;
-            double novaLargura = referencia * Math.Pow(FATOR_ZOOM, -passos);
+            double novaLargura = referencia * Math.Pow(fatorPasso, -passos);
             novaLargura = Math.Max(larguraMinima, Math.Min(larguraMaxima, novaLargura));
 
             est.CursorZoom = e.GetPosition(viewport);

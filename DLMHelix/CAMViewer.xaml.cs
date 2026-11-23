@@ -814,6 +814,52 @@ namespace DLM.helix
         /// <summary>
         /// Carrega qualquer arquivo .IFC de forma assíncrona no View3D, exibindo barra de progresso e opção de cancelar.
         /// </summary>
+        /// <summary>
+        /// Renderiza um IfcModeloLido já carregado em background (evitando leitura duplicada).
+        /// </summary>
+        public void AbrirModeloIFC(IfcModeloLido modelo, string caminho = null, bool extend = true)
+        {
+            CancelarCarregamentoIFC();
+            MostrarProgressoIFC(false, 0, "");
+
+            ArquivoCarregado = caminho;
+            DxfCarregado = null;
+            this.MVC.CAM = null;
+            _modoPlanificado = false;
+            LimparViewports();
+
+            this.tab_3d.Visibility = Visibility.Visible;
+            this.tab_3d.IsSelected = true;
+
+            if (modelo == null || modelo.Elementos.Count == 0)
+            {
+                AtualizarBotaoPlanificado();
+                return;
+            }
+
+            viewPort3D.Children.Add(Gera3d.Luz());
+            double tamUcs = modelo.TemGeometria
+                ? Math.Max(0.1, (modelo.Max - modelo.Min).Comprimento * RenderIFC.ESCALA_MM_PARA_M * 0.08)
+                : 0.25;
+            viewPort3D.AddUCSIcon(tamUcs);
+            AtualizarBotaoPlanificado();
+
+            RenderIFC.Renderizar(viewPort3D, modelo, true);
+
+            this.viewPort3D.ShowCoordinateSystem = true;
+            this.viewPort3D.ShowFieldOfView = false;
+            this.viewPort3D.ShowViewCube = true;
+            this.viewPort3D.ShowCameraTarget = false;
+            this.viewPort3D.ShowCameraInfo = false;
+
+            AtualizarBounds();
+            if (extend)
+            {
+                Isometric();
+                ZoomExtend();
+            }
+        }
+
         public async void AbrirIFC(string caminho, bool extend = true)
         {
             if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho)) return;
@@ -891,7 +937,7 @@ namespace DLM.helix
             }
         }
 
-        private void CancelarCarregamentoIFC()
+        public void CancelarCarregamentoIFC()
         {
             if (_ctsIfc != null)
             {

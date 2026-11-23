@@ -222,48 +222,7 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Overlay de progresso de carregamento IFC com opção de cancelar -->
-                    <Border x:Name="bd_progresso_ifc"
-                            Visibility="Collapsed"
-                            Background="#F5FFFFFF"
-                            BorderBrush="#CBD5E1"
-                            BorderThickness="1"
-                            CornerRadius="6"
-                            Padding="14,10"
-                            Width="340"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center">
-                        <StackPanel>
-                            <DockPanel Margin="0,0,0,6">
-                                <TextBlock x:Name="lbl_progresso_ifc"
-                                           Text="Carregando IFC..."
-                                           FontSize="12"
-                                           FontWeight="SemiBold"
-                                           Foreground="#0F172A"
-                                           VerticalAlignment="Center" />
-                                <TextBlock x:Name="lbl_pct_ifc"
-                                           DockPanel.Dock="Right"
-                                           Text="0%"
-                                           FontSize="11"
-                                           FontWeight="Bold"
-                                           Foreground="#1D4ED8"
-                                           VerticalAlignment="Center" />
-                            </DockPanel>
-                            <ProgressBar x:Name="pb_progresso_ifc"
-                                         Height="10"
-                                         Minimum="0"
-                                         Maximum="100"
-                                         Value="0"
-                                         Margin="0,0,0,8" />
-                            <Button x:Name="bt_cancelar_ifc"
-                                    Style="{DynamicResource BotaoPerigo}"
-                                    Content="Cancelar"
-                                    HorizontalAlignment="Right"
-                                    Padding="12,3"
-                                    FontSize="11"
-                                    Click="cancelar_ifc_click" />
-                        </StackPanel>
-                    </Border>
+
 
                     <Border Background="White"
 					Grid.Column="1"
@@ -471,5 +430,48 @@
                 </Grid>
             </TabItem>
         </TabControl>
+        <!-- Overlay unificado de carregamento (IFC, DWG, DXF, CAM) com progresso e cancelar -->
+        <Border x:Name="bd_progresso_ifc"
+                Visibility="Collapsed"
+                Background="#F5FFFFFF"
+                BorderBrush="#CBD5E1"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="14,10"
+                Width="340"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <StackPanel>
+                <DockPanel Margin="0,0,0,6">
+                    <TextBlock x:Name="lbl_progresso_ifc"
+                               Text="Carregando..."
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               Foreground="#0F172A"
+                               TextAlignment="Left"
+                               VerticalAlignment="Center" />
+                    <TextBlock x:Name="lbl_pct_ifc"
+                               DockPanel.Dock="Right"
+                               Text=""
+                               FontSize="11"
+                               FontWeight="Bold"
+                               Foreground="#1D4ED8"
+                               VerticalAlignment="Center" />
+                </DockPanel>
+                <ProgressBar x:Name="pb_progresso_ifc"
+                             Height="8"
+                             Minimum="0"
+                             Maximum="100"
+                             Value="0"
+                             Margin="0,0,0,8" />
+                <Button x:Name="bt_cancelar_ifc"
+                        Style="{DynamicResource BotaoPerigo}"
+                        Content="Cancelar"
+                        HorizontalAlignment="Right"
+                        Padding="12,3"
+                        FontSize="11"
+                        Click="cancelar_ifc_click" />
+            </StackPanel>
+        </Border>
     </Grid>
 </UserControl>

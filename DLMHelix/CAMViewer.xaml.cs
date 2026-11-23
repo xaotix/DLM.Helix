@@ -781,11 +781,12 @@ namespace DLM.helix
 
         public void Abrir(string arq, bool extend = true)
         {
+            CancelarCarregamento();
             LimparViewports();
 
             if (!arq.Exists()) return;
 
-            var ext = arq.getExtensao();
+            var ext = (arq.getExtensao() ?? "").ToUpperInvariant();
             if (ext == "CAM")
             {
                 ArquivoCarregado = arq;
@@ -796,15 +797,89 @@ namespace DLM.helix
             }
             else if (ext == "DXF")
             {
-                var dxf = arq.GetDxf();
-                ArquivoCarregado = arq;
-                DxfCarregado = dxf;
-                Abrir(dxf, extend);
-                AtualizarBotoesDXF(System.IO.File.Exists(arq));
+                AbrirDXF(arq, extend);
+            }
+            else if (ext == "DWG")
+            {
+                AbrirDWG(arq, extend);
             }
             else if (ext == "IFC")
             {
                 AbrirIFC(arq, extend);
+            }
+        }
+
+        public void AbrirDXF(string caminho, bool extend = true)
+        {
+            AbrirDwgOuDxfAsync(caminho, extend);
+        }
+
+        public void AbrirDWG(string caminho, bool extend = true)
+        {
+            AbrirDwgOuDxfAsync(caminho, extend);
+        }
+
+        private async void AbrirDwgOuDxfAsync(string caminho, bool extend = true)
+        {
+            if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho)) return;
+
+            CancelarCarregamento();
+            _ctsIfc = new CancellationTokenSource();
+            var token = _ctsIfc.Token;
+
+            ArquivoCarregado = caminho;
+            DxfCarregado = null;
+            this.MVC.CAM = null;
+            _modeloIfcAtual = null;
+            LimparViewports();
+
+            if (grid_cam_2d_visual != null) grid_cam_2d_visual.Visibility = Visibility.Collapsed;
+            if (grid_dxf_2d_helix != null) grid_dxf_2d_helix.Visibility = Visibility.Visible;
+            if (bd_layouts_dxf != null) bd_layouts_dxf.Visibility = Visibility.Collapsed;
+            Set2D();
+
+            string nomeArq = Path.GetFileName(caminho);
+            MostrarProgressoIFC(true, -1, "Carregando " + nomeArq + "...");
+
+            try
+            {
+                var dxf = await Task.Run(() =>
+                {
+                    return DwgLoader.CarregarDwgOuDxf(caminho, (atual, total, msg) =>
+                    {
+                        if (token.IsCancellationRequested) return;
+                        int pct = atual < 0 ? -1 : (total > 0 ? Math.Max(0, Math.Min(100, (atual * 100) / total)) : -1);
+                        Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                        {
+                            if (!token.IsCancellationRequested) MostrarProgressoIFC(true, pct, msg);
+                        }));
+                    }, token);
+                }, token);
+
+                if (token.IsCancellationRequested || dxf == null)
+                {
+                    MostrarProgressoIFC(false, 0, "");
+                    return;
+                }
+
+                MostrarProgressoIFC(true, 95, "Renderizando desenho...");
+                Abrir(dxf, extend);
+                AtualizarBotoesDXF(File.Exists(caminho));
+            }
+            catch (OperationCanceledException)
+            {
+                LimparViewports();
+            }
+            catch (Exception ex)
+            {
+                ex.Log(descricao: "CAMViewer.AbrirDwgOuDxfAsync: " + caminho);
+            }
+            finally
+            {
+                if (!token.IsCancellationRequested)
+                {
+                    MostrarProgressoIFC(false, 0, "");
+                }
             }
         }
 
@@ -941,7 +1016,7 @@ namespace DLM.helix
             }
         }
 
-        public void CancelarCarregamentoIFC()
+        public void CancelarCarregamento()
         {
             if (_ctsIfc != null)
             {
@@ -949,15 +1024,35 @@ namespace DLM.helix
                 _ctsIfc.Dispose();
                 _ctsIfc = null;
             }
+            MostrarProgressoIFC(false, 0, "");
         }
+
+        public void CancelarCarregamentoIFC() => CancelarCarregamento();
 
         private void MostrarProgressoIFC(bool visivel, int pct, string texto)
         {
             if (bd_progresso_ifc == null) return;
             bd_progresso_ifc.Visibility = visivel ? Visibility.Visible : Visibility.Collapsed;
-            if (pb_progresso_ifc != null) pb_progresso_ifc.Value = pct;
-            if (lbl_pct_ifc != null) lbl_pct_ifc.Text = pct + "%";
-            if (lbl_progresso_ifc != null && !string.IsNullOrEmpty(texto)) lbl_progresso_ifc.Text = texto;
+            if (pb_progresso_ifc != null)
+            {
+                if (pct < 0)
+                {
+                    pb_progresso_ifc.IsIndeterminate = true;
+                }
+                else
+                {
+                    pb_progresso_ifc.IsIndeterminate = false;
+                    pb_progresso_ifc.Value = Math.Max(0, Math.Min(100, pct));
+                }
+            }
+            if (lbl_pct_ifc != null)
+            {
+                lbl_pct_ifc.Text = pct < 0 ? "" : (pct + "%");
+            }
+            if (lbl_progresso_ifc != null && !string.IsNullOrEmpty(texto))
+            {
+                lbl_progresso_ifc.Text = texto;
+            }
         }
 
         private void cancelar_ifc_click(object sender, RoutedEventArgs e)

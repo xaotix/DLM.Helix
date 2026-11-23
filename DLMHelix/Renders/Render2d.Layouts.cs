@@ -25,6 +25,13 @@ namespace DLM.helix
 
     public static class Render2dLayouts
     {
+        private class EntidadeModelCache
+        {
+            public string LayerName;
+            public List<LinhaVisual3D> Linhas = new List<LinhaVisual3D>();
+            public List<TextoVisual3D> Textos = new List<TextoVisual3D>();
+        }
+
         public static List<DxfLayoutInfo> ObterLayouts(DxfDocument dxf)
         {
             var lista = new List<DxfLayoutInfo>();
@@ -34,20 +41,17 @@ namespace DLM.helix
             {
                 if (lay == null) continue;
                 int mviews = 0;
-                int ents = 0;
+                int ents = (lay.AssociatedBlock != null && lay.AssociatedBlock.Entities != null)
+                    ? lay.AssociatedBlock.Entities.Count
+                    : 0;
 
                 if (lay.IsPaperSpace && lay.AssociatedBlock != null && lay.AssociatedBlock.Entities != null)
                 {
-                    ents = lay.AssociatedBlock.Entities.Count;
                     foreach (var ent in lay.AssociatedBlock.Entities)
                     {
                         var vp = ent as Viewport;
                         if (EhMViewValido(vp, lay)) mviews++;
                     }
-                }
-                else if (!lay.IsPaperSpace)
-                {
-                    ents = dxf.Entities != null ? dxf.Entities.All.Count() : 0;
                 }
 
                 lista.Add(new DxfLayoutInfo
@@ -60,7 +64,6 @@ namespace DLM.helix
                 });
             }
 
-            // Ordena: layouts PaperSpace por TabOrder primeiro (priorizando com MView) e Model no fim/ordem
             return lista
                 .OrderBy(x => x.EhPaperSpace ? 0 : 1)
                 .ThenBy(x => x.TabOrder)
@@ -89,7 +92,16 @@ namespace DLM.helix
             if (string.IsNullOrWhiteSpace(nomeLayout) ||
                 string.Equals(nomeLayout, Layout.ModelSpaceName, StringComparison.OrdinalIgnoreCase))
             {
-                dxf.RenderHelix(viewPort);
+                string prevActive = dxf.Entities.ActiveLayout;
+                try
+                {
+                    dxf.Entities.ActiveLayout = Layout.ModelSpaceName;
+                    dxf.RenderHelix(viewPort);
+                }
+                finally
+                {
+                    try { dxf.Entities.ActiveLayout = prevActive; } catch { }
+                }
                 return;
             }
 
@@ -141,65 +153,110 @@ namespace DLM.helix
                     continue;
                 }
 
-                RenderizarEntidadeSimples(ent, origem, espessura, linhas, textos);
+                RenderizarEntidade(ent, origem, espessura, linhas, textos);
             }
 
             // 2) Renderiza o conteúdo do ModelSpace projetado e recortado dentro de cada MView
             if (mviews.Count > 0)
             {
-                // Coleta linhas do ModelSpace uma única vez (rápido)
-                var modelLinhas = new List<LinhaVisual3D>(4096);
-                var modelTextos = new List<TextVisual3D>(256);
-                ColetarEntidadesModelSpace(dxf, modelLinhas, modelTextos);
+                var modelPorLayer = ColetarEntidadesModelSpacePorLayer(dxf);
 
                 foreach (var mv in mviews)
                 {
-                    // Moldura sutil do MView
                     double minX = mv.Center.X - mv.Width * 0.5;
                     double maxX = mv.Center.X + mv.Width * 0.5;
                     double minY = mv.Center.Y - mv.Height * 0.5;
                     double maxY = mv.Center.Y + mv.Height * 0.5;
 
-                    var moldura = new LinhaVisual3D
+                    // Moldura sutil do MView (respeita visibilidade da layer da MView)
+                    if (mv.Layer == null || mv.Layer.IsVisible)
                     {
-                        Color = Color.FromRgb(71, 85, 105),
-                        Thickness = 0.7
-                    };
-                    moldura.Points.Add(new Point3D(minX, minY, 0)); moldura.Points.Add(new Point3D(maxX, minY, 0));
-                    moldura.Points.Add(new Point3D(maxX, minY, 0)); moldura.Points.Add(new Point3D(maxX, maxY, 0));
-                    moldura.Points.Add(new Point3D(maxX, maxY, 0)); moldura.Points.Add(new Point3D(minX, maxY, 0));
-                    moldura.Points.Add(new Point3D(minX, maxY, 0)); moldura.Points.Add(new Point3D(minX, minY, 0));
-                    linhas.Add(moldura);
-
-                    double escala = mv.ViewHeight > 1e-6 ? (mv.Height / mv.ViewHeight) : 1.0;
-                    double modelCx = mv.ViewTarget.X + mv.ViewCenter.X;
-                    double modelCy = mv.ViewTarget.Y + mv.ViewCenter.Y;
-                    double rad = mv.TwistAngle * Math.PI / 180.0;
-                    double cosT = Math.Cos(rad);
-                    double sinT = Math.Sin(rad);
-
-                    // Agrupa segmentos recortados por cor dentro deste MView
-                    var porCor = new Dictionary<Color, Point3DCollection>();
-                    foreach (var ml in modelLinhas)
-                    {
-                        if (ml == null || ml.Points == null || ml.Points.Count < 2) continue;
-                        var pts = ml.Points;
-                        for (int i = 0; i + 1 < pts.Count; i += 2)
+                        var moldura = new LinhaVisual3D
                         {
-                            double x1, y1, x2, y2;
-                            TransformarPontoMView(pts[i].X, pts[i].Y, modelCx, modelCy, escala, cosT, sinT, mv.Center.X, mv.Center.Y, out x1, out y1);
-                            TransformarPontoMView(pts[i + 1].X, pts[i + 1].Y, modelCx, modelCy, escala, cosT, sinT, mv.Center.X, mv.Center.Y, out x2, out y2);
+                            Color = Color.FromRgb(71, 85, 105),
+                            Thickness = 0.7
+                        };
+                        moldura.Points.Add(new Point3D(minX, minY, 0)); moldura.Points.Add(new Point3D(maxX, minY, 0));
+                        moldura.Points.Add(new Point3D(maxX, minY, 0)); moldura.Points.Add(new Point3D(maxX, maxY, 0));
+                        moldura.Points.Add(new Point3D(maxX, maxY, 0)); moldura.Points.Add(new Point3D(minX, maxY, 0));
+                        moldura.Points.Add(new Point3D(minX, maxY, 0)); moldura.Points.Add(new Point3D(minX, minY, 0));
+                        linhas.Add(moldura);
+                    }
 
-                            if (RecortarSegmentoRetangulo(ref x1, ref y1, ref x2, ref y2, minX, minY, maxX, maxY))
+                    // Conjunto de layers congeladas especificamente nesta MView
+                    var congeladas = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    if (mv.FrozenLayers != null)
+                    {
+                        foreach (var fl in mv.FrozenLayers)
+                        {
+                            if (fl != null && !string.IsNullOrEmpty(fl.Name)) congeladas.Add(fl.Name);
+                        }
+                    }
+
+                    // Base ortonormal DCS (WCS -> DCS -> PaperSpace) conforme especificação DXF/AutoCAD
+                    double escala = mv.ViewHeight > 1e-6 ? (mv.Height / mv.ViewHeight) : 1.0;
+                    Vector3D dcsX, dcsY;
+                    CalcularBaseDCS(mv.ViewDirection, mv.TwistAngle, out dcsX, out dcsY);
+
+                    double targetX = mv.ViewTarget.X;
+                    double targetY = mv.ViewTarget.Y;
+                    double targetZ = mv.ViewTarget.Z;
+                    double vcX = mv.ViewCenter.X;
+                    double vcY = mv.ViewCenter.Y;
+                    double vpCx = mv.Center.X;
+                    double vpCy = mv.Center.Y;
+
+                    var porCor = new Dictionary<Color, Point3DCollection>();
+
+                    foreach (var grp in modelPorLayer)
+                    {
+                        if (!string.IsNullOrEmpty(grp.LayerName) && congeladas.Contains(grp.LayerName)) continue;
+
+                        foreach (var ml in grp.Linhas)
+                        {
+                            if (ml == null || ml.Points == null || ml.Points.Count < 2) continue;
+                            var pts = ml.Points;
+                            for (int i = 0; i + 1 < pts.Count; i += 2)
                             {
-                                Point3DCollection col;
-                                if (!porCor.TryGetValue(ml.Color, out col))
+                                double x1, y1, x2, y2;
+                                ProjetarWcsParaPaper(pts[i], targetX, targetY, targetZ, dcsX, dcsY, vcX, vcY, escala, vpCx, vpCy, out x1, out y1);
+                                ProjetarWcsParaPaper(pts[i + 1], targetX, targetY, targetZ, dcsX, dcsY, vcX, vcY, escala, vpCx, vpCy, out x2, out y2);
+
+                                if (RecortarSegmentoRetangulo(ref x1, ref y1, ref x2, ref y2, minX, minY, maxX, maxY))
                                 {
-                                    col = new Point3DCollection();
-                                    porCor[ml.Color] = col;
+                                    Point3DCollection col;
+                                    if (!porCor.TryGetValue(ml.Color, out col))
+                                    {
+                                        col = new Point3DCollection();
+                                        porCor[ml.Color] = col;
+                                    }
+                                    col.Add(new Point3D(x1, y1, 0));
+                                    col.Add(new Point3D(x2, y2, 0));
                                 }
-                                col.Add(new Point3D(x1, y1, 0));
-                                col.Add(new Point3D(x2, y2, 0));
+                            }
+                        }
+
+                        foreach (var mt in grp.Textos)
+                        {
+                            if (mt == null) continue;
+                            double tx, ty;
+                            ProjetarWcsParaPaper(mt.Position, targetX, targetY, targetZ, dcsX, dcsY, vcX, vcY, escala, vpCx, vpCy, out tx, out ty);
+                            if (tx >= minX && tx <= maxX && ty >= minY && ty <= maxY)
+                            {
+                                double h = mt.Height * escala;
+                                if (h >= 0.35)
+                                {
+                                    textos.Add(new TextVisual3D
+                                    {
+                                        Text = mt.Text,
+                                        Position = new Point3D(tx, ty, 0),
+                                        Height = h,
+                                        Foreground = mt.Foreground,
+                                        FontFamily = mt.FontFamily,
+                                        UpDirection = mt.UpDirection,
+                                        TextDirection = mt.TextDirection
+                                    });
+                                }
                             }
                         }
                     }
@@ -216,30 +273,6 @@ namespace DLM.helix
                             });
                         }
                     }
-
-                    foreach (var mt in modelTextos)
-                    {
-                        if (mt == null) continue;
-                        double tx, ty;
-                        TransformarPontoMView(mt.Position.X, mt.Position.Y, modelCx, modelCy, escala, cosT, sinT, mv.Center.X, mv.Center.Y, out tx, out ty);
-                        if (tx >= minX && tx <= maxX && ty >= minY && ty <= maxY)
-                        {
-                            double h = mt.Height * escala;
-                            if (h >= 0.4)
-                            {
-                                textos.Add(new TextVisual3D
-                                {
-                                    Text = mt.Text,
-                                    Position = new Point3D(tx, ty, 0),
-                                    Height = h,
-                                    Foreground = mt.Foreground,
-                                    FontFamily = mt.FontFamily,
-                                    UpDirection = mt.UpDirection,
-                                    TextDirection = mt.TextDirection
-                                });
-                            }
-                        }
-                    }
                 }
             }
 
@@ -252,37 +285,132 @@ namespace DLM.helix
         {
             if (vp == null) return false;
             if (ReferenceEquals(vp, lay.Viewport)) return false;
-            if (vp.Stacking <= 1) return false;
-            return vp.Width > 1e-3 && vp.Height > 1e-3 && vp.ViewHeight > 1e-3;
+            if (vp.Width <= 1e-3 || vp.Height <= 1e-3 || vp.ViewHeight <= 1e-3) return false;
+
+            // Exclui o viewport raiz do próprio PaperSpace (que tem Center == ViewCenter e Height == ViewHeight)
+            bool ehRaizPaperSpace =
+                Math.Abs(vp.Center.X - vp.ViewCenter.X) < 1e-2 &&
+                Math.Abs(vp.Center.Y - vp.ViewCenter.Y) < 1e-2 &&
+                Math.Abs(vp.Height - vp.ViewHeight) < 1e-2 &&
+                Math.Abs(vp.ViewTarget.X) < 1e-2 &&
+                Math.Abs(vp.ViewTarget.Y) < 1e-2 &&
+                Math.Abs(vp.ViewTarget.Z) < 1e-2 &&
+                (vp.Layer == null || vp.Layer.Name == "0");
+
+            return !ehRaizPaperSpace;
         }
 
-        private static void TransformarPontoMView(
-            double mx, double my,
-            double modelCx, double modelCy,
-            double escala, double cosT, double sinT,
-            double vpCx, double vpCy,
-            out double px, out double py)
+        private static void CalcularBaseDCS(Vector3 viewDir, double twistGraus, out Vector3D dcsX, out Vector3D dcsY)
         {
-            double dx = (mx - modelCx) * escala;
-            double dy = (my - modelCy) * escala;
-            px = vpCx + (dx * cosT - dy * sinT);
-            py = vpCy + (dx * sinT + dy * cosT);
-        }
+            var z = new Vector3D(viewDir.X, viewDir.Y, viewDir.Z);
+            if (z.LengthSquared < 1e-9) z = new Vector3D(0, 0, 1);
+            z.Normalize();
 
-        private static void ColetarEntidadesModelSpace(DxfDocument dxf, List<LinhaVisual3D> linhas, List<TextVisual3D> textos)
-        {
-            var origem = new P3d();
-            double esp = 1;
-            if (dxf.Entities == null) return;
-
-            foreach (var ent in dxf.Entities.All)
+            Vector3D x;
+            if (Math.Abs(z.X) < 1e-5 && Math.Abs(z.Y) < 1e-5)
             {
-                if (ent == null || (ent.Layer != null && !ent.Layer.IsVisible)) continue;
-                RenderizarEntidadeSimples(ent, origem, esp, linhas, textos);
+                x = z.Z >= 0 ? new Vector3D(1, 0, 0) : new Vector3D(-1, 0, 0);
+            }
+            else
+            {
+                x = Vector3D.CrossProduct(new Vector3D(0, 0, 1), z);
+                x.Normalize();
+            }
+            var y = Vector3D.CrossProduct(z, x);
+            y.Normalize();
+
+            if (Math.Abs(twistGraus) > 1e-4)
+            {
+                double rad = -twistGraus * Math.PI / 180.0;
+                double c = Math.Cos(rad);
+                double s = Math.Sin(rad);
+                dcsX = x * c + y * s;
+                dcsY = -x * s + y * c;
+            }
+            else
+            {
+                dcsX = x;
+                dcsY = y;
             }
         }
 
-        private static void RenderizarEntidadeSimples(EntityObject ent, P3d origem, double espessura, List<LinhaVisual3D> linhas, List<TextVisual3D> textos)
+        private static void ProjetarWcsParaPaper(
+            Point3D pWcs,
+            double targetX, double targetY, double targetZ,
+            Vector3D dcsX, Vector3D dcsY,
+            double vcX, double vcY,
+            double escala,
+            double vpCx, double vpCy,
+            out double px, out double py)
+        {
+            double dx = pWcs.X - targetX;
+            double dy = pWcs.Y - targetY;
+            double dz = pWcs.Z - targetZ;
+
+            double u = dx * dcsX.X + dy * dcsX.Y + dz * dcsX.Z;
+            double v = dx * dcsY.X + dy * dcsY.Y + dz * dcsY.Z;
+
+            px = vpCx + (u - vcX) * escala;
+            py = vpCy + (v - vcY) * escala;
+        }
+
+        private static List<EntidadeModelCache> ColetarEntidadesModelSpacePorLayer(DxfDocument dxf)
+        {
+            var mapa = new Dictionary<string, EntidadeModelCache>(StringComparer.OrdinalIgnoreCase);
+            if (dxf == null || dxf.Layouts == null) return new List<EntidadeModelCache>();
+
+            Layout modelLayout = null;
+            foreach (var l in dxf.Layouts)
+            {
+                if (l != null && !l.IsPaperSpace)
+                {
+                    modelLayout = l;
+                    break;
+                }
+            }
+            if (modelLayout == null || modelLayout.AssociatedBlock == null || modelLayout.AssociatedBlock.Entities == null)
+            {
+                return new List<EntidadeModelCache>();
+            }
+
+            var origem = new P3d();
+            double esp = 1;
+
+            foreach (var ent in modelLayout.AssociatedBlock.Entities)
+            {
+                if (ent == null || (ent.Layer != null && !ent.Layer.IsVisible)) continue;
+                string layName = ent.Layer != null ? (ent.Layer.Name ?? "") : "";
+
+                EntidadeModelCache grp;
+                if (!mapa.TryGetValue(layName, out grp))
+                {
+                    grp = new EntidadeModelCache { LayerName = layName };
+                    mapa[layName] = grp;
+                }
+
+                var txtsTemp = new List<TextVisual3D>();
+                RenderizarEntidade(ent, origem, esp, grp.Linhas, txtsTemp);
+                for (int i = 0; i < txtsTemp.Count; i++)
+                {
+                    var t = txtsTemp[i];
+                    if (t is TextoVisual3D tv) grp.Textos.Add(tv);
+                    else grp.Textos.Add(new TextoVisual3D
+                    {
+                        Text = t.Text,
+                        Position = t.Position,
+                        Height = t.Height,
+                        Foreground = t.Foreground,
+                        FontFamily = t.FontFamily,
+                        UpDirection = t.UpDirection,
+                        TextDirection = t.TextDirection
+                    });
+                }
+            }
+
+            return mapa.Values.ToList();
+        }
+
+        private static void RenderizarEntidade(EntityObject ent, P3d origem, double espessura, List<LinhaVisual3D> linhas, List<TextVisual3D> textos)
         {
             try
             {
@@ -311,16 +439,28 @@ namespace DLM.helix
                 {
                     linhas.AddRange(el.GetHelix(origem, espessura));
                 }
+                else if (ent is Spline sp)
+                {
+                    var pl = sp.ToPolyline2D(16);
+                    if (pl != null) pl.GetHelix(origem, ref linhas, ref textos, espessura);
+                }
                 else if (ent is Insert ins)
                 {
                     ins.GetHelix(origem, ref linhas, ref textos, espessura);
                 }
-                else if (ent is Text tx && tx.Height >= 0.4)
+                else if (ent is Dimension dim && dim.Block != null && dim.Block.Entities != null)
+                {
+                    foreach (var de in dim.Block.Entities)
+                    {
+                        if (de != null) RenderizarEntidade(de, origem, espessura, linhas, textos);
+                    }
+                }
+                else if (ent is Text tx && tx.Height >= 0.35)
                 {
                     var tv = Render2d.GetText(tx, origem);
                     if (tv != null) textos.Add(tv);
                 }
-                else if (ent is MText mtx && mtx.Height >= 0.4)
+                else if (ent is MText mtx && mtx.Height >= 0.35)
                 {
                     var tv = Render2d.GetText(mtx, origem);
                     if (tv != null) textos.Add(tv);

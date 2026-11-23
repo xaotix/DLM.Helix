@@ -116,9 +116,14 @@ namespace DLM.helix
             double larg = face.Largura > 0 ? face.Largura : Math.Max(cam.Formato.Perfil.Altura, 50);
             int qtdFuros = face.Furacoes != null ? face.Furacoes.Count : 0;
             int qtdDobras = face.Dobras != null ? face.Dobras.Count : 0;
+            int qtdRecInt = face.RecortesInternos != null ? face.RecortesInternos.Count : 0;
+
+            string extras = "";
+            if (qtdRecInt > 0) extras += ", " + qtdRecInt + " rec. int.";
+            if (qtdDobras > 0) extras += ", " + qtdDobras + " dobras";
 
             string info = string.Format(CultureInfo.InvariantCulture, "{0}   ({1:0.#} x {2:0.#} mm  |  {3} furos{4})",
-                titulo, comp, larg, qtdFuros, qtdDobras > 0 ? (", " + qtdDobras + " dobras") : "");
+                titulo, comp, larg, qtdFuros, extras);
             AddText(canvas, info, x + 8, y + 4, 9.5, FontWeights.Bold, BrTextoEscuro);
 
             // Caixa de desenho fora de escala (sempre ocupa bem a largura e altura disponíveis)
@@ -134,9 +139,10 @@ namespace DLM.helix
             double sx = dw / Math.Max(comp, 1.0);
             double sy = dh / Math.Max(larg, 1.0);
 
-            // Contorno real da face (se tiver LivSegmentada) ou retângulo
+            // Contorno real da face (discretizando arcos se existirem) ou retângulo
             var fillBrush = ehMesa ? BrAcoMesaFill : BrAcoFill;
-            if (face.LivSegmentada != null && face.LivSegmentada.Count >= 3)
+            var ptsContorno = DiscretizarLiv2D(face.LivSegmentada != null && face.LivSegmentada.Count >= 3 ? (IList<Liv>)face.LivSegmentada : face.Liv);
+            if (ptsContorno.Count >= 3)
             {
                 var pg = new Polygon
                 {
@@ -145,10 +151,10 @@ namespace DLM.helix
                     StrokeThickness = 1.4,
                     StrokeLineJoin = PenLineJoin.Round
                 };
-                foreach (var lv in face.LivSegmentada)
+                foreach (var pt in ptsContorno)
                 {
-                    double px = dx + Math.Max(0, Math.Min(comp, lv.Origem.X)) * sx;
-                    double py = dy + Math.Max(0, Math.Min(larg, Math.Abs(lv.Origem.Y))) * sy;
+                    double px = dx + Math.Max(0, Math.Min(comp, pt.X)) * sx;
+                    double py = dy + Math.Max(0, Math.Min(larg, Math.Abs(pt.Y))) * sy;
                     pg.Points.Add(new Point(px, py));
                 }
                 canvas.Children.Add(pg);
@@ -156,6 +162,48 @@ namespace DLM.helix
             else
             {
                 AddRect(canvas, dx, dy, dw, dh, fillBrush, BrAcoStroke, 1.4, 0);
+            }
+
+            // Recortes internos ([INLINE]) vazados em branco com contorno vermelho e dimensão
+            if (face.RecortesInternos != null && face.RecortesInternos.Count > 0)
+            {
+                foreach (var rec in face.RecortesInternos)
+                {
+                    var ptsRec = DiscretizarLiv2D(rec.Coordenadas);
+                    if (ptsRec.Count < 3) continue;
+
+                    var pgRec = new Polygon
+                    {
+                        Fill = BrFundo,
+                        Stroke = BrFuro,
+                        StrokeThickness = 1.3,
+                        StrokeLineJoin = PenLineJoin.Round
+                    };
+
+                    double minRx = double.MaxValue, maxRx = double.MinValue;
+                    double minRy = double.MaxValue, maxRy = double.MinValue;
+                    foreach (var pt in ptsRec)
+                    {
+                        double px = dx + Math.Max(0, Math.Min(comp, pt.X)) * sx;
+                        double py = dy + Math.Max(0, Math.Min(larg, Math.Abs(pt.Y))) * sy;
+                        pgRec.Points.Add(new Point(px, py));
+                        if (pt.X < minRx) minRx = pt.X;
+                        if (pt.X > maxRx) maxRx = pt.X;
+                        double ay = Math.Abs(pt.Y);
+                        if (ay < minRy) minRy = ay;
+                        if (ay > maxRy) maxRy = ay;
+                    }
+                    canvas.Children.Add(pgRec);
+
+                    double recW = maxRx - minRx;
+                    double recH = maxRy - minRy;
+                    double cxPx = dx + ((minRx + maxRx) * 0.5) * sx;
+                    double cyPx = dy + ((minRy + maxRy) * 0.5) * sy;
+                    string tagRec = Math.Abs(recW - recH) <= 2.0 && rec.Coordenadas.Any(c => c.Raio > 0.05)
+                        ? string.Format(CultureInfo.InvariantCulture, "Ø{0:0.#}", recW)
+                        : string.Format(CultureInfo.InvariantCulture, "{0:0.#}x{1:0.#}", recW, recH);
+                    AddText(canvas, tagRec, cxPx - 16, cyPx - 6, 8.5, FontWeights.Bold, BrFuro);
+                }
             }
 
             // Cota vertical à esquerda (largura da face)
@@ -395,6 +443,71 @@ namespace DLM.helix
             if (bLarg > 0)
                 AddText(canvas, string.Format(CultureInfo.InvariantCulture, "B = {0:0.#} mm", bLarg), x + 4, infoY + 13, 9, FontWeights.SemiBold, BrCota);
             AddText(canvas, string.Format(CultureInfo.InvariantCulture, "t = {0:0.##} mm", p.Esp), x + 4, infoY + 26, 9, FontWeights.Normal, BrTextoSuave);
+        }
+
+        private static List<Point> DiscretizarLiv2D(IList<Liv> coords)
+        {
+            var pts = new List<Point>();
+            if (coords == null || coords.Count < 2) return pts;
+
+            int n = coords.Count;
+            for (int i = 0; i < n; i++)
+            {
+                var p = coords[i];
+                if (p.Raio > 0.05 && n >= 3)
+                {
+                    var pAnt = coords[(i - 1 + n) % n];
+                    var pProx = coords[(i + 1) % n];
+                    double cx = p.Origem.X;
+                    double cy = p.Origem.Y;
+                    double r = Math.Sqrt(Math.Pow(pAnt.Origem.X - cx, 2) + Math.Pow(pAnt.Origem.Y - cy, 2));
+                    if (r < 0.05) r = p.Raio;
+
+                    // No padrão CAM/DXF, Ang1 -> Ang2 define sempre o arco no sentido anti-horário (CCW).
+                    double ang1Rad = p.Ang1 * Math.PI / 180.0;
+                    double sweepDeg = p.Ang2 - p.Ang1;
+                    while (sweepDeg <= 1e-6) sweepDeg += 360.0;
+                    if (sweepDeg > 360.0) sweepDeg -= 360.0;
+                    double sweepRad = sweepDeg * Math.PI / 180.0;
+                    double ang2Rad = ang1Rad + sweepRad;
+
+                    double d1 = Math.Pow(cx + r * Math.Cos(ang1Rad) - pAnt.Origem.X, 2) + Math.Pow(cy + r * Math.Sin(ang1Rad) - pAnt.Origem.Y, 2);
+                    double d2 = Math.Pow(cx + r * Math.Cos(ang2Rad) - pAnt.Origem.X, 2) + Math.Pow(cy + r * Math.Sin(ang2Rad) - pAnt.Origem.Y, 2);
+                    bool reverso = d2 < d1;
+
+                    int passos = Math.Max(12, (int)Math.Ceiling(sweepRad / (Math.PI / 16.0)));
+                    for (int s = 1; s < passos; s++)
+                    {
+                        double t = (double)s / passos;
+                        double ang = reverso ? (ang2Rad - sweepRad * t) : (ang1Rad + sweepRad * t);
+                        pts.Add(new Point(cx + r * Math.Cos(ang), cy + r * Math.Sin(ang)));
+                    }
+                }
+                else
+                {
+                    pts.Add(new Point(p.Origem.X, p.Origem.Y));
+                }
+            }
+
+            // Remove pontos duplicados consecutivos e fechamento repetido
+            var limpo = new List<Point>();
+            for (int i = 0; i < pts.Count; i++)
+            {
+                var cur = pts[i];
+                if (limpo.Count == 0 ||
+                    Math.Abs(cur.X - limpo[limpo.Count - 1].X) > 0.05 ||
+                    Math.Abs(cur.Y - limpo[limpo.Count - 1].Y) > 0.05)
+                {
+                    limpo.Add(cur);
+                }
+            }
+            if (limpo.Count > 2 &&
+                Math.Abs(limpo[0].X - limpo[limpo.Count - 1].X) <= 0.05 &&
+                Math.Abs(limpo[0].Y - limpo[limpo.Count - 1].Y) <= 0.05)
+            {
+                limpo.RemoveAt(limpo.Count - 1);
+            }
+            return limpo;
         }
 
         private static void AddRect(Canvas c, double x, double y, double w, double h, Brush fill, Brush stroke, double thick, double radius)

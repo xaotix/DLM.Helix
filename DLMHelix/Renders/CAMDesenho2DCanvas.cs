@@ -1,4 +1,3 @@
-using Conexoes;
 using DLM.cam;
 using DLM.vars;
 using System;
@@ -13,26 +12,31 @@ using System.Windows.Shapes;
 namespace DLM.helix
 {
     /// <summary>
-    /// Desenhador técnico 2D fora de escala para qualquer ReadCAM, seguindo o padrão visual
-    /// limpo e claro das macros Purlin, Arremate Especial e Banzo Medajoist.
+    /// Desenhador técnico 2D padrão CAD para ReadCAM:
+    /// - LIV2 (Mesa Superior) em cima (somente se tiver geometria)
+    /// - LIV1 (Alma / Chapa) no centro
+    /// - LIV3 (Mesa Inferior) embaixo (somente se tiver geometria)
+    /// - Corte / Seção Transversal sempre à direita (+ detalhes de solda quando existirem)
+    /// - UCSIcon na origem (0,0) de cada vista
     /// </summary>
     public static class CAMDesenho2DCanvas
     {
-        private static readonly Brush BrFundo = Freeze(new SolidColorBrush(Color.FromRgb(255, 255, 255)));
-        private static readonly Brush BrHeaderBg = Freeze(new SolidColorBrush(Color.FromRgb(248, 250, 252)));
-        private static readonly Brush BrCardBorda = Freeze(new SolidColorBrush(Color.FromRgb(203, 213, 225)));
-        private static readonly Brush BrAcoFill = Freeze(new SolidColorBrush(Color.FromRgb(226, 232, 240)));
-        private static readonly Brush BrAcoMesaFill = Freeze(new SolidColorBrush(Color.FromRgb(219, 234, 254)));
-        private static readonly Brush BrAcoStroke = Freeze(new SolidColorBrush(Color.FromRgb(30, 41, 59)));
-        private static readonly Brush BrTextoEscuro = Freeze(new SolidColorBrush(Color.FromRgb(15, 23, 42)));
-        private static readonly Brush BrTextoSuave = Freeze(new SolidColorBrush(Color.FromRgb(100, 116, 139)));
-        private static readonly Brush BrCota = Freeze(new SolidColorBrush(Color.FromRgb(37, 99, 235)));
-        private static readonly Brush BrDobra = Freeze(new SolidColorBrush(Color.FromRgb(217, 119, 6)));
-        private static readonly Brush BrFuro = Freeze(new SolidColorBrush(Color.FromRgb(220, 38, 38)));
-        private static readonly Brush BrFuroFill = Freeze(new SolidColorBrush(Color.FromRgb(254, 226, 226)));
-        private static readonly Brush BrRecorteInterno = Freeze(new SolidColorBrush(Color.FromRgb(234, 88, 12)));
-        private static readonly Brush BrSolda = Freeze(new SolidColorBrush(Color.FromRgb(202, 138, 4)));
-        private static readonly Brush BrSoldaTexto = Freeze(new SolidColorBrush(Color.FromRgb(146, 64, 14)));
+        private static readonly Brush BrFundo = Freeze(new SolidColorBrush(Color.FromRgb(20, 25, 35)));
+        private static readonly Brush BrPainelBg = Freeze(new SolidColorBrush(Color.FromRgb(26, 32, 44)));
+        private static readonly Brush BrBorda = Freeze(new SolidColorBrush(Color.FromRgb(51, 65, 85)));
+        private static readonly Brush BrPecaFill = Freeze(new SolidColorBrush(Color.FromRgb(22, 52, 38)));
+        private static readonly Brush BrPecaStroke = Freeze(new SolidColorBrush(Color.FromRgb(34, 197, 94)));
+        private static readonly Brush BrTextoClaro = Freeze(new SolidColorBrush(Color.FromRgb(241, 245, 249)));
+        private static readonly Brush BrTextoSuave = Freeze(new SolidColorBrush(Color.FromRgb(148, 163, 184)));
+        private static readonly Brush BrCotaLinha = Freeze(new SolidColorBrush(Color.FromRgb(148, 163, 184)));
+        private static readonly Brush BrCotaTexto = Freeze(new SolidColorBrush(Color.FromRgb(226, 232, 240)));
+        private static readonly Brush BrDobra = Freeze(new SolidColorBrush(Color.FromRgb(217, 70, 239)));
+        private static readonly Brush BrFuro = Freeze(new SolidColorBrush(Color.FromRgb(239, 68, 68)));
+        private static readonly Brush BrFuroFill = Freeze(new SolidColorBrush(Color.FromRgb(69, 26, 26)));
+        private static readonly Brush BrRecorteInt = Freeze(new SolidColorBrush(Color.FromRgb(249, 115, 22)));
+        private static readonly Brush BrSolda = Freeze(new SolidColorBrush(Color.FromRgb(250, 204, 21)));
+        private static readonly Brush BrUcsX = Freeze(new SolidColorBrush(Color.FromRgb(239, 68, 68)));
+        private static readonly Brush BrUcsY = Freeze(new SolidColorBrush(Color.FromRgb(34, 197, 94)));
 
         private static SolidColorBrush Freeze(SolidColorBrush b) { b.Freeze(); return b; }
 
@@ -43,122 +47,147 @@ namespace DLM.helix
             canvas.Background = BrFundo;
             if (cam == null || cam.Formato == null || cam.Formato.Perfil == null) return;
 
-            double w = canvas.ActualWidth > 60 ? canvas.ActualWidth : 760;
-            double h = canvas.ActualHeight > 60 ? canvas.ActualHeight : 420;
+            double w = canvas.ActualWidth > 80 ? canvas.ActualWidth : 900;
+            double h = canvas.ActualHeight > 80 ? canvas.ActualHeight : 520;
 
-            var perfil = cam.Formato.Perfil;
-            double comp = cam.Comprimento > 0 ? cam.Comprimento : cam.Formato.GetComprimento();
-            double esp = cam.Espessura > 0 ? cam.Espessura : perfil.Esp;
-            double corte = (cam.Formato.LIV1 != null && cam.Formato.LIV1.Largura > 0) ? cam.Formato.LIV1.Largura : perfil.Altura;
+            double margem = 8;
+            double headerH = 38;
 
-            // 1) Cabeçalho técnico compacto
-            double hdrH = 44;
-            AddRect(canvas, 6, 6, w - 12, hdrH, BrHeaderBg, BrCardBorda, 1, 4);
+            AddRect(canvas, margem, margem, w - margem * 2, headerH, BrPainelBg, BrBorda, 1, 4);
+            string titulo = !string.IsNullOrWhiteSpace(cam.Nome) ? cam.Nome : "CAM";
+            AddText(canvas, titulo, margem + 10, margem + 4, 12.5, FontWeights.Bold, BrTextoClaro);
 
-            string titulo = !string.IsNullOrWhiteSpace(cam.Posicao) ? cam.Posicao : (cam.Nome ?? "CAM");
-            string sub = string.Format(CultureInfo.InvariantCulture,
-                "{0}  |  Comp: {1:0.#} mm  |  Esp: {2:0.##} mm  |  Corte/Lar: {3:0.#} mm  |  Mat: {4}  |  Trat: {5}  |  Peso: {6:0.##} kg",
-                perfil.Descricao ?? perfil.Tipo.ToString(),
-                comp,
-                esp,
-                corte,
+            string subtitulo = string.Format(CultureInfo.InvariantCulture,
+                "{0}  |  Comp: {1:0.#} mm  |  Esp: {2:0.##} mm  |  Larg: {3:0.#} mm  |  Mat: {4}  |  Peso: {5:0.##} kg",
+                cam.Descricao, cam.Comprimento, cam.Espessura, cam.Largura,
                 string.IsNullOrWhiteSpace(cam.Material) ? "-" : cam.Material,
-                string.IsNullOrWhiteSpace(cam.Tratamento) ? "-" : cam.Tratamento,
                 cam.Peso);
+            AddText(canvas, subtitulo, margem + 10, margem + 20, 9.5, FontWeights.Normal, BrTextoSuave);
 
-            AddText(canvas, titulo, 14, 10, 12.5, FontWeights.Bold, BrTextoEscuro);
-            AddText(canvas, sub, 14, 28, 10, FontWeights.Normal, BrTextoSuave);
+            double corpoY = margem + headerH + 6;
+            double corpoH = Math.Max(140, h - corpoY - margem);
+            double painelDirW = Math.Min(215, Math.Max(155, w * 0.21));
+            double areaVistasW = Math.Max(260, w - margem * 2 - painelDirW - 6);
+            double painelDirX = margem + areaVistasW + 6;
 
-            // Área útil abaixo do cabeçalho
-            double topY = hdrH + 14;
-            double areaH = Math.Max(140, h - topY - 10);
+            var facesVisiveis = new List<Tuple<string, Face, double>>();
+            var f2 = cam.Formato.LIV2;
+            var f1 = cam.Formato.LIV1;
+            var f3 = cam.Formato.LIV3;
+            var f4 = cam.Formato.LIV4;
 
-            // 2) Painel esquerdo: Seção Transversal esquemática (22% da largura, min 120, max 190)
-            double secW = Math.Max(120, Math.Min(185, w * 0.22));
-            AddRect(canvas, 6, topY, secW, areaH, BrFundo, BrCardBorda, 1, 4);
-            AddText(canvas, "SEÇÃO TRANSVERSAL", 14, topY + 6, 9.5, FontWeights.Bold, BrTextoSuave);
-            DesenharSecaoEsquematica(canvas, cam, 14, topY + 24, secW - 16, areaH - 34);
+            if (TemGeometriaFace(f2)) facesVisiveis.Add(Tuple.Create("LIV2 — Mesa Superior", f2, 1.0));
+            if (TemGeometriaFace(f1)) facesVisiveis.Add(Tuple.Create("LIV1 — Alma / Chapa", f1, 1.45));
+            if (TemGeometriaFace(f3)) facesVisiveis.Add(Tuple.Create("LIV3 — Mesa Inferior", f3, 1.0));
+            if (TemGeometriaFace(f4)) facesVisiveis.Add(Tuple.Create("LIV4", f4, 0.9));
 
-            // 3) Painel principal: Vistas das faces (LIV1, LIV2, LIV3, LIV4) fora de escala
-            double facesX = secW + 14;
-            double facesW = Math.Max(200, w - facesX - 6);
-
-            var facesAtivas = ColetarFacesAtivas(cam);
-            if (facesAtivas.Count == 0) return;
-
-            double gap = 8;
-            double faceH = Math.Max(72, (areaH - gap * (facesAtivas.Count - 1)) / facesAtivas.Count);
-
-            for (int i = 0; i < facesAtivas.Count; i++)
+            var soldasTodas = new List<Tuple<string, Solda>>();
+            int idxLetra = 0;
+            foreach (var fv in facesVisiveis)
             {
-                double fy = topY + i * (faceH + gap);
-                DesenharFace(canvas, cam, facesAtivas[i].Item1, facesAtivas[i].Item2, facesAtivas[i].Item3, facesX, fy, facesW, faceH);
+                if (fv.Item2.Soldas != null)
+                {
+                    foreach (var s in fv.Item2.Soldas)
+                    {
+                        if (s == null || s.Tipo == TAB_CAM_TIPO_SOLDA._) continue;
+                        string letra = ((char)('A' + (idxLetra % 26))).ToString();
+                        idxLetra++;
+                        soldasTodas.Add(Tuple.Create(letra, s));
+                    }
+                }
             }
+
+            AddRect(canvas, margem, corpoY, areaVistasW, corpoH, BrFundo, BrBorda, 1, 4);
+
+            if (facesVisiveis.Count > 0)
+            {
+                double somaPesos = facesVisiveis.Sum(x => x.Item3);
+                double gap = 6;
+                double alturaUtil = Math.Max(60, corpoH - gap * (facesVisiveis.Count + 1));
+                double curY = corpoY + gap;
+
+                double compRef = Math.Max(100, facesVisiveis.Max(x => x.Item2.Comprimento > 0 ? x.Item2.Comprimento : cam.Comprimento));
+
+                foreach (var fv in facesVisiveis)
+                {
+                    double fh = alturaUtil * (fv.Item3 / somaPesos);
+                    DesenharFace(canvas, cam, fv.Item2, fv.Item1, margem + 6, curY, areaVistasW - 12, fh, compRef, soldasTodas);
+                    curY += fh + gap;
+                }
+            }
+
+            DesenharPainelDireito(canvas, cam, painelDirX, corpoY, painelDirW, corpoH, soldasTodas);
         }
 
-        private static List<Tuple<string, Face, bool>> ColetarFacesAtivas(ReadCAM cam)
+        private static bool TemGeometriaFace(Face face)
         {
-            var res = new List<Tuple<string, Face, bool>>();
-            var f = cam.Formato;
-            if (f.LIV1 != null && (f.LIV1.Comprimento > 0 || f.LIV1.Largura > 0 || (f.LIV1.Furacoes != null && f.LIV1.Furacoes.Count > 0)))
-                res.Add(Tuple.Create("LIV1 — Alma / Chapa", f.LIV1, false));
-            if (f.LIV2 != null && ((f.LIV2.Furacoes != null && f.LIV2.Furacoes.Count > 0) || (f.Perfil.Faces > 1 && f.LIV2.Largura > 0)))
-                res.Add(Tuple.Create("LIV2 — Mesa Superior", f.LIV2, true));
-            if (f.LIV3 != null && ((f.LIV3.Furacoes != null && f.LIV3.Furacoes.Count > 0) || (f.Perfil.Faces > 2 && f.LIV3.Largura > 0)))
-                res.Add(Tuple.Create("LIV3 — Mesa Inferior", f.LIV3, true));
-            if (f.LIV4 != null && f.LIV4.Furacoes != null && f.LIV4.Furacoes.Count > 0)
-                res.Add(Tuple.Create("LIV4 — Face Auxiliar", f.LIV4, true));
-            return res;
+            if (face == null) return false;
+            if (face.Liv != null && face.Liv.Count >= 3) return true;
+            if (face.LivSegmentada != null && face.LivSegmentada.Count >= 3) return true;
+            if (face.Furacoes != null && face.Furacoes.Count > 0) return true;
+            if (face.RecortesInternos != null && face.RecortesInternos.Count > 0) return true;
+            if (face.Soldas != null && face.Soldas.Any(s => s != null && s.Tipo != TAB_CAM_TIPO_SOLDA._)) return true;
+            return false;
         }
 
-        private static void DesenharFace(Canvas canvas, ReadCAM cam, string titulo, Face face, bool ehMesa, double x, double y, double w, double h)
+        private static void DesenharFace(
+            Canvas canvas,
+            ReadCAM cam,
+            Face face,
+            string titulo,
+            double x,
+            double y,
+            double w,
+            double h,
+            double compRef,
+            List<Tuple<string, Solda>> soldasTodas)
         {
-            AddRect(canvas, x, y, w, h, BrFundo, BrCardBorda, 1, 4);
-
             double comp = face.Comprimento > 0 ? face.Comprimento : Math.Max(cam.Comprimento, 100);
             double larg = face.Largura > 0 ? face.Largura : Math.Max(cam.Formato.Perfil.Altura, 50);
+
             int qtdFuros = face.Furacoes != null ? face.Furacoes.Count : 0;
-            int qtdDobras = face.Dobras != null ? face.Dobras.Count : 0;
             int qtdRecInt = face.RecortesInternos != null ? face.RecortesInternos.Count : 0;
-            int qtdSoldas = face.Soldas != null ? face.Soldas.Count(s => s != null && s.Tipo != DLM.vars.TAB_CAM_TIPO_SOLDA._) : 0;
+            int qtdDobras = face.Dobras != null ? face.Dobras.Count : 0;
+            int qtdSoldas = face.Soldas != null ? face.Soldas.Count(s => s != null && s.Tipo != TAB_CAM_TIPO_SOLDA._) : 0;
 
             string extras = "";
             if (qtdRecInt > 0) extras += ", " + qtdRecInt + " rec. int.";
             if (qtdDobras > 0) extras += ", " + qtdDobras + " dobras";
             if (qtdSoldas > 0) extras += ", " + qtdSoldas + " soldas";
 
-            string info = string.Format(CultureInfo.InvariantCulture, "{0}   ({1:0.#} x {2:0.#} mm  |  {3} furos{4})",
+            string info = string.Format(CultureInfo.InvariantCulture, "{0}  ({1:0.#} x {2:0.#} mm | {3} furos{4})",
                 titulo, comp, larg, qtdFuros, extras);
-            AddText(canvas, info, x + 8, y + 4, 9.5, FontWeights.Bold, BrTextoEscuro);
+            AddText(canvas, info, x + 4, y + 1, 9.0, FontWeights.SemiBold, BrTextoSuave);
 
-            // Caixa de desenho fora de escala (sempre ocupa bem a largura e altura disponíveis)
-            double padL = 46;
-            double padR = 16;
-            double padT = 32;
+            double padL = 44;
+            double padR = 46;
+            double padT = 28;
             double padB = 22;
+
             double dx = x + padL;
             double dy = y + padT;
-            double dw = Math.Max(60, w - padL - padR);
+            double dwMax = Math.Max(80, w - padL - padR);
             double dh = Math.Max(26, h - padT - padB);
 
-            double sx = dw / Math.Max(comp, 1.0);
+            double sx = dwMax / Math.Max(compRef, 1.0);
+            double dw = comp * sx;
             double sy = dh / Math.Max(larg, 1.0);
 
-            // Contorno real da face (discretizando arcos se existirem) ou retângulo
-            var fillBrush = ehMesa ? BrAcoMesaFill : BrAcoFill;
-            var ptsContorno = DiscretizarLiv2D(face.LivSegmentada != null && face.LivSegmentada.Count >= 3 ? (IList<Liv>)face.LivSegmentada : face.Liv);
+            var ptsContorno = DiscretizarLiv2D(face.LivSegmentada != null && face.LivSegmentada.Count >= 3
+                ? (IList<Liv>)face.LivSegmentada : face.Liv);
+
             if (ptsContorno.Count >= 3)
             {
                 var pg = new Polygon
                 {
-                    Fill = fillBrush,
-                    Stroke = BrAcoStroke,
-                    StrokeThickness = 1.4,
+                    Fill = BrPecaFill,
+                    Stroke = BrPecaStroke,
+                    StrokeThickness = 1.5,
                     StrokeLineJoin = PenLineJoin.Round
                 };
                 foreach (var pt in ptsContorno)
                 {
-                    double px = dx + Math.Max(0, Math.Min(comp, pt.X)) * sx;
+                    double px = dx + Math.Max(0, Math.Min(compRef, pt.X)) * sx;
                     double py = dy + Math.Max(0, Math.Min(larg, Math.Abs(pt.Y))) * sy;
                     pg.Points.Add(new Point(px, py));
                 }
@@ -166,10 +195,9 @@ namespace DLM.helix
             }
             else
             {
-                AddRect(canvas, dx, dy, dw, dh, fillBrush, BrAcoStroke, 1.4, 0);
+                AddRect(canvas, dx, dy, dw, dh, BrPecaFill, BrPecaStroke, 1.5, 0);
             }
 
-            // Recortes internos ([INLINE]) vazados em branco com contorno vermelho e dimensão
             if (face.RecortesInternos != null && face.RecortesInternos.Count > 0)
             {
                 foreach (var rec in face.RecortesInternos)
@@ -180,7 +208,7 @@ namespace DLM.helix
                     var pgRec = new Polygon
                     {
                         Fill = BrFundo,
-                        Stroke = BrRecorteInterno,
+                        Stroke = BrRecorteInt,
                         StrokeThickness = 1.6,
                         StrokeLineJoin = PenLineJoin.Round
                     };
@@ -189,7 +217,7 @@ namespace DLM.helix
                     double minRy = double.MaxValue, maxRy = double.MinValue;
                     foreach (var pt in ptsRec)
                     {
-                        double px = dx + Math.Max(0, Math.Min(comp, pt.X)) * sx;
+                        double px = dx + Math.Max(0, Math.Min(compRef, pt.X)) * sx;
                         double py = dy + Math.Max(0, Math.Min(larg, Math.Abs(pt.Y))) * sy;
                         pgRec.Points.Add(new Point(px, py));
                         if (pt.X < minRx) minRx = pt.X;
@@ -207,57 +235,10 @@ namespace DLM.helix
                     string tagRec = Math.Abs(recW - recH) <= 2.0 && rec.Coordenadas.Any(c => c.Raio > 0.05)
                         ? string.Format(CultureInfo.InvariantCulture, "Ø{0:0.#}", recW)
                         : string.Format(CultureInfo.InvariantCulture, "{0:0.#}x{1:0.#}", recW, recH);
-                    AddText(canvas, tagRec, cxPx - 16, cyPx - 6, 8.5, FontWeights.Bold, BrRecorteInterno);
+                    AddText(canvas, tagRec, cxPx - 16, cyPx - 6, 8.5, FontWeights.Bold, BrRecorteInt);
                 }
             }
 
-            // Soldas / chanfros ([WELD]) destacados sobre as arestas em dourado/âmbar
-            if (face.Soldas != null && face.Soldas.Count > 0)
-            {
-                foreach (var s in face.Soldas)
-                {
-                    if (s == null || s.Tipo == DLM.vars.TAB_CAM_TIPO_SOLDA._) continue;
-                    double sx1 = dx + Math.Max(0, Math.Min(comp, s.Linha.P1.X)) * sx;
-                    double sy1 = dy + Math.Max(0, Math.Min(larg, Math.Abs(s.Linha.P1.Y))) * sy;
-                    double sx2 = dx + Math.Max(0, Math.Min(comp, s.Linha.P2.X)) * sx;
-                    double sy2 = dy + Math.Max(0, Math.Min(larg, Math.Abs(s.Linha.P2.Y))) * sy;
-
-                    var lnSolda = new Line
-                    {
-                        X1 = sx1,
-                        Y1 = sy1,
-                        X2 = sx2,
-                        Y2 = sy2,
-                        Stroke = BrSolda,
-                        StrokeThickness = 3.2,
-                        StrokeStartLineCap = PenLineCap.Round,
-                        StrokeEndLineCap = PenLineCap.Round
-                    };
-                    canvas.Children.Add(lnSolda);
-
-                    double mx = (sx1 + sx2) * 0.5;
-                    double my = (sy1 + sy2) * 0.5;
-                    string lblSolda = string.Format(CultureInfo.InvariantCulture, "{0}{1}{2}",
-                        s.Tipo,
-                        s.T > 0 ? string.Format(CultureInfo.InvariantCulture, " T{0:0.#}", s.T) : "",
-                        s.Angulo > 0 ? string.Format(CultureInfo.InvariantCulture, " {0:0.#}°", s.Angulo) : "");
-                    AddText(canvas, lblSolda, mx - 20, my - 12, 8.0, FontWeights.Bold, BrSoldaTexto);
-                }
-            }
-            // Cota vertical à esquerda (largura da face)
-            AddLine(canvas, dx - 8, dy, dx - 8, dy + dh, BrCota, 0.9);
-            AddLine(canvas, dx - 11, dy, dx - 5, dy, BrCota, 0.9);
-            AddLine(canvas, dx - 11, dy + dh, dx - 5, dy + dh, BrCota, 0.9);
-            AddText(canvas, larg.ToString("0.#", CultureInfo.InvariantCulture), x + 4, dy + dh * 0.5 - 6, 8.5, FontWeights.SemiBold, BrCota);
-
-            // Cota horizontal na base (comprimento total)
-            double cotaBotY = dy + dh + 10;
-            AddLine(canvas, dx, cotaBotY, dx + dw, cotaBotY, BrCota, 0.9);
-            AddLine(canvas, dx, cotaBotY - 3, dx, cotaBotY + 3, BrCota, 0.9);
-            AddLine(canvas, dx + dw, cotaBotY - 3, dx + dw, cotaBotY + 3, BrCota, 0.9);
-            AddText(canvas, "L = " + comp.ToString("0.#", CultureInfo.InvariantCulture) + " mm", dx + dw * 0.5 - 32, cotaBotY - 11, 8.5, FontWeights.SemiBold, BrCota);
-
-            // Linhas de dobra (se existirem)
             if (face.Dobras != null && face.Dobras.Count > 0)
             {
                 foreach (var dob in face.Dobras)
@@ -265,182 +246,223 @@ namespace DLM.helix
                     double yDob = Math.Abs(dob.Linha.P1.Y);
                     if (yDob <= 0.1 || yDob >= larg - 0.1) continue;
                     double py = dy + yDob * sy;
-                    var ln = new Line
+                    canvas.Children.Add(new Line
                     {
                         X1 = dx, Y1 = py, X2 = dx + dw, Y2 = py,
-                        Stroke = BrDobra,
-                        StrokeThickness = 1.2,
-                        StrokeDashArray = new DoubleCollection { 5, 3 }
-                    };
-                    canvas.Children.Add(ln);
-                    double ang = dob.Angulo - 180.0;
-                    string tagDobra = string.Format(CultureInfo.InvariantCulture, "Dobra Y={0:0.#} ({1:+0;-0;0}°)", yDob, ang);
-                    AddText(canvas, tagDobra, dx + 6, py - 12, 8.5, FontWeights.SemiBold, BrDobra);
+                        Stroke = BrDobra, StrokeThickness = 1.2,
+                        StrokeDashArray = new DoubleCollection { 6, 3 }
+                    });
+                    AddText(canvas, string.Format(CultureInfo.InvariantCulture, "Dobra Y={0:0.#} ({1:0.#}°)", yDob, dob.Angulo),
+                        dx + 6, py - 11, 7.8, FontWeights.Normal, BrDobra);
                 }
             }
 
-            // Furações + cotas em X (sem sobreposição) e diâmetros
+            if (face.Soldas != null && face.Soldas.Count > 0)
+            {
+                foreach (var s in face.Soldas)
+                {
+                    if (s == null || s.Tipo == TAB_CAM_TIPO_SOLDA._) continue;
+                    double sx1 = dx + Math.Max(0, Math.Min(compRef, s.Linha.P1.X)) * sx;
+                    double sy1 = dy + Math.Max(0, Math.Min(larg, Math.Abs(s.Linha.P1.Y))) * sy;
+                    double sx2 = dx + Math.Max(0, Math.Min(compRef, s.Linha.P2.X)) * sx;
+                    double sy2 = dy + Math.Max(0, Math.Min(larg, Math.Abs(s.Linha.P2.Y))) * sy;
+
+                    canvas.Children.Add(new Line
+                    {
+                        X1 = sx1, Y1 = sy1, X2 = sx2, Y2 = sy2,
+                        Stroke = BrSolda, StrokeThickness = 3.0,
+                        StrokeStartLineCap = PenLineCap.Round,
+                        StrokeEndLineCap = PenLineCap.Round
+                    });
+
+                    var tagMatch = soldasTodas.FirstOrDefault(t => ReferenceEquals(t.Item2, s));
+                    string letra = tagMatch != null ? tagMatch.Item1 : "W";
+                    double mx = (sx1 + sx2) * 0.5;
+                    double my = (sy1 + sy2) * 0.5;
+                    var circ = new Ellipse { Width = 14, Height = 14, Fill = BrFundo, Stroke = BrSolda, StrokeThickness = 1.2 };
+                    Canvas.SetLeft(circ, mx - 7);
+                    Canvas.SetTop(circ, my - 7);
+                    canvas.Children.Add(circ);
+                    AddText(canvas, letra, mx - 3.5, my - 6.5, 8.5, FontWeights.Bold, BrSolda);
+                }
+            }
+
             if (face.Furacoes != null && face.Furacoes.Count > 0)
             {
-                var xsUnicos = new SortedSet<double>();
-                var tiposFuro = new HashSet<string>();
-
+                var gruposX = new List<double>();
                 foreach (var fr in face.Furacoes)
                 {
-                    if (fr.Diametro <= 0) continue;
-                    double fx = dx + Math.Max(0, Math.Min(comp, fr.Origem.X)) * sx;
-                    double fyLocal = Math.Abs(fr.Origem.Y);
-                    double fy = dy + Math.Max(0, Math.Min(larg, fyLocal)) * sy;
+                    double fx = dx + Math.Max(0, Math.Min(compRef, fr.Origem.X)) * sx;
+                    double fy = dy + Math.Max(0, Math.Min(larg, Math.Abs(fr.Origem.Y))) * sy;
+                    double rPx = Math.Max(3.2, Math.Min(9.0, (fr.Diametro * 0.5) * Math.Min(sx, sy)));
 
-                    xsUnicos.Add(Math.Round(fr.Origem.X, 1));
-                    string tagDiam = fr.Oblongo > 0.5
-                        ? string.Format(CultureInfo.InvariantCulture, "Ø{0:0.#}x{1:0.#}", fr.Diametro, fr.Diametro + fr.Oblongo)
-                        : string.Format(CultureInfo.InvariantCulture, "Ø{0:0.#}", fr.Diametro);
-                    tiposFuro.Add(tagDiam);
-
-                    double rPx = Math.Max(3.2, Math.Min(7.5, fr.Diametro * 0.25));
                     if (fr.Oblongo > 0.5)
                     {
-                        double oblPx = Math.Max(rPx * 2.4, Math.Min(18, (fr.Diametro + fr.Oblongo) * 0.28));
+                        double wObl = Math.Max(rPx * 2 + 4, (fr.Diametro + fr.Oblongo) * sx);
+                        double hObl = rPx * 2;
                         var rect = new Rectangle
                         {
-                            Width = oblPx,
-                            Height = rPx * 2,
-                            RadiusX = rPx,
-                            RadiusY = rPx,
-                            Fill = BrFuroFill,
-                            Stroke = BrFuro,
-                            StrokeThickness = 1.2,
+                            Width = wObl, Height = hObl, RadiusX = rPx, RadiusY = rPx,
+                            Fill = BrFuroFill, Stroke = BrFuro, StrokeThickness = 1.4,
                             RenderTransformOrigin = new Point(0.5, 0.5),
                             RenderTransform = new RotateTransform(-fr.Angulo)
                         };
-                        Canvas.SetLeft(rect, fx - oblPx * 0.5);
-                        Canvas.SetTop(rect, fy - rPx);
+                        Canvas.SetLeft(rect, fx - wObl * 0.5);
+                        Canvas.SetTop(rect, fy - hObl * 0.5);
                         canvas.Children.Add(rect);
                     }
                     else
                     {
-                        var el = new Ellipse
-                        {
-                            Width = rPx * 2,
-                            Height = rPx * 2,
-                            Fill = BrFuroFill,
-                            Stroke = BrFuro,
-                            StrokeThickness = 1.2
-                        };
+                        var el = new Ellipse { Width = rPx * 2, Height = rPx * 2, Fill = BrFuroFill, Stroke = BrFuro, StrokeThickness = 1.4 };
                         Canvas.SetLeft(el, fx - rPx);
                         Canvas.SetTop(el, fy - rPx);
                         canvas.Children.Add(el);
                     }
 
-                    // Cruz de centro discreta
-                    AddLine(canvas, fx - rPx - 2, fy, fx + rPx + 2, fy, BrFuro, 0.5);
-                    AddLine(canvas, fx, fy - rPx - 2, fx, fy + rPx + 2, BrFuro, 0.5);
+                    AddLine(canvas, fx - rPx - 2, fy, fx + rPx + 2, fy, BrFuro, 0.7);
+                    AddLine(canvas, fx, fy - rPx - 2, fx, fy + rPx + 2, BrFuro, 0.7);
+
+                    if (!gruposX.Any(gx => Math.Abs(gx - fr.Origem.X) < 1.0))
+                        gruposX.Add(fr.Origem.X);
                 }
 
-                // Cadeia de cotas em X acima da face (com anticolisão horizontal)
-                double cotaTopY = dy - 9;
-                double ultimoLabelX = -1000;
-                foreach (double xVal in xsUnicos)
+                gruposX.Sort();
+                double ultimoPx = -999;
+                foreach (var gx in gruposX)
                 {
-                    double px = dx + Math.Max(0, Math.Min(comp, xVal)) * sx;
-                    AddLine(canvas, px, dy - 1, px, cotaTopY, BrFuro, 0.6);
-                    if (px - ultimoLabelX >= 34)
-                    {
-                        AddText(canvas, xVal.ToString("0.#", CultureInfo.InvariantCulture), px - 12, cotaTopY - 12, 8.2, FontWeights.SemiBold, BrFuro);
-                        ultimoLabelX = px;
-                    }
+                    double fx = dx + gx * sx;
+                    if (fx - ultimoPx < 24) continue;
+                    ultimoPx = fx;
+                    AddLine(canvas, fx, dy - 2, fx, dy - 10, BrCotaLinha, 0.7);
+                    AddText(canvas, gx.ToString("0", CultureInfo.InvariantCulture), fx - 8, dy - 21, 7.8, FontWeights.Normal, BrCotaTexto);
                 }
-
-                // Legenda de diâmetros no canto superior direito da face
-                string legenda = "Furos: " + string.Join(", ", tiposFuro);
-                AddText(canvas, legenda, x + w - Math.Min(210, legenda.Length * 5.6 + 12), y + 4, 8.8, FontWeights.SemiBold, BrFuro);
             }
+
+            double cotaBotY = dy + dh + 9;
+            AddLine(canvas, dx, cotaBotY, dx + dw, cotaBotY, BrCotaLinha, 0.8);
+            AddLine(canvas, dx, cotaBotY - 3, dx, cotaBotY + 3, BrCotaLinha, 0.8);
+            AddLine(canvas, dx + dw, cotaBotY - 3, dx + dw, cotaBotY + 3, BrCotaLinha, 0.8);
+            AddText(canvas, comp.ToString("0.#", CultureInfo.InvariantCulture), dx + dw * 0.5 - 14, cotaBotY - 11, 8.5, FontWeights.SemiBold, BrCotaTexto);
+
+            double cotaDirX = dx + dw + 10;
+            AddLine(canvas, cotaDirX, dy, cotaDirX, dy + dh, BrCotaLinha, 0.8);
+            AddLine(canvas, cotaDirX - 3, dy, cotaDirX + 3, dy, BrCotaLinha, 0.8);
+            AddLine(canvas, cotaDirX - 3, dy + dh, cotaDirX + 3, dy + dh, BrCotaLinha, 0.8);
+            AddText(canvas, larg.ToString("0.#", CultureInfo.InvariantCulture), cotaDirX + 4, dy + dh * 0.5 - 6, 8.5, FontWeights.SemiBold, BrCotaTexto);
+
+            DesenharUCSIcon2D(canvas, dx, dy, 20);
         }
 
-        private static void DesenharSecaoEsquematica(Canvas canvas, ReadCAM cam, double x, double y, double w, double h)
+        private static void DesenharUCSIcon2D(Canvas canvas, double ox, double oy, double tam)
+        {
+            AddLine(canvas, ox, oy, ox + tam, oy, BrUcsX, 1.8);
+            var setaX = new Polygon { Fill = BrUcsX };
+            setaX.Points.Add(new Point(ox + tam + 4, oy));
+            setaX.Points.Add(new Point(ox + tam - 1, oy - 3));
+            setaX.Points.Add(new Point(ox + tam - 1, oy + 3));
+            canvas.Children.Add(setaX);
+            AddText(canvas, "X", ox + tam + 6, oy - 7, 8.0, FontWeights.Bold, BrUcsX);
+
+            AddLine(canvas, ox, oy, ox, oy + tam, BrUcsY, 1.8);
+            var setaY = new Polygon { Fill = BrUcsY };
+            setaY.Points.Add(new Point(ox, oy + tam + 4));
+            setaY.Points.Add(new Point(ox - 3, oy + tam - 1));
+            setaY.Points.Add(new Point(ox + 3, oy + tam - 1));
+            canvas.Children.Add(setaY);
+            AddText(canvas, "Y", ox - 11, oy + tam - 3, 8.0, FontWeights.Bold, BrUcsY);
+
+            AddRect(canvas, ox - 2.5, oy - 2.5, 5, 5, BrFundo, BrTextoClaro, 1.1, 0);
+        }
+
+        private static void DesenharPainelDireito(
+            Canvas canvas,
+            ReadCAM cam,
+            double x,
+            double y,
+            double w,
+            double h,
+            List<Tuple<string, Solda>> soldasTodas)
+        {
+            AddRect(canvas, x, y, w, h, BrPainelBg, BrBorda, 1, 4);
+
+            double curY = y + 6;
+            double restoH = h - 12;
+
+            if (soldasTodas != null && soldasTodas.Count > 0)
+            {
+                double soldaH = Math.Min(h * 0.44, 24 + soldasTodas.Count * 42);
+                AddText(canvas, "CHANFROS / SOLDAS", x + 8, curY, 9.0, FontWeights.Bold, BrSolda);
+                curY += 16;
+
+                int maxExibir = Math.Min(soldasTodas.Count, 4);
+                for (int i = 0; i < maxExibir; i++)
+                {
+                    var item = soldasTodas[i];
+                    var s = item.Item2;
+                    double iy = curY + i * 38;
+                    double bx = x + 12;
+                    double by = iy + 6;
+                    var poly = new Polygon { Fill = BrPecaFill, Stroke = BrPecaStroke, StrokeThickness = 1.2 };
+                    poly.Points.Add(new Point(bx, by + 22));
+                    poly.Points.Add(new Point(bx + 12, by));
+                    poly.Points.Add(new Point(bx + 36, by));
+                    poly.Points.Add(new Point(bx + 36, by + 22));
+                    canvas.Children.Add(poly);
+                    AddLine(canvas, bx, by + 22, bx + 12, by, BrSolda, 2.0);
+
+                    AddText(canvas, string.Format(CultureInfo.InvariantCulture, "{0}: {1}", item.Item1, s.Tipo), bx + 44, by - 1, 9.0, FontWeights.Bold, BrSolda);
+                    AddText(canvas, string.Format(CultureInfo.InvariantCulture, "T={0:0.#}  A={1:0.#}°", s.T, s.Angulo), bx + 44, by + 11, 8.2, FontWeights.Normal, BrCotaTexto);
+                }
+
+                curY = y + soldaH;
+                AddLine(canvas, x + 6, curY, x + w - 6, curY, BrBorda, 1);
+                curY += 6;
+                restoH = Math.Max(110, y + h - curY - 6);
+            }
+
+            AddText(canvas, "CORTE / SEÇÃO", x + 8, curY, 9.0, FontWeights.Bold, BrTextoSuave);
+            DesenharSecaoTransversal(canvas, cam, x + 6, curY + 16, w - 12, restoH - 16);
+        }
+
+        private static void DesenharSecaoTransversal(Canvas canvas, ReadCAM cam, double x, double y, double w, double h)
         {
             var p = cam.Formato.Perfil;
             double cx = x + w * 0.5;
-            double cy = y + h * 0.45;
-            double box = Math.Min(w - 24, h - 55);
-            if (box < 30) return;
+            double cy = y + Math.Max(40, (h - 50) * 0.5);
+            double box = Math.Min(w - 36, Math.Max(55, h - 75));
 
-            var liv1 = cam.Formato.LIV1;
-            bool temDobras = liv1 != null && liv1.Dobras != null && liv1.Dobras.Count > 0;
-
-            if (temDobras)
+            if (p.Tipo == CAM_PERFIL_TIPO.Chapa)
             {
-                // Reconstrói polilinha dobrada proporcional à caixa
-                double corte = liv1.Largura > 0 ? liv1.Largura : Math.Max(p.Altura, 50);
-                var dobras = liv1.Dobras
-                    .Select(d => new { PosY = Math.Abs(d.Linha.P1.Y), Ang = d.Angulo })
-                    .Where(d => d.PosY > 0.5 && d.PosY < corte - 0.5)
-                    .OrderBy(d => d.PosY).ToList();
-
-                var pts = new List<Point>();
-                double u = 0, v = 0, ang = 0, yAnt = 0;
-                pts.Add(new Point(u, v));
-                for (int i = 0; i <= dobras.Count; i++)
+                bool temDobras = cam.Formato.LIV1 != null && cam.Formato.LIV1.Dobras != null && cam.Formato.LIV1.Dobras.Count > 0;
+                if (temDobras)
                 {
-                    double yProx = (i < dobras.Count) ? dobras[i].PosY : corte;
-                    double len = Math.Max(yProx - yAnt, 1);
-                    u += Math.Cos(ang) * len;
-                    v += Math.Sin(ang) * len;
-                    pts.Add(new Point(u, v));
-                    yAnt = yProx;
-                    if (i < dobras.Count)
-                    {
-                        double dg = dobras[i].Ang - 180.0;
-                        if (Math.Abs(dg) < 1) dg = 90;
-                        ang += dg * Math.PI / 180.0;
-                    }
+                    var pl = new Polyline { Stroke = BrPecaStroke, StrokeThickness = 3.0, StrokeLineJoin = PenLineJoin.Miter };
+                    double bw = box * 0.42, bh = box * 0.28;
+                    pl.Points.Add(new Point(cx - bw + 8, cy - bh));
+                    pl.Points.Add(new Point(cx - bw, cy - bh));
+                    pl.Points.Add(new Point(cx - bw, cy + bh));
+                    pl.Points.Add(new Point(cx + bw, cy + bh));
+                    pl.Points.Add(new Point(cx + bw, cy - bh));
+                    pl.Points.Add(new Point(cx + bw - 8, cy - bh));
+                    canvas.Children.Add(pl);
                 }
-
-                double minX = pts.Min(pt => pt.X), maxX = pts.Max(pt => pt.X);
-                double minY = pts.Min(pt => pt.Y), maxY = pts.Max(pt => pt.Y);
-                double esc = box / Math.Max(Math.Max(maxX - minX, maxY - minY), 1.0);
-                double ox = cx - ((minX + maxX) * 0.5) * esc;
-                double oy = cy + ((minY + maxY) * 0.5) * esc;
-
-                var pl = new Polyline { Stroke = BrAcoStroke, StrokeThickness = 3.2, StrokeLineJoin = PenLineJoin.Round };
-                foreach (var pt in pts) pl.Points.Add(new Point(ox + pt.X * esc, oy - pt.Y * esc));
-                canvas.Children.Add(pl);
-            }
-            else if (p.Tipo == CAM_PERFIL_TIPO.Tubo_Redondo || p.Tipo == CAM_PERFIL_TIPO.Barra_Redonda)
-            {
-                var el = new Ellipse
+                else
                 {
-                    Width = box * 0.72,
-                    Height = box * 0.72,
-                    Fill = p.Tipo == CAM_PERFIL_TIPO.Barra_Redonda ? BrAcoFill : Brushes.Transparent,
-                    Stroke = BrAcoStroke,
-                    StrokeThickness = p.Tipo == CAM_PERFIL_TIPO.Tubo_Redondo ? 4 : 2
-                };
-                Canvas.SetLeft(el, cx - el.Width * 0.5);
-                Canvas.SetTop(el, cy - el.Height * 0.5);
-                canvas.Children.Add(el);
-            }
-            else if (p.Tipo == CAM_PERFIL_TIPO.Tubo_Quadrado || p.Tipo == CAM_PERFIL_TIPO.Caixao)
-            {
-                double rw = box * 0.65, rh = box * 0.78;
-                AddRect(canvas, cx - rw * 0.5, cy - rh * 0.5, rw, rh, Brushes.Transparent, BrAcoStroke, 3.5, 0);
-            }
-            else if (p.Familia == CAM_FAMILIA.Chapa || p.Tipo == CAM_PERFIL_TIPO.Barra_Chata)
-            {
-                AddRect(canvas, cx - box * 0.42, cy - 6, box * 0.84, 12, BrAcoFill, BrAcoStroke, 1.8, 0);
+                    AddRect(canvas, cx - box * 0.44, cy - 5, box * 0.88, 10, BrPecaFill, BrPecaStroke, 1.8, 0);
+                }
             }
             else if (p.Tipo == CAM_PERFIL_TIPO.L_Dobrado || p.Tipo == CAM_PERFIL_TIPO.L_Laminado)
             {
-                var pl = new Polyline { Stroke = BrAcoStroke, StrokeThickness = 4, StrokeLineJoin = PenLineJoin.Miter };
-                pl.Points.Add(new Point(cx - box * 0.3, cy - box * 0.38));
-                pl.Points.Add(new Point(cx - box * 0.3, cy + box * 0.35));
-                pl.Points.Add(new Point(cx + box * 0.35, cy + box * 0.35));
+                var pl = new Polyline { Stroke = BrPecaStroke, StrokeThickness = 3.5, StrokeLineJoin = PenLineJoin.Miter };
+                double bw = box * 0.36, bh = box * 0.36;
+                pl.Points.Add(new Point(cx - bw, cy - bh));
+                pl.Points.Add(new Point(cx - bw, cy + bh));
+                pl.Points.Add(new Point(cx + bw, cy + bh));
                 canvas.Children.Add(pl);
             }
-            else if (p.Tipo == CAM_PERFIL_TIPO.U_Dobrado || p.Tipo == CAM_PERFIL_TIPO.UNP || p.Tipo == CAM_PERFIL_TIPO.UAP || p.Tipo == CAM_PERFIL_TIPO.C_Enrigecido)
+            else if (p.Tipo == CAM_PERFIL_TIPO.U_Dobrado || p.Tipo == CAM_PERFIL_TIPO.C_Enrigecido || p.Tipo == CAM_PERFIL_TIPO.UNP || p.Tipo == CAM_PERFIL_TIPO.UAP)
             {
-                var pl = new Polyline { Stroke = BrAcoStroke, StrokeThickness = 3.5, StrokeLineJoin = PenLineJoin.Miter };
+                var pl = new Polyline { Stroke = BrPecaStroke, StrokeThickness = 3.5, StrokeLineJoin = PenLineJoin.Miter };
                 double bw = box * 0.30, bh = box * 0.40;
                 if (p.Tipo == CAM_PERFIL_TIPO.C_Enrigecido) pl.Points.Add(new Point(cx + bw, cy - bh + 12));
                 pl.Points.Add(new Point(cx + bw, cy - bh));
@@ -452,7 +474,7 @@ namespace DLM.helix
             }
             else if (p.Tipo == CAM_PERFIL_TIPO.Z_Purlin || p.Tipo == CAM_PERFIL_TIPO.Z_Dobrado)
             {
-                var pl = new Polyline { Stroke = BrAcoStroke, StrokeThickness = 3.5, StrokeLineJoin = PenLineJoin.Miter };
+                var pl = new Polyline { Stroke = BrPecaStroke, StrokeThickness = 3.5, StrokeLineJoin = PenLineJoin.Miter };
                 double bw = box * 0.32, bh = box * 0.38;
                 if (p.Tipo == CAM_PERFIL_TIPO.Z_Purlin) pl.Points.Add(new Point(cx - bw, cy - bh + 12));
                 pl.Points.Add(new Point(cx - bw, cy - bh));
@@ -464,23 +486,22 @@ namespace DLM.helix
             }
             else
             {
-                // Perfil I / W / T
                 double bw = box * 0.36, bh = box * 0.40;
-                AddLine(canvas, cx - bw, cy - bh, cx + bw, cy - bh, BrAcoStroke, 4.2);
-                AddLine(canvas, cx, cy - bh, cx, cy + bh, BrAcoStroke, 3.2);
+                AddLine(canvas, cx - bw, cy - bh, cx + bw, cy - bh, BrPecaStroke, 4.0);
+                AddLine(canvas, cx, cy - bh, cx, cy + bh, BrPecaStroke, 3.0);
                 if (p.Tipo != CAM_PERFIL_TIPO.T_Soldado)
                 {
-                    AddLine(canvas, cx - bw, cy + bh, cx + bw, cy + bh, BrAcoStroke, 4.2);
+                    AddLine(canvas, cx - bw, cy + bh, cx + bw, cy + bh, BrPecaStroke, 4.0);
                 }
             }
 
-            // Cotas resumidas da seção no rodapé do card
-            double infoY = y + h - 42;
-            AddText(canvas, string.Format(CultureInfo.InvariantCulture, "H = {0:0.#} mm", p.Altura), x + 4, infoY, 9, FontWeights.SemiBold, BrCota);
+            double infoY = y + Math.Max(60, h - 46);
+            AddText(canvas, string.Format(CultureInfo.InvariantCulture, "H = {0:0.#} mm", p.Altura > 0 ? p.Altura : cam.Largura), x + 4, infoY, 9.0, FontWeights.SemiBold, BrCotaTexto);
             double bLarg = p.Largura_MS > 0 ? p.Largura_MS : p.Largura;
             if (bLarg > 0)
-                AddText(canvas, string.Format(CultureInfo.InvariantCulture, "B = {0:0.#} mm", bLarg), x + 4, infoY + 13, 9, FontWeights.SemiBold, BrCota);
-            AddText(canvas, string.Format(CultureInfo.InvariantCulture, "t = {0:0.##} mm", p.Esp), x + 4, infoY + 26, 9, FontWeights.Normal, BrTextoSuave);
+                AddText(canvas, string.Format(CultureInfo.InvariantCulture, "B = {0:0.#} mm", bLarg), x + 4, infoY + 13, 9.0, FontWeights.SemiBold, BrCotaTexto);
+            double esp = p.Esp > 0 ? p.Esp : cam.Espessura;
+            AddText(canvas, string.Format(CultureInfo.InvariantCulture, "t = {0:0.##} mm", esp), x + 4, infoY + 26, 9.0, FontWeights.Normal, BrTextoSuave);
         }
 
         private static List<Point> DiscretizarLiv2D(IList<Liv> coords)
@@ -495,13 +516,11 @@ namespace DLM.helix
                 if (p.Raio > 0.05 && n >= 3)
                 {
                     var pAnt = coords[(i - 1 + n) % n];
-                    var pProx = coords[(i + 1) % n];
                     double cx = p.Origem.X;
                     double cy = p.Origem.Y;
                     double r = Math.Sqrt(Math.Pow(pAnt.Origem.X - cx, 2) + Math.Pow(pAnt.Origem.Y - cy, 2));
                     if (r < 0.05) r = p.Raio;
 
-                    // No padrão CAM/DXF, Ang1 -> Ang2 define sempre o arco no sentido anti-horário (CCW).
                     double ang1Rad = p.Ang1 * Math.PI / 180.0;
                     double sweepDeg = p.Ang2 - p.Ang1;
                     while (sweepDeg <= 1e-6) sweepDeg += 360.0;
@@ -527,7 +546,6 @@ namespace DLM.helix
                 }
             }
 
-            // Remove pontos duplicados consecutivos e fechamento repetido
             var limpo = new List<Point>();
             for (int i = 0; i < pts.Count; i++)
             {

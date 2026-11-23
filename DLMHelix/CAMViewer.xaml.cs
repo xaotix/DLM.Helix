@@ -789,11 +789,7 @@ namespace DLM.helix
             var ext = (arq.getExtensao() ?? "").ToUpperInvariant();
             if (ext == "CAM")
             {
-                ArquivoCarregado = arq;
-                DxfCarregado = null;
-                AtualizarBotoesDXF(false);
-                this.MVC.CAM = new ReadCAM(arq);
-                Abrir(this.MVC.CAM, extend);
+                AbrirCAMAsync(arq, extend);
             }
             else if (ext == "DXF")
             {
@@ -812,6 +808,47 @@ namespace DLM.helix
         public void AbrirDXF(string caminho, bool extend = true)
         {
             AbrirDwgOuDxfAsync(caminho, extend);
+        }
+
+        public async void AbrirCAMAsync(string caminho, bool extend = true)
+        {
+            if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho)) return;
+
+            CancelarCarregamento();
+            _ctsIfc = new CancellationTokenSource();
+            var token = _ctsIfc.Token;
+
+            ArquivoCarregado = caminho;
+            DxfCarregado = null;
+            _modeloIfcAtual = null;
+            _modoPlanificado = false;
+            LimparViewports();
+            AtualizarBotoesDXF(false);
+
+            this.tab_3d.Visibility = Visibility.Visible;
+            this.tab_3d.IsSelected = true;
+            MostrarProgressoIFC(true, -1, "Carregando CAM...");
+
+            try
+            {
+                var rcam = await Task.Run(() =>
+                {
+                    token.ThrowIfCancellationRequested();
+                    return new ReadCAM(caminho);
+                }, token);
+
+                if (token.IsCancellationRequested || rcam == null) return;
+                this.MVC.CAM = rcam;
+                _isInitializedZoom = false;
+                _zoomPendente = extend;
+                Recarregar();
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                ex.Log(descricao: "CAMViewer.AbrirCAMAsync: " + caminho);
+                MostrarProgressoIFC(false, 0, "");
+            }
         }
 
         public void AbrirDWG(string caminho, bool extend = true)
@@ -1168,9 +1205,10 @@ namespace DLM.helix
 
         public Rect3D? Bounds { get; private set; }
 
-        public void Recarregar()
+        public async void Recarregar()
         {
-            if (this.MVC.CAM == null)
+            var camAtual = this.MVC.CAM;
+            if (camAtual == null)
             {
                 if (_zoomPendente)
                 {
@@ -1180,42 +1218,62 @@ namespace DLM.helix
                 return;
             }
 
-            Dispatcher.BeginInvoke(DispatcherPriority.Normal, new Action(() =>
+            CancelarCarregamento();
+            _ctsIfc = new CancellationTokenSource();
+            var token = _ctsIfc.Token;
+            bool planificado = _modoPlanificado;
+
+            MostrarProgressoIFC(true, -1, "Gerando modelo 3D...");
+
+            try
             {
+                // Pipeline pesado 100% em Background Thread (nunca trava a UI principal!)
+                var modeloIfc = await Task.Run(() =>
+                {
+                    token.ThrowIfCancellationRequested();
+                    string textoIfc = null;
+                    string arqCacheIfc = null;
+                    string sufixoCache = planificado ? "PLAN" : "3D";
+                    if (!string.IsNullOrWhiteSpace(camAtual.Arquivo) &&
+                        CachePreview.ExisteCacheValido(camAtual.Arquivo, ".ifc", out arqCacheIfc, sufixoCache))
+                    {
+                        try { textoIfc = File.ReadAllText(arqCacheIfc); } catch { textoIfc = null; }
+                    }
+                    if (string.IsNullOrEmpty(textoIfc))
+                    {
+                        token.ThrowIfCancellationRequested();
+                        textoIfc = camAtual.GerarTextoIFC(planificado);
+                        if (!string.IsNullOrWhiteSpace(camAtual.Arquivo))
+                        {
+                            string destCache = CachePreview.ObterCaminhoCache(camAtual.Arquivo, ".ifc", sufixoCache);
+                            CachePreview.SalvarTextoAtomico(destCache, textoIfc);
+                        }
+                    }
+                    token.ThrowIfCancellationRequested();
+                    return IfcLeitor.LerTexto(textoIfc, null, token);
+                }, token);
+
+                if (token.IsCancellationRequested || !ReferenceEquals(this.MVC.CAM, camAtual))
+                {
+                    return;
+                }
+
                 Render2d.LimparViewport(viewPort3D);
                 viewPort3D.Children.Add(Gera3d.Luz());
-                double compM = Math.Max(0.2, this.MVC.CAM.Formato.GetComprimento() * RenderIFC.ESCALA_MM_PARA_M);
+                double compM = Math.Max(0.2, camAtual.Formato.GetComprimento() * RenderIFC.ESCALA_MM_PARA_M);
                 viewPort3D.AddUCSIcon(Math.Max(0.08, compM * 0.08));
                 viewPort3D.ShowCameraTarget = true;
 
                 AtualizarBotaoPlanificado();
 
-                // Pipeline unificado com cache em AppData: ReadCAM -> IFC -> RenderIFC (Helix)
-                string textoIfc = null;
-                string arqCacheIfc = null;
-                string sufixoCache = _modoPlanificado ? "PLAN" : "3D";
-                if (!string.IsNullOrWhiteSpace(this.MVC.CAM.Arquivo) &&
-                    CachePreview.ExisteCacheValido(this.MVC.CAM.Arquivo, ".ifc", out arqCacheIfc, sufixoCache))
-                {
-                    try { textoIfc = File.ReadAllText(arqCacheIfc); } catch { textoIfc = null; }
-                }
-                if (string.IsNullOrEmpty(textoIfc))
-                {
-                    textoIfc = this.MVC.CAM.GerarTextoIFC(_modoPlanificado);
-                    if (!string.IsNullOrWhiteSpace(this.MVC.CAM.Arquivo))
-                    {
-                        string destCache = CachePreview.ObterCaminhoCache(this.MVC.CAM.Arquivo, ".ifc", sufixoCache);
-                        CachePreview.SalvarTextoAtomico(destCache, textoIfc);
-                    }
-                }
-                var modeloIfc = IfcLeitor.LerTexto(textoIfc);
+                _modeloIfcAtual = modeloIfc;
                 RenderIFC.Renderizar(viewPort3D, modeloIfc, true);
 
                 // Aba 2D para CAMs: detalhamento técnico visual rico fora de escala
                 if (bd_layouts_dxf != null) bd_layouts_dxf.Visibility = Visibility.Collapsed;
                 if (grid_dxf_2d_helix != null) grid_dxf_2d_helix.Visibility = Visibility.Collapsed;
                 if (grid_cam_2d_visual != null) grid_cam_2d_visual.Visibility = Visibility.Visible;
-                CAMDesenho2DCanvas.Desenhar(canvas_cam_2d, this.MVC.CAM);
+                CAMDesenho2DCanvas.Desenhar(canvas_cam_2d, camAtual);
 
                 this.viewPort3D.ShowCoordinateSystem = true;
                 this.viewPort3D.ShowFieldOfView = false;
@@ -1231,8 +1289,6 @@ namespace DLM.helix
                 this.viewPort2D.IsRotationEnabled = false;
 
                 SetView2D();
-
-                // Captura os limites agora que os filhos já estão nos viewports
                 AtualizarBounds();
 
                 if (_zoomPendente)
@@ -1240,7 +1296,19 @@ namespace DLM.helix
                     _zoomPendente = false;
                     ZoomExtend();
                 }
-            }));
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                ex.Log(descricao: "CAMViewer.Recarregar");
+            }
+            finally
+            {
+                if (!token.IsCancellationRequested)
+                {
+                    MostrarProgressoIFC(false, 0, "");
+                }
+            }
         }
 
         private void SetView2D()

@@ -139,9 +139,11 @@ namespace DLM.helix
             var mviews = new List<Viewport>();
 
             // 1) Renderiza todas as entidades do PaperSpace (margem, carimbo, notas, etc.)
+            // IMPORTANTE: Viewports (MViews) quase sempre ficam em layers desligadas (ex.: MV / Defpoints)
+            // para não plotar a moldura, mas seu conteúdo do ModelSpace DEVE ser renderizado!
             foreach (var ent in lay.AssociatedBlock.Entities)
             {
-                if (ent == null || (ent.Layer != null && !ent.Layer.IsVisible)) continue;
+                if (ent == null) continue;
 
                 var vp = ent as Viewport;
                 if (vp != null)
@@ -152,6 +154,8 @@ namespace DLM.helix
                     }
                     continue;
                 }
+
+                if (ent.Layer != null && !ent.Layer.IsVisible) continue;
 
                 RenderizarEntidade(ent, origem, espessura, linhas, textos);
             }
@@ -464,6 +468,16 @@ namespace DLM.helix
                 {
                     var tv = Render2d.GetText(mtx, origem);
                     if (tv != null) textos.Add(tv);
+                }
+                else if (ent is Leader ldr && ldr.Vertexes != null && ldr.Vertexes.Count >= 2)
+                {
+                    var ptsL = new Point3DCollection();
+                    for (int i = 0; i + 1 < ldr.Vertexes.Count; i++)
+                    {
+                        ptsL.Add(new Point3D(ldr.Vertexes[i].X, ldr.Vertexes[i].Y, 0));
+                        ptsL.Add(new Point3D(ldr.Vertexes[i + 1].X, ldr.Vertexes[i + 1].Y, 0));
+                    }
+                    linhas.Add(new LinhaVisual3D { Points = ptsL, Color = ldr.GetCor().Color, Thickness = espessura });
                 }
                 else if (ent is Solid sol)
                 {

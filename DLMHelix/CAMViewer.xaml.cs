@@ -811,6 +811,7 @@ namespace DLM.helix
         private CancellationTokenSource _ctsIfc;
         private bool _modoPlanificado = false;
         private string _layoutDxfAtivo = "Model";
+        private IfcModeloLido _modeloIfcAtual;
 
         /// <summary>
         /// Carrega qualquer arquivo .IFC de forma assíncrona no View3D, exibindo barra de progresso e opção de cancelar.
@@ -845,6 +846,7 @@ namespace DLM.helix
             viewPort3D.AddUCSIcon(tamUcs);
             AtualizarBotaoPlanificado();
 
+            _modeloIfcAtual = modelo;
             RenderIFC.Renderizar(viewPort3D, modelo, true);
 
             this.viewPort3D.ShowCoordinateSystem = true;
@@ -909,7 +911,8 @@ namespace DLM.helix
                 viewPort3D.AddUCSIcon(tamUcs);
                 AtualizarBotaoPlanificado();
 
-                RenderIFC.Renderizar(viewPort3D, modelo, true);
+                _modeloIfcAtual = modelo;
+            RenderIFC.Renderizar(viewPort3D, modelo, true);
 
                 this.viewPort3D.ShowCoordinateSystem = true;
                 this.viewPort3D.ShowFieldOfView = false;
@@ -1003,6 +1006,7 @@ namespace DLM.helix
             this.tab_3d.IsSelected = true;
 
             this.MVC.CAM = arq;
+            _modeloIfcAtual = null;
             _modoPlanificado = false;
             _isInitializedZoom = false;
 
@@ -1021,6 +1025,7 @@ namespace DLM.helix
         public void Abrir(netDxf.DxfDocument dxfDocument, bool extend = true, int maxZoom = 15, double fatorAproximacao = 0.5)
         {
             this.DxfCarregado = dxfDocument;
+            _modeloIfcAtual = null;
             this.MVC.CAM = null;
             this.PassosZoomIn = maxZoom;
             this.FatorAproximacao = fatorAproximacao;
@@ -1293,6 +1298,81 @@ namespace DLM.helix
         public void Isometric()
         {
             ControleCamera.Setar(this.viewPort3D, ControleCamera.eCameraViews.Isometric_PPP, 0);
+        }
+
+        public void OcultarBotaoTelaCheia()
+        {
+            if (bt_tela_cheia_3d != null) bt_tela_cheia_3d.Visibility = Visibility.Collapsed;
+            if (bt_tela_cheia_2d != null) bt_tela_cheia_2d.Visibility = Visibility.Collapsed;
+            if (bt_tela_cheia_cam2d != null) bt_tela_cheia_cam2d.Visibility = Visibility.Collapsed;
+        }
+
+        private void abrir_tela_cheia_click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var viewer = new CAMViewer();
+                viewer.OcultarBotaoTelaCheia();
+
+                string titulo = !string.IsNullOrWhiteSpace(ArquivoCarregado)
+                    ? Path.GetFileName(ArquivoCarregado)
+                    : (this.MVC.CAM != null ? (this.MVC.CAM.Nome ?? "Visualizador CAM") : "Visualizador");
+
+                var win = new Window
+                {
+                    Title = "Visualizador - " + titulo,
+                    Content = viewer,
+                    WindowState = WindowState.Maximized,
+                    WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                    Width = 1280,
+                    Height = 800
+                };
+
+                bool aba2DAtiva = this.tab_2d != null && this.tab_2d.IsSelected;
+                bool modoPlan = _modoPlanificado;
+                string layoutAtual = _layoutDxfAtivo;
+                var camAtual = this.MVC.CAM;
+                var dxfAtual = this.DxfCarregado;
+                var ifcAtual = _modeloIfcAtual;
+                string arqAtual = this.ArquivoCarregado;
+
+                win.Loaded += (s, args) =>
+                {
+                    viewer.ArquivoCarregado = arqAtual;
+                    if (camAtual != null)
+                    {
+                        viewer.Abrir(camAtual, true);
+                        if (modoPlan)
+                        {
+                            viewer._modoPlanificado = true;
+                            viewer._zoomPendente = true;
+                            viewer.Recarregar();
+                        }
+                        if (aba2DAtiva && viewer.tab_2d != null)
+                        {
+                            viewer.tab_2d.IsSelected = true;
+                        }
+                    }
+                    else if (ifcAtual != null)
+                    {
+                        viewer.AbrirModeloIFC(ifcAtual, arqAtual, true);
+                    }
+                    else if (dxfAtual != null)
+                    {
+                        viewer.Abrir(dxfAtual, true);
+                        if (!string.IsNullOrWhiteSpace(layoutAtual))
+                        {
+                            viewer.SelecionarLayoutDXF(layoutAtual);
+                        }
+                    }
+                };
+
+                win.Show();
+            }
+            catch (Exception ex)
+            {
+                ex.Log();
+            }
         }
 
         private void abrir(object sender, RoutedEventArgs e)

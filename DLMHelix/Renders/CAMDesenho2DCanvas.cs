@@ -30,6 +30,9 @@ namespace DLM.helix
         private static readonly Brush BrDobra = Freeze(new SolidColorBrush(Color.FromRgb(217, 119, 6)));
         private static readonly Brush BrFuro = Freeze(new SolidColorBrush(Color.FromRgb(220, 38, 38)));
         private static readonly Brush BrFuroFill = Freeze(new SolidColorBrush(Color.FromRgb(254, 226, 226)));
+        private static readonly Brush BrRecorteInterno = Freeze(new SolidColorBrush(Color.FromRgb(234, 88, 12)));
+        private static readonly Brush BrSolda = Freeze(new SolidColorBrush(Color.FromRgb(202, 138, 4)));
+        private static readonly Brush BrSoldaTexto = Freeze(new SolidColorBrush(Color.FromRgb(146, 64, 14)));
 
         private static SolidColorBrush Freeze(SolidColorBrush b) { b.Freeze(); return b; }
 
@@ -117,10 +120,12 @@ namespace DLM.helix
             int qtdFuros = face.Furacoes != null ? face.Furacoes.Count : 0;
             int qtdDobras = face.Dobras != null ? face.Dobras.Count : 0;
             int qtdRecInt = face.RecortesInternos != null ? face.RecortesInternos.Count : 0;
+            int qtdSoldas = face.Soldas != null ? face.Soldas.Count(s => s != null && s.Tipo != DLM.vars.TAB_CAM_TIPO_SOLDA._) : 0;
 
             string extras = "";
             if (qtdRecInt > 0) extras += ", " + qtdRecInt + " rec. int.";
             if (qtdDobras > 0) extras += ", " + qtdDobras + " dobras";
+            if (qtdSoldas > 0) extras += ", " + qtdSoldas + " soldas";
 
             string info = string.Format(CultureInfo.InvariantCulture, "{0}   ({1:0.#} x {2:0.#} mm  |  {3} furos{4})",
                 titulo, comp, larg, qtdFuros, extras);
@@ -175,8 +180,8 @@ namespace DLM.helix
                     var pgRec = new Polygon
                     {
                         Fill = BrFundo,
-                        Stroke = BrFuro,
-                        StrokeThickness = 1.3,
+                        Stroke = BrRecorteInterno,
+                        StrokeThickness = 1.6,
                         StrokeLineJoin = PenLineJoin.Round
                     };
 
@@ -202,10 +207,43 @@ namespace DLM.helix
                     string tagRec = Math.Abs(recW - recH) <= 2.0 && rec.Coordenadas.Any(c => c.Raio > 0.05)
                         ? string.Format(CultureInfo.InvariantCulture, "Ø{0:0.#}", recW)
                         : string.Format(CultureInfo.InvariantCulture, "{0:0.#}x{1:0.#}", recW, recH);
-                    AddText(canvas, tagRec, cxPx - 16, cyPx - 6, 8.5, FontWeights.Bold, BrFuro);
+                    AddText(canvas, tagRec, cxPx - 16, cyPx - 6, 8.5, FontWeights.Bold, BrRecorteInterno);
                 }
             }
 
+            // Soldas / chanfros ([WELD]) destacados sobre as arestas em dourado/âmbar
+            if (face.Soldas != null && face.Soldas.Count > 0)
+            {
+                foreach (var s in face.Soldas)
+                {
+                    if (s == null || s.Tipo == DLM.vars.TAB_CAM_TIPO_SOLDA._) continue;
+                    double sx1 = dx + Math.Max(0, Math.Min(comp, s.Linha.P1.X)) * sx;
+                    double sy1 = dy + Math.Max(0, Math.Min(larg, Math.Abs(s.Linha.P1.Y))) * sy;
+                    double sx2 = dx + Math.Max(0, Math.Min(comp, s.Linha.P2.X)) * sx;
+                    double sy2 = dy + Math.Max(0, Math.Min(larg, Math.Abs(s.Linha.P2.Y))) * sy;
+
+                    var lnSolda = new Line
+                    {
+                        X1 = sx1,
+                        Y1 = sy1,
+                        X2 = sx2,
+                        Y2 = sy2,
+                        Stroke = BrSolda,
+                        StrokeThickness = 3.2,
+                        StrokeStartLineCap = PenLineCap.Round,
+                        StrokeEndLineCap = PenLineCap.Round
+                    };
+                    canvas.Children.Add(lnSolda);
+
+                    double mx = (sx1 + sx2) * 0.5;
+                    double my = (sy1 + sy2) * 0.5;
+                    string lblSolda = string.Format(CultureInfo.InvariantCulture, "{0}{1}{2}",
+                        s.Tipo,
+                        s.T > 0 ? string.Format(CultureInfo.InvariantCulture, " T{0:0.#}", s.T) : "",
+                        s.Angulo > 0 ? string.Format(CultureInfo.InvariantCulture, " {0:0.#}°", s.Angulo) : "");
+                    AddText(canvas, lblSolda, mx - 20, my - 12, 8.0, FontWeights.Bold, BrSoldaTexto);
+                }
+            }
             // Cota vertical à esquerda (largura da face)
             AddLine(canvas, dx - 8, dy, dx - 8, dy + dh, BrCota, 0.9);
             AddLine(canvas, dx - 11, dy, dx - 5, dy, BrCota, 0.9);

@@ -29,6 +29,9 @@ namespace DLM.helix
 
             var grupos = new Dictionary<string, GrupoCor>();
             var pontosArestas = new Point3DCollection();
+            var pontosArestasFuro = new Point3DCollection();
+            var pontosArestasRecorte = new Point3DCollection();
+            var pontosArestasSolda = new Point3DCollection();
 
             foreach (var el in modelo.Elementos)
             {
@@ -67,11 +70,20 @@ namespace DLM.helix
 
                 if (adicionarArestas && el.Arestas.Count > 0 && pontosArestas.Count < 220000)
                 {
+                    string nomeEl = el.Nome ?? "";
+                    Point3DCollection destinoArestas = pontosArestas;
+                    if (nomeEl.StartsWith("CONTORNO_FURO", StringComparison.OrdinalIgnoreCase))
+                        destinoArestas = pontosArestasFuro;
+                    else if (nomeEl.StartsWith("CONTORNO_RECORTE", StringComparison.OrdinalIgnoreCase))
+                        destinoArestas = pontosArestasRecorte;
+                    else if (nomeEl.StartsWith("SOLDA_", StringComparison.OrdinalIgnoreCase))
+                        destinoArestas = pontosArestasSolda;
+
                     for (int i = 0; i < el.Arestas.Count; i++)
                     {
                         var ar = el.Arestas[i];
-                        pontosArestas.Add(new Point3D(ar.P1.X * ESCALA_MM_PARA_M, ar.P1.Y * ESCALA_MM_PARA_M, ar.P1.Z * ESCALA_MM_PARA_M));
-                        pontosArestas.Add(new Point3D(ar.P2.X * ESCALA_MM_PARA_M, ar.P2.Y * ESCALA_MM_PARA_M, ar.P2.Z * ESCALA_MM_PARA_M));
+                        destinoArestas.Add(new Point3D(ar.P1.X * ESCALA_MM_PARA_M, ar.P1.Y * ESCALA_MM_PARA_M, ar.P1.Z * ESCALA_MM_PARA_M));
+                        destinoArestas.Add(new Point3D(ar.P2.X * ESCALA_MM_PARA_M, ar.P2.Y * ESCALA_MM_PARA_M, ar.P2.Z * ESCALA_MM_PARA_M));
                     }
                 }
             }
@@ -115,6 +127,36 @@ namespace DLM.helix
                     Points = pontosArestas,
                     Color = Color.FromRgb(22, 28, 36),
                     Thickness = 0.9
+                });
+            }
+            if (adicionarArestas && pontosArestasFuro.Count > 0)
+            {
+                pontosArestasFuro.Freeze();
+                vp.Children.Add(new LinesVisual3D
+                {
+                    Points = pontosArestasFuro,
+                    Color = Color.FromRgb(220, 38, 38),
+                    Thickness = 1.8
+                });
+            }
+            if (adicionarArestas && pontosArestasRecorte.Count > 0)
+            {
+                pontosArestasRecorte.Freeze();
+                vp.Children.Add(new LinesVisual3D
+                {
+                    Points = pontosArestasRecorte,
+                    Color = Color.FromRgb(234, 88, 12),
+                    Thickness = 1.8
+                });
+            }
+            if (adicionarArestas && pontosArestasSolda.Count > 0)
+            {
+                pontosArestasSolda.Freeze();
+                vp.Children.Add(new LinesVisual3D
+                {
+                    Points = pontosArestasSolda,
+                    Color = Color.FromRgb(180, 83, 9),
+                    Thickness = 1.6
                 });
             }
         }

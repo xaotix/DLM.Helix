@@ -1233,7 +1233,7 @@ namespace DLM.helix
                     token.ThrowIfCancellationRequested();
                     string textoIfc = null;
                     string arqCacheIfc = null;
-                    string sufixoCache = planificado ? "PLAN_V2" : "3D_V2";
+                    string sufixoCache = planificado ? "PLAN_V3" : "3D_V3";
                     if (!string.IsNullOrWhiteSpace(camAtual.Arquivo) &&
                         CachePreview.ExisteCacheValido(camAtual.Arquivo, ".ifc", out arqCacheIfc, sufixoCache))
                     {

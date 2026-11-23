@@ -578,12 +578,16 @@ namespace DLM.helix
 
         private void GarantirCameraOrtografica(HelixViewport3D viewport)
         {
-            if (viewport != null && !(viewport.Camera is OrthographicCamera))
+            if (viewport == null) return;
+            var orthoExistente = viewport.Camera as OrthographicCamera;
+            if (orthoExistente == null)
             {
                 var antigaCam = viewport.Camera;
                 var orthoCam = new OrthographicCamera
                 {
-                    Width = 100
+                    Width = 10,
+                    NearPlaneDistance = -10000,
+                    FarPlaneDistance = 10000
                 };
 
                 if (antigaCam != null)
@@ -594,6 +598,11 @@ namespace DLM.helix
                 }
 
                 viewport.Camera = orthoCam;
+            }
+            else if (orthoExistente.NearPlaneDistance >= 0)
+            {
+                orthoExistente.NearPlaneDistance = -10000;
+                orthoExistente.FarPlaneDistance = 10000;
             }
         }
 
@@ -800,6 +809,7 @@ namespace DLM.helix
         }
 
         private CancellationTokenSource _ctsIfc;
+        private bool _modoPlanificado = false;
 
         /// <summary>
         /// Carrega qualquer arquivo .IFC de forma assíncrona no View3D, exibindo barra de progresso e opção de cancelar.
@@ -847,9 +857,10 @@ namespace DLM.helix
                 Render2d.LimparViewport(viewPort3D);
                 viewPort3D.Children.Add(Gera3d.Luz());
                 double tamUcs = modelo.TemGeometria
-                    ? Math.Max(100, (modelo.Max - modelo.Min).Comprimento * 0.08)
-                    : 200;
+                    ? Math.Max(0.1, (modelo.Max - modelo.Min).Comprimento * RenderIFC.ESCALA_MM_PARA_M * 0.08)
+                    : 0.25;
                 viewPort3D.AddUCSIcon(tamUcs);
+                AtualizarBotaoPlanificado();
 
                 RenderIFC.Renderizar(viewPort3D, modelo, true);
 
@@ -905,6 +916,26 @@ namespace DLM.helix
             MostrarProgressoIFC(false, 0, "");
         }
 
+        private void AtualizarBotaoPlanificado()
+        {
+            if (bt_planificado == null) return;
+            bool pode = this.MVC.CAM != null && this.MVC.CAM.PodeVerPlanificado();
+            bt_planificado.Visibility = pode ? Visibility.Visible : Visibility.Collapsed;
+            bt_planificado.IsChecked = pode && _modoPlanificado;
+            if (txt_planificado != null)
+            {
+                txt_planificado.Text = _modoPlanificado ? "Dobrado 3D" : "Planificado";
+            }
+        }
+
+        private void alternar_planificado_click(object sender, RoutedEventArgs e)
+        {
+            if (this.MVC.CAM == null) return;
+            _modoPlanificado = !_modoPlanificado;
+            _zoomPendente = true;
+            Recarregar();
+        }
+
         private void abrir_ifc_click(object sender, RoutedEventArgs e)
         {
             var ofd = new Microsoft.Win32.OpenFileDialog
@@ -925,6 +956,7 @@ namespace DLM.helix
             this.tab_3d.IsSelected = true;
 
             this.MVC.CAM = arq;
+            _modoPlanificado = false;
             _isInitializedZoom = false;
 
             // O zoom extend é feito dentro do Recarregar, depois que os objetos já estão nos viewports.
@@ -997,11 +1029,14 @@ namespace DLM.helix
             {
                 Render2d.LimparViewport(viewPort3D);
                 viewPort3D.Children.Add(Gera3d.Luz());
-                viewPort3D.AddUCSIcon(this.MVC.CAM.Formato.GetComprimento() / 10);
+                double compM = Math.Max(0.2, this.MVC.CAM.Formato.GetComprimento() * RenderIFC.ESCALA_MM_PARA_M);
+                viewPort3D.AddUCSIcon(Math.Max(0.08, compM * 0.08));
                 viewPort3D.ShowCameraTarget = true;
 
+                AtualizarBotaoPlanificado();
+
                 // Pipeline unificado: ReadCAM -> IFC (DLM.IFCEngine) -> RenderIFC (Helix)
-                string textoIfc = this.MVC.CAM.GerarTextoIFC();
+                string textoIfc = this.MVC.CAM.GerarTextoIFC(_modoPlanificado);
                 var modeloIfc = IfcLeitor.LerTexto(textoIfc);
                 RenderIFC.Renderizar(viewPort3D, modeloIfc, true);
 
@@ -1155,7 +1190,13 @@ namespace DLM.helix
 
             if (this.viewPort3D?.Camera is OrthographicCamera ortho3D)
             {
-                _est3D.LarguraBase = ortho3D.Width > 0 ? ortho3D.Width : 100;
+                _est3D.LarguraBase = ortho3D.Width > 0 ? ortho3D.Width : 10;
+                double diag = !_est3D.Bounds.IsEmpty
+                    ? Math.Sqrt(_est3D.Bounds.SizeX * _est3D.Bounds.SizeX + _est3D.Bounds.SizeY * _est3D.Bounds.SizeY + _est3D.Bounds.SizeZ * _est3D.Bounds.SizeZ)
+                    : 100;
+                double alcance = Math.Max(1000, diag * 50);
+                ortho3D.NearPlaneDistance = -alcance;
+                ortho3D.FarPlaneDistance = alcance;
             }
 
             _isInitializedZoom = true;

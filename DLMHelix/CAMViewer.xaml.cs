@@ -998,11 +998,26 @@ namespace DLM.helix
             try
             {
                 // Detecta automaticamente modelos 3D do TecnoMetal (TEC_PROFILE3D / TEC_BOLTS3D)
+                _modeloTecnoAtual = null;
+                _textoIfcAtual = null;
                 if (caminho.EndsWith(".dwg", StringComparison.OrdinalIgnoreCase))
                 {
-                    var modeloTecnoIfc = await Task.Run(() =>
+                    var resultadoTecno = await Task.Run(() =>
                     {
                         if (!TecnoMetalDwgLeitor.ContemEntidadesTecnoMetal(caminho))
+                            return null;
+
+                        var modeloTecno = TecnoMetalDwgLeitor.LerArquivo(caminho, true, (atual, total, msg) =>
+                        {
+                            if (token.IsCancellationRequested) return;
+                            int pct = total > 0 ? Math.Max(0, Math.Min(45, (atual * 45) / total)) : -1;
+                            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                            {
+                                if (!token.IsCancellationRequested) MostrarProgressoIFC(true, pct, msg);
+                            }));
+                        }, token);
+
+                        if (token.IsCancellationRequested || modeloTecno == null || (modeloTecno.Pecas.Count == 0 && modeloTecno.Parafusos.Count == 0))
                             return null;
 
                         var opcoes = new OpcoesExportacaoIfc
@@ -1015,10 +1030,10 @@ namespace DLM.helix
                             CentralizarNaOrigem = true
                         };
 
-                        string textoIfc = TecnoMetalIfcExportador.ConverterDwgParaIfcTexto(caminho, opcoes, (atual, total, msg) =>
+                        string textoIfc = TecnoMetalIfcExportador.GerarIfcTexto(modeloTecno, opcoes, (atual, total, msg) =>
                         {
                             if (token.IsCancellationRequested) return;
-                            int pct = total > 0 ? Math.Max(0, Math.Min(70, (atual * 70) / total)) : -1;
+                            int pct = 45 + (total > 0 ? Math.Max(0, Math.Min(25, (atual * 25) / total)) : 0);
                             Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
                             {
                                 if (!token.IsCancellationRequested) MostrarProgressoIFC(true, pct, msg);
@@ -1028,7 +1043,7 @@ namespace DLM.helix
                         if (token.IsCancellationRequested || string.IsNullOrEmpty(textoIfc))
                             return null;
 
-                        return IfcLeitor.LerTexto(textoIfc, (atual, total, msg) =>
+                        var modeloIfc = IfcLeitor.LerTexto(textoIfc, (atual, total, msg) =>
                         {
                             if (token.IsCancellationRequested) return;
                             int pct = 70 + (total > 0 ? Math.Max(0, Math.Min(28, (atual * 28) / total)) : 0);
@@ -1037,6 +1052,8 @@ namespace DLM.helix
                                 if (!token.IsCancellationRequested) MostrarProgressoIFC(true, pct, msg);
                             }));
                         }, token);
+
+                        return Tuple.Create(modeloTecno, modeloIfc, textoIfc);
                     }, token);
 
                     if (token.IsCancellationRequested)
@@ -1045,10 +1062,12 @@ namespace DLM.helix
                         return;
                     }
 
-                    if (modeloTecnoIfc != null && modeloTecnoIfc.Elementos.Count > 0)
+                    if (resultadoTecno != null && resultadoTecno.Item2 != null && resultadoTecno.Item2.Elementos.Count > 0)
                     {
+                        _modeloTecnoAtual = resultadoTecno.Item1;
+                        _textoIfcAtual = resultadoTecno.Item3;
                         MostrarProgressoIFC(true, 98, "Renderizando modelo 3D TecnoMetal...");
-                        AbrirModeloIFC(modeloTecnoIfc, caminho, extend);
+                        AbrirModeloIFC(resultadoTecno.Item2, caminho, extend, _modeloTecnoAtual.VistaAtiva);
                         return;
                     }
                 }
@@ -1096,6 +1115,8 @@ namespace DLM.helix
         private bool _modoPlanificado = false;
         private string _layoutDxfAtivo = "Model";
         private IfcModeloLido _modeloIfcAtual;
+        private ModeloTecnoMetal _modeloTecnoAtual;
+        private string _textoIfcAtual;
 
         /// <summary>
         /// Carrega qualquer arquivo .IFC de forma assíncrona no View3D, exibindo barra de progresso e opção de cancelar.
@@ -1103,7 +1124,7 @@ namespace DLM.helix
         /// <summary>
         /// Renderiza um IfcModeloLido já carregado em background (evitando leitura duplicada).
         /// </summary>
-        public void AbrirModeloIFC(IfcModeloLido modelo, string caminho = null, bool extend = true)
+        public void AbrirModeloIFC(IfcModeloLido modelo, string caminho = null, bool extend = true, VistaCad3D vistaCad = null)
         {
             CancelarCarregamentoIFC();
             MostrarProgressoIFC(false, 0, "");
@@ -1141,9 +1162,47 @@ namespace DLM.helix
             AtualizarBounds();
             if (extend)
             {
-                Isometric();
+                if (vistaCad != null && vistaCad.Valida)
+                {
+                    AplicarVistaCad3D(vistaCad);
+                }
+                else
+                {
+                    Isometric();
+                }
                 ZoomExtend();
             }
+        }
+
+        private void AplicarVistaCad3D(VistaCad3D vista)
+        {
+            if (vista == null || !vista.Valida || this.viewPort3D == null) return;
+            GarantirCameraOrtografica(this.viewPort3D);
+            var cam = this.viewPort3D.Camera as ProjectionCamera;
+            if (cam == null) return;
+
+            // No AutoCAD, VPort.Direction aponta do alvo para o observador -> LookDirection e o inverso
+            var look = new Vector3D(-vista.Direcao.X, -vista.Direcao.Y, -vista.Direcao.Z);
+            if (look.LengthSquared < 1e-12) return;
+            look.Normalize();
+
+            var up = Math.Abs(look.Z) < 0.99 ? new Vector3D(0, 0, 1) : new Vector3D(0, 1, 0);
+            // Ortogonaliza Up contra Look
+            up = up - Vector3D.DotProduct(up, look) * look;
+            if (up.LengthSquared < 1e-12) up = new Vector3D(0, 1, 0);
+            up.Normalize();
+
+            // Aplica TwistAngle (radianos) ao redor do eixo de visao se presente
+            if (Math.Abs(vista.AnguloTwistRad) > 1e-6)
+            {
+                double angGraus = vista.AnguloTwistRad * (180.0 / Math.PI);
+                var rot = new RotateTransform3D(new AxisAngleRotation3D(look, angGraus));
+                up = rot.Transform(up);
+                up.Normalize();
+            }
+
+            cam.LookDirection = look;
+            cam.UpDirection = up;
         }
 
         public async void AbrirIFC(string caminho, bool extend = true)
@@ -1799,6 +1858,108 @@ namespace DLM.helix
             {
                 this.MVC.CAM.Formato.GetDxf().Save(destino);
                 destino.Abrir();
+            }
+        }
+
+        private async void exportar_ifc_click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string nomePadrao = !string.IsNullOrWhiteSpace(ArquivoCarregado)
+                    ? Path.GetFileNameWithoutExtension(ArquivoCarregado)
+                    : (this.MVC.CAM != null ? (this.MVC.CAM.Nome ?? "modelo_3d") : "modelo_3d");
+
+                var sfd = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "Arquivo IFC (*.ifc)|*.ifc",
+                    FileName = nomePadrao + ".ifc",
+                    Title = "Exportar modelo 3D para IFC"
+                };
+                if (sfd.ShowDialog() != true) return;
+
+                string destino = sfd.FileName;
+                MostrarProgressoIFC(true, -1, "Exportando arquivo IFC...");
+
+                if (_modeloTecnoAtual != null)
+                {
+                    var modeloLocal = _modeloTecnoAtual;
+                    var opcoes = new OpcoesExportacaoIfc
+                    {
+                        NomeProjeto = nomePadrao,
+                        IncluirChapas = true,
+                        IncluirPerfis = true,
+                        IncluirParafusos = true,
+                        ApenasModelSpace = true,
+                        CentralizarNaOrigem = false
+                    };
+                    await Task.Run(() => TecnoMetalIfcExportador.ExportarParaIfc(modeloLocal, destino, opcoes));
+                }
+                else if (!string.IsNullOrEmpty(_textoIfcAtual))
+                {
+                    File.WriteAllText(destino, _textoIfcAtual, System.Text.Encoding.UTF8);
+                }
+                else if (!string.IsNullOrEmpty(ArquivoCarregado) && ArquivoCarregado.EndsWith(".ifc", StringComparison.OrdinalIgnoreCase) && File.Exists(ArquivoCarregado))
+                {
+                    File.Copy(ArquivoCarregado, destino, true);
+                }
+                else if (this.MVC.CAM != null)
+                {
+                    string textoCamIfc = this.MVC.CAM.GerarTextoIFC(_modoPlanificado);
+                    if (!string.IsNullOrEmpty(textoCamIfc))
+                        File.WriteAllText(destino, textoCamIfc, System.Text.Encoding.UTF8);
+                }
+
+                MostrarProgressoIFC(false, 0, "");
+                if (File.Exists(destino))
+                    MessageBox.Show("Arquivo IFC exportado com sucesso:\n" + destino, "Exportar IFC", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MostrarProgressoIFC(false, 0, "");
+                ex.Log(descricao: "CAMViewer.exportar_ifc_click");
+                MessageBox.Show("Erro ao exportar IFC: " + ex.Message, "Exportar IFC", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private async void exportar_dxf3d_click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string nomePadrao = !string.IsNullOrWhiteSpace(ArquivoCarregado)
+                    ? Path.GetFileNameWithoutExtension(ArquivoCarregado)
+                    : (this.MVC.CAM != null ? (this.MVC.CAM.Nome ?? "modelo_3d") : "modelo_3d");
+
+                var sfd = new Microsoft.Win32.SaveFileDialog
+                {
+                    Filter = "Arquivo DXF 3D (*.dxf)|*.dxf",
+                    FileName = nomePadrao + "_3D.dxf",
+                    Title = "Exportar modelo 3D para DXF 3D (3DFACE)"
+                };
+                if (sfd.ShowDialog() != true) return;
+
+                string destino = sfd.FileName;
+                MostrarProgressoIFC(true, -1, "Exportando DXF 3D...");
+
+                if (_modeloIfcAtual != null && _modeloIfcAtual.Elementos.Count > 0)
+                {
+                    var modeloIfcLocal = _modeloIfcAtual;
+                    await Task.Run(() => TecnoMetalDxf3DExportador.ExportarModeloIfcParaDxf3D(modeloIfcLocal, destino));
+                }
+                else if (this.MVC.CAM != null)
+                {
+                    var camLocal = this.MVC.CAM;
+                    await Task.Run(() => camLocal.Formato.GetDxf().Save(destino));
+                }
+
+                MostrarProgressoIFC(false, 0, "");
+                if (File.Exists(destino))
+                    MessageBox.Show("Arquivo DXF 3D exportado com sucesso:\n" + destino, "Exportar DXF 3D", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            catch (Exception ex)
+            {
+                MostrarProgressoIFC(false, 0, "");
+                ex.Log(descricao: "CAMViewer.exportar_dxf3d_click");
+                MessageBox.Show("Erro ao exportar DXF 3D: " + ex.Message, "Exportar DXF 3D", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

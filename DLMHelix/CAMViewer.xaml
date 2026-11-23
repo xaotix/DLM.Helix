@@ -76,7 +76,60 @@
                             Background="White"
                                        FontSize="11"
 							Click="exp_dxf" FontWeight="Bold" />
+                        <Button 
+							ToolTip="Carregar arquivo IFC 3D..."
+							Content="IFC..."
+                            Background="White"
+                            Margin="2,0,0,0"
+                            Padding="6,0"
+                            FontSize="11"
+							Click="abrir_ifc_click" FontWeight="Bold" />
                     </StackPanel>
+                    <Border x:Name="bd_progresso_ifc"
+                            Visibility="Collapsed"
+                            Background="#F2FFFFFF"
+                            BorderBrush="#CBD5E1"
+                            BorderThickness="1"
+                            CornerRadius="6"
+                            Padding="14,10"
+                            Width="340"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                        <StackPanel>
+                            <DockPanel Margin="0,0,0,6">
+                                <TextBlock x:Name="lbl_progresso_ifc"
+                                           Text="Carregando IFC..."
+                                           FontSize="12"
+                                           FontWeight="SemiBold"
+                                           Foreground="#0F172A"
+                                           VerticalAlignment="Center" />
+                                <TextBlock x:Name="lbl_pct_ifc"
+                                           DockPanel.Dock="Right"
+                                           Text="0%"
+                                           FontSize="11"
+                                           FontWeight="Bold"
+                                           Foreground="#1D4ED8"
+                                           VerticalAlignment="Center" />
+                            </DockPanel>
+                            <ProgressBar x:Name="pb_progresso_ifc"
+                                         Height="10"
+                                         Minimum="0"
+                                         Maximum="100"
+                                         Value="0"
+                                         Margin="0,0,0,8" />
+                            <Button x:Name="bt_cancelar_ifc"
+                                    Content="Cancelar"
+                                    HorizontalAlignment="Right"
+                                    Padding="12,3"
+                                    Background="#DC2626"
+                                    Foreground="White"
+                                    BorderThickness="0"
+                                    FontSize="11"
+                                    FontWeight="SemiBold"
+                                    Cursor="Hand"
+                                    Click="cancelar_ifc_click" />
+                        </StackPanel>
+                    </Border>
                     <Border Background="White"
 					Grid.Column="1"
 					Width="175"

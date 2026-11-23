@@ -98,6 +98,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="core\Utilidades.cs" />
     <Compile Include="Renders\Gera3D.cs" />
+    <Compile Include="Renders\RenderIFC.cs" />
     <Compile Include="Renders\LinhaVisual3D.cs" />
     <Compile Include="Renders\Render2d.cs" />
     <Compile Include="Texto.xaml.cs">
@@ -160,6 +161,12 @@
     <PackageReference Include="HelixToolkit.Wpf">
       <Version>3.1.2</Version>
     </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\DLM.IFCEngine\DLM.IFCEngine\DLM.IFCEngine.csproj">
+      <Project>{C10DF59A-1412-423D-A61E-CF94A8EF1C25}</Project>
+      <Name>DLM.IFCEngine</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

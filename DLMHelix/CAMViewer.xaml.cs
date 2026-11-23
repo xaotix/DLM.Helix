@@ -1,7 +1,8 @@
-Ôªøusing Conexoes;
+using Conexoes;
 using Conexoes.WPF;
 using DLM.cam;
 using DLM.desenho;
+using DLM.IFCEngine;
 using DLM.vars;
 using HelixToolkit.Wpf;
 using System;
@@ -9,6 +10,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -27,7 +30,7 @@ namespace DLM.helix
         // CONTROLE DE ZOOM
         // ==========================================
         /// <summary>
-        /// Quantas vezes (passos de scroll) o usu√°rio pode aproximar (Zoom In) a partir da base.
+        /// Quantas vezes (passos de scroll) o usu·rio pode aproximar (Zoom In) a partir da base.
         /// </summary>
         /// <summary>
         /// Escala de distanciamento para tipos de linha no Helix (DashDot, Hidden, Dashed, etc.). Padrao: 50.0.
@@ -45,36 +48,36 @@ namespace DLM.helix
         public double FatorAproximacao { get; set; } = 0.5;
 
         /// <summary>
-        /// Quantas vezes (passos de scroll) o usu√°rio pode afastar (Zoom Out) a partir da base.
+        /// Quantas vezes (passos de scroll) o usu·rio pode afastar (Zoom Out) a partir da base.
         /// </summary>
         public int PassosZoomOut { get; set; } = 5;
 
         /// <summary>
-        /// Quando verdadeiro, o zoom √© animado (interpolado a cada frame) em vez de saltar de uma vez.
+        /// Quando verdadeiro, o zoom È animado (interpolado a cada frame) em vez de saltar de uma vez.
         /// </summary>
         public bool ZoomSuave { get; set; } = true;
 
         /// <summary>
-        /// Quando verdadeiro, o zoom aproxima/afasta em dire√ß√£o ao ponteiro do mouse
-        /// (o ponto sob o mouse permanece fixo). Falso mant√©m o zoom centrado na tela.
+        /// Quando verdadeiro, o zoom aproxima/afasta em direÁ„o ao ponteiro do mouse
+        /// (o ponto sob o mouse permanece fixo). Falso mantÈm o zoom centrado na tela.
         /// </summary>
         public bool ZoomNoCursor { get; set; } = true;
 
         // Fator aplicado por passo de scroll (120 unidades de Delta)
         private const double FATOR_ZOOM = 1.08;
 
-        // Constante de tempo da suaviza√ß√£o do zoom, em segundos. Menor = mais responsivo.
+        // Constante de tempo da suavizaÁ„o do zoom, em segundos. Menor = mais responsivo.
         private const double TAU_ZOOM = 0.06;
         // ==========================================
 
         // ==========================================
-        // IN√âRCIA DA C√ÇMERA (PAN)
+        // IN…RCIA DA C¬MERA (PAN)
         // ==========================================
         private double _inercia = 0.80;
 
         /// <summary>
-        /// Fator de in√©rcia da c√¢mera. A in√©rcia padr√£o do Helix (0.93) d√° sensa√ß√£o de arrasto.
-        /// Valores menores deixam o pan mais "colado" ao mouse. 0 desativa a in√©rcia.
+        /// Fator de inÈrcia da c‚mera. A inÈrcia padr„o do Helix (0.93) d· sensaÁ„o de arrasto.
+        /// Valores menores deixam o pan mais "colado" ao mouse. 0 desativa a inÈrcia.
         /// </summary>
         public double InerciaCamera
         {
@@ -104,8 +107,8 @@ namespace DLM.helix
         private double _fracaoVisivelMinima = 0.25;
 
         /// <summary>
-        /// Fra√ß√£o m√≠nima da largura/altura da vista que deve continuar coberta pelos objetos.
-        /// 0.25 = o usu√°rio nunca consegue arrastar at√© sobrar menos de 25% da tela com objeto.
+        /// FraÁ„o mÌnima da largura/altura da vista que deve continuar coberta pelos objetos.
+        /// 0.25 = o usu·rio nunca consegue arrastar atÈ sobrar menos de 25% da tela com objeto.
         /// Use 0 para desativar o limite.
         /// </summary>
         public double FracaoVisivelMinima
@@ -121,8 +124,8 @@ namespace DLM.helix
         // ==========================================
 
         /// <summary>
-        /// Estado por viewport: base de zoom, zoom alvo da anima√ß√£o, limites dos objetos
-        /// e cache do √∫ltimo estado da c√¢mera (para evitar recalcular o limite quando nada mudou).
+        /// Estado por viewport: base de zoom, zoom alvo da animaÁ„o, limites dos objetos
+        /// e cache do ˙ltimo estado da c‚mera (para evitar recalcular o limite quando nada mudou).
         /// </summary>
         private class EstadoViewport
         {
@@ -182,8 +185,8 @@ namespace DLM.helix
         private double _ultimoTick = 0;
 
         /// <summary>
-        /// Procura uma linha pr√≥xima ao ponto no View2D.
-        /// Com c√¢mera ortogr√°fica, calcula diretamente a dist√¢ncia ponto-segmento em 2D usando Bounds
+        /// Procura uma linha prÛxima ao ponto no View2D.
+        /// Com c‚mera ortogr·fica, calcula diretamente a dist‚ncia ponto-segmento em 2D usando Bounds
         /// para filtrar rapidamente, evitando centenas de chamadas custosas ao VisualTreeHelper.HitTest.
         /// </summary>
         public LinhaVisual3D GetLinhaSelecao(Point center, int radius = 10, int step = 1)
@@ -513,8 +516,8 @@ namespace DLM.helix
         }
 
         /// <summary>
-        /// Executa a cada frame: avan√ßa a anima√ß√£o de zoom e aplica o limite de pan.
-        /// S√≥ trabalha nos viewports vis√≠veis e s√≥ recalcula o limite quando a c√¢mera mudou.
+        /// Executa a cada frame: avanÁa a animaÁ„o de zoom e aplica o limite de pan.
+        /// SÛ trabalha nos viewports visÌveis e sÛ recalcula o limite quando a c‚mera mudou.
         /// </summary>
         private void OnRendering(object sender, EventArgs e)
         {
@@ -544,7 +547,7 @@ namespace DLM.helix
 
             if (_fracaoVisivelMinima <= 0) return;
 
-            // Nada mudou desde o √∫ltimo frame: n√£o h√° o que limitar
+            // Nada mudou desde o ˙ltimo frame: n„o h· o que limitar
             if (est.CacheIgual(cam, vp)) return;
 
             AplicarLimitePan(vp, cam, est.Bounds);
@@ -617,7 +620,7 @@ namespace DLM.helix
             double larguraMinima = baseWidth / Math.Pow(FATOR_ZOOM, Math.Max(PassosZoomIn, 1));
             double larguraMaxima = baseWidth * Math.Pow(FATOR_ZOOM, Math.Max(PassosZoomOut, 1));
 
-            // Parte do alvo atual (se estiver animando) para que v√°rios cliques seguidos acumulem
+            // Parte do alvo atual (se estiver animando) para que v·rios cliques seguidos acumulem
             double referencia = est.Animando ? est.LarguraAlvo : orthoCam.Width;
 
             // Delta positivo = aproximar. Touchpads enviam deltas menores que 120 e geram passos proporcionais.
@@ -639,7 +642,7 @@ namespace DLM.helix
         }
 
         /// <summary>
-        /// D√° um passo da anima√ß√£o de zoom em dire√ß√£o √† largura alvo.
+        /// D· um passo da animaÁ„o de zoom em direÁ„o ‡ largura alvo.
         /// </summary>
         private void AvancarZoom(HelixViewport3D vp, OrthographicCamera cam, EstadoViewport est, double dt)
         {
@@ -652,7 +655,7 @@ namespace DLM.helix
                 return;
             }
 
-            // Interpola√ß√£o exponencial no espa√ßo logar√≠tmico: velocidade percebida constante em qualquer escala
+            // InterpolaÁ„o exponencial no espaÁo logarÌtmico: velocidade percebida constante em qualquer escala
             double k = 1.0 - Math.Exp(-dt / TAU_ZOOM);
             double w1 = w0 * Math.Pow(alvo / w0, k);
 
@@ -666,7 +669,7 @@ namespace DLM.helix
         }
 
         /// <summary>
-        /// Aplica a nova largura da c√¢mera ortogr√°fica. Com ZoomNoCursor, desloca a c√¢mera
+        /// Aplica a nova largura da c‚mera ortogr·fica. Com ZoomNoCursor, desloca a c‚mera
         /// para que o ponto sob o mouse continue no mesmo lugar da tela.
         /// </summary>
         private void AplicarLargura(HelixViewport3D vp, OrthographicCamera cam, EstadoViewport est, double novaLargura)
@@ -692,7 +695,7 @@ namespace DLM.helix
         }
 
         /// <summary>
-        /// Obt√©m os eixos "direita" e "cima" da tela, no espa√ßo do mundo.
+        /// ObtÈm os eixos "direita" e "cima" da tela, no espaÁo do mundo.
         /// </summary>
         private static bool ObterEixosTela(OrthographicCamera cam, out Vector3D right, out Vector3D up)
         {
@@ -716,8 +719,8 @@ namespace DLM.helix
         }
 
         /// <summary>
-        /// Limita o pan no plano da tela (direita/cima da c√¢mera), independente da orienta√ß√£o da vista.
-        /// A profundidade da c√¢mera nunca √© alterada.
+        /// Limita o pan no plano da tela (direita/cima da c‚mera), independente da orientaÁ„o da vista.
+        /// A profundidade da c‚mera nunca È alterada.
         /// </summary>
         private void AplicarLimitePan(HelixViewport3D viewport, OrthographicCamera orthoCam, Rect3D bounds)
         {
@@ -737,20 +740,20 @@ namespace DLM.helix
                 bounds.Y + bounds.SizeY / 2.0,
                 bounds.Z + bounds.SizeZ / 2.0);
 
-            // Meia-extens√£o da caixa projetada em cada eixo da tela
+            // Meia-extens„o da caixa projetada em cada eixo da tela
             double halfObjX = 0.5 * (Math.Abs(right.X) * bounds.SizeX + Math.Abs(right.Y) * bounds.SizeY + Math.Abs(right.Z) * bounds.SizeZ);
             double halfObjY = 0.5 * (Math.Abs(up.X) * bounds.SizeX + Math.Abs(up.Y) * bounds.SizeY + Math.Abs(up.Z) * bounds.SizeZ);
 
-            // Deslocamento do centro dos objetos em rela√ß√£o ao centro da vista (no plano da tela)
+            // Deslocamento do centro dos objetos em relaÁ„o ao centro da vista (no plano da tela)
             Vector3D delta = centro - orthoCam.Position;
             double dx = Vector3D.DotProduct(delta, right);
             double dy = Vector3D.DotProduct(delta, up);
 
-            // Faixa m√≠nima que precisa continuar vis√≠vel (nunca maior que o pr√≥prio objeto)
+            // Faixa mÌnima que precisa continuar visÌvel (nunca maior que o prÛprio objeto)
             double minVisX = Math.Min(2.0 * halfObjX, camWidth * _fracaoVisivelMinima);
             double minVisY = Math.Min(2.0 * halfObjY, camHeight * _fracaoVisivelMinima);
 
-            // Deslocamento m√°ximo permitido do centro do objeto em rela√ß√£o ao centro da vista
+            // Deslocamento m·ximo permitido do centro do objeto em relaÁ„o ao centro da vista
             double maxDx = halfObjX + (camWidth / 2.0) - minVisX;
             double maxDy = halfObjY + (camHeight / 2.0) - minVisY;
 
@@ -762,7 +765,7 @@ namespace DLM.helix
 
             if (Math.Abs(corrigirX) > 1e-9 || Math.Abs(corrigirY) > 1e-9)
             {
-                // Move a c√¢mera apenas no plano da tela, sem alterar a profundidade
+                // Move a c‚mera apenas no plano da tela, sem alterar a profundidade
                 orthoCam.Position += (right * corrigirX) + (up * corrigirY);
             }
         }
@@ -790,6 +793,129 @@ namespace DLM.helix
                 Abrir(dxf, extend);
                 AtualizarBotoesDXF(System.IO.File.Exists(arq));
             }
+            else if (ext == "IFC")
+            {
+                AbrirIFC(arq, extend);
+            }
+        }
+
+        private CancellationTokenSource _ctsIfc;
+
+        /// <summary>
+        /// Carrega qualquer arquivo .IFC de forma assÌncrona no View3D, exibindo barra de progresso e opÁ„o de cancelar.
+        /// </summary>
+        public async void AbrirIFC(string caminho, bool extend = true)
+        {
+            if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho)) return;
+
+            CancelarCarregamentoIFC();
+            _ctsIfc = new CancellationTokenSource();
+            var token = _ctsIfc.Token;
+
+            ArquivoCarregado = caminho;
+            DxfCarregado = null;
+            this.MVC.CAM = null;
+            LimparViewports();
+
+            this.tab_3d.Visibility = Visibility.Visible;
+            this.tab_3d.IsSelected = true;
+
+            MostrarProgressoIFC(true, 0, "Abrindo arquivo IFC...");
+
+            try
+            {
+                var modelo = await Task.Run(() =>
+                {
+                    return IfcLeitor.LerArquivo(caminho, (atual, total, msg) =>
+                    {
+                        int pct = total > 0 ? Math.Max(0, Math.Min(100, (atual * 100) / total)) : 0;
+                        Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                        {
+                            MostrarProgressoIFC(true, pct, msg);
+                        }));
+                    }, token);
+                }, token);
+
+                if (token.IsCancellationRequested || modelo == null)
+                {
+                    MostrarProgressoIFC(false, 0, "");
+                    return;
+                }
+
+                MostrarProgressoIFC(true, 98, "Renderizando malhas 3D...");
+
+                Render2d.LimparViewport(viewPort3D);
+                viewPort3D.Children.Add(Gera3d.Luz());
+                double tamUcs = modelo.TemGeometria
+                    ? Math.Max(100, (modelo.Max - modelo.Min).Comprimento * 0.08)
+                    : 200;
+                viewPort3D.AddUCSIcon(tamUcs);
+
+                RenderIFC.Renderizar(viewPort3D, modelo, true);
+
+                this.viewPort3D.ShowCoordinateSystem = true;
+                this.viewPort3D.ShowFieldOfView = false;
+                this.viewPort3D.ShowViewCube = true;
+                this.viewPort3D.ShowCameraTarget = false;
+                this.viewPort3D.ShowCameraInfo = false;
+
+                AtualizarBounds();
+                if (extend)
+                {
+                    Isometric();
+                    ZoomExtend();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                Render2d.LimparViewport(viewPort3D);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao carregar arquivo IFC:\n" + ex.Message, "IFC 3D", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                MostrarProgressoIFC(false, 0, "");
+            }
+        }
+
+        private void CancelarCarregamentoIFC()
+        {
+            if (_ctsIfc != null)
+            {
+                try { _ctsIfc.Cancel(); } catch { }
+                _ctsIfc.Dispose();
+                _ctsIfc = null;
+            }
+        }
+
+        private void MostrarProgressoIFC(bool visivel, int pct, string texto)
+        {
+            if (bd_progresso_ifc == null) return;
+            bd_progresso_ifc.Visibility = visivel ? Visibility.Visible : Visibility.Collapsed;
+            if (pb_progresso_ifc != null) pb_progresso_ifc.Value = pct;
+            if (lbl_pct_ifc != null) lbl_pct_ifc.Text = pct + "%";
+            if (lbl_progresso_ifc != null && !string.IsNullOrEmpty(texto)) lbl_progresso_ifc.Text = texto;
+        }
+
+        private void cancelar_ifc_click(object sender, RoutedEventArgs e)
+        {
+            CancelarCarregamentoIFC();
+            MostrarProgressoIFC(false, 0, "");
+        }
+
+        private void abrir_ifc_click(object sender, RoutedEventArgs e)
+        {
+            var ofd = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "Arquivos IFC (*.ifc)|*.ifc|Todos os arquivos (*.*)|*.*",
+                Title = "Abrir arquivo IFC 3D"
+            };
+            if (ofd.ShowDialog() == true)
+            {
+                AbrirIFC(ofd.FileName, true);
+            }
         }
 
         public void Abrir(ReadCAM arq, bool extend = true)
@@ -801,8 +927,8 @@ namespace DLM.helix
             this.MVC.CAM = arq;
             _isInitializedZoom = false;
 
-            // O zoom extend √© feito dentro do Recarregar, depois que os objetos j√° est√£o nos viewports.
-            // Antes ele rodava com os viewports ainda vazios (o Recarregar √© ass√≠ncrono) e era refeito depois.
+            // O zoom extend È feito dentro do Recarregar, depois que os objetos j· est„o nos viewports.
+            // Antes ele rodava com os viewports ainda vazios (o Recarregar È assÌncrono) e era refeito depois.
             _zoomPendente = extend;
             Recarregar();
         }
@@ -874,12 +1000,10 @@ namespace DLM.helix
                 viewPort3D.AddUCSIcon(this.MVC.CAM.Formato.GetComprimento() / 10);
                 viewPort3D.ShowCameraTarget = true;
 
-                var chapas3d = this.MVC.CAM.GetChapas3Ds();
-                foreach (var chapa in chapas3d)
-                {
-                    var desenho = chapa.GetDesenho3D();
-                    viewPort3D.Children.Add(desenho);
-                }
+                // Pipeline unificado: ReadCAM -> IFC (DLM.IFCEngine) -> RenderIFC (Helix)
+                string textoIfc = this.MVC.CAM.GerarTextoIFC();
+                var modeloIfc = IfcLeitor.LerTexto(textoIfc);
+                RenderIFC.Renderizar(viewPort3D, modeloIfc, true);
 
                 var dxf = this.MVC.CAM.Formato.GetDxf();
                 dxf.RenderHelix(this.viewPort2D);
@@ -899,7 +1023,7 @@ namespace DLM.helix
 
                 SetView2D();
 
-                // Captura os limites agora que os filhos j√° est√£o nos viewports
+                // Captura os limites agora que os filhos j· est„o nos viewports
                 AtualizarBounds();
 
                 if (_zoomPendente)
@@ -958,7 +1082,7 @@ namespace DLM.helix
             }
             catch (Exception ex)
             {
-                MessageBox.Show("N√£o foi poss√≠vel abrir o arquivo externamente:\n" + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("N„o foi possÌvel abrir o arquivo externamente:\n" + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -1004,11 +1128,11 @@ namespace DLM.helix
             GarantirCameraOrtografica(this.viewPort3D);
             GarantirCameraOrtografica(this.viewPort2D);
 
-            // Cancela qualquer anima√ß√£o de zoom em andamento
+            // Cancela qualquer animaÁ„o de zoom em andamento
             _est2D.Resetar();
             _est3D.Resetar();
 
-            // FindBounds percorre todos os filhos: calcula uma √∫nica vez e reaproveita no ZoomExtents
+            // FindBounds percorre todos os filhos: calcula uma ˙nica vez e reaproveita no ZoomExtents
             AtualizarBounds();
 
             if (!_est3D.Bounds.IsEmpty)

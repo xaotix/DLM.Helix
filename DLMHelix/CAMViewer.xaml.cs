@@ -1911,7 +1911,7 @@ namespace DLM.helix
 
                 MostrarProgressoIFC(false, 0, "");
                 if (File.Exists(destino))
-                    MessageBox.Show("Arquivo IFC exportado com sucesso:\n" + destino, "Exportar IFC", MessageBoxButton.OK, MessageBoxImage.Information);
+                    AbrirArquivoSeguro(destino);
             }
             catch (Exception ex)
             {
@@ -1953,7 +1953,7 @@ namespace DLM.helix
 
                 MostrarProgressoIFC(false, 0, "");
                 if (File.Exists(destino))
-                    MessageBox.Show("Arquivo DXF 3D exportado com sucesso:\n" + destino, "Exportar DXF 3D", MessageBoxButton.OK, MessageBoxImage.Information);
+                    AbrirArquivoSeguro(destino);
             }
             catch (Exception ex)
             {

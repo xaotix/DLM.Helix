@@ -23,6 +23,91 @@ namespace DLM.helix
 {
     public partial class CAMViewer : UserControl
     {
+        private bool _preferirAba2D;
+        private bool _trocandoAbaProgramaticamente;
+
+        public bool Aba2DSelecionada => this.tab_2d != null && this.tab_2d.IsSelected;
+
+        public void SelecionarAba2D(bool selecionar2D)
+        {
+            _preferirAba2D = selecionar2D;
+            if (this.tab_2d == null || this.tab_3d == null) return;
+            _trocandoAbaProgramaticamente = true;
+            try
+            {
+                if (selecionar2D && this.tab_2d.Visibility == Visibility.Visible)
+                    this.tab_2d.IsSelected = true;
+                else if (!selecionar2D && this.tab_3d.Visibility == Visibility.Visible)
+                    this.tab_3d.IsSelected = true;
+            }
+            finally
+            {
+                _trocandoAbaProgramaticamente = false;
+            }
+        }
+
+        private void AplicarAbaPreferida(bool suporta3D, bool suporta2D)
+        {
+            if (this.tab_3d == null || this.tab_2d == null) return;
+            _trocandoAbaProgramaticamente = true;
+            try
+            {
+                this.tab_3d.Visibility = suporta3D ? Visibility.Visible : Visibility.Collapsed;
+                this.tab_2d.Visibility = suporta2D ? Visibility.Visible : Visibility.Collapsed;
+
+                if (suporta3D && suporta2D)
+                {
+                    if (_preferirAba2D)
+                        this.tab_2d.IsSelected = true;
+                    else
+                        this.tab_3d.IsSelected = true;
+                }
+                else if (suporta2D)
+                {
+                    this.tab_2d.IsSelected = true;
+                }
+                else if (suporta3D)
+                {
+                    this.tab_3d.IsSelected = true;
+                }
+            }
+            finally
+            {
+                _trocandoAbaProgramaticamente = false;
+            }
+        }
+
+        private void tab_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!ReferenceEquals(e.OriginalSource, this.tab)) return;
+            if (!_trocandoAbaProgramaticamente &&
+                this.tab_3d != null && this.tab_2d != null &&
+                this.tab_3d.Visibility == Visibility.Visible &&
+                this.tab_2d.Visibility == Visibility.Visible)
+            {
+                _preferirAba2D = this.tab_2d.IsSelected;
+            }
+
+            if (this.tab_2d != null && this.tab_2d.IsSelected &&
+                this.MVC != null && this.MVC.CAM != null &&
+                grid_cam_2d_visual != null && grid_cam_2d_visual.Visibility == Visibility.Visible)
+            {
+                var camAtual = this.MVC.CAM;
+                Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+                {
+                    if (ReferenceEquals(this.MVC?.CAM, camAtual) && canvas_cam_2d != null)
+                        CAMDesenho2DCanvas.Desenhar(canvas_cam_2d, camAtual);
+                if (this.tab_2d != null && this.tab_2d.IsSelected)
+                {
+                    Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+                    {
+                        if (ReferenceEquals(this.MVC?.CAM, camAtual) && canvas_cam_2d != null)
+                            CAMDesenho2DCanvas.Desenhar(canvas_cam_2d, camAtual);
+                    }));
+                }
+                }));
+            }
+        }
         public HelixViewport3D View2D => this.viewPort2D;
         public HelixViewport3D View3D => this.viewPort3D;
 
@@ -825,8 +910,7 @@ namespace DLM.helix
             LimparViewports();
             AtualizarBotoesDXF(false);
 
-            this.tab_3d.Visibility = Visibility.Visible;
-            this.tab_3d.IsSelected = true;
+            AplicarAbaPreferida(true, true);
             MostrarProgressoIFC(true, -1, "Carregando CAM...");
 
             try
@@ -942,8 +1026,7 @@ namespace DLM.helix
             _modoPlanificado = false;
             LimparViewports();
 
-            this.tab_3d.Visibility = Visibility.Visible;
-            this.tab_3d.IsSelected = true;
+            AplicarAbaPreferida(true, false);
 
             if (modelo == null || modelo.Elementos.Count == 0)
             {
@@ -988,8 +1071,7 @@ namespace DLM.helix
             this.MVC.CAM = null;
             LimparViewports();
 
-            this.tab_3d.Visibility = Visibility.Visible;
-            this.tab_3d.IsSelected = true;
+            AplicarAbaPreferida(true, false);
 
             MostrarProgressoIFC(true, 0, "Abrindo arquivo IFC...");
 
@@ -1134,8 +1216,7 @@ namespace DLM.helix
         public void Abrir(ReadCAM arq, bool extend = true)
         {
             LimparViewports();
-            this.tab_3d.Visibility = Visibility.Visible;
-            this.tab_3d.IsSelected = true;
+            AplicarAbaPreferida(true, true);
 
             this.MVC.CAM = arq;
             _modeloIfcAtual = null;
@@ -1196,8 +1277,7 @@ namespace DLM.helix
 
         public void Set2D()
         {
-            this.tab_3d.Visibility = Visibility.Collapsed;
-            this.tab_2d.IsSelected = true;
+            AplicarAbaPreferida(false, true);
             this.viewPort2D.IsRotationEnabled = false;
             this.viewPort2D.RotateGesture = null;
             this.viewPort2D.RotateGesture2 = null;
@@ -1274,6 +1354,14 @@ namespace DLM.helix
                 if (grid_dxf_2d_helix != null) grid_dxf_2d_helix.Visibility = Visibility.Collapsed;
                 if (grid_cam_2d_visual != null) grid_cam_2d_visual.Visibility = Visibility.Visible;
                 CAMDesenho2DCanvas.Desenhar(canvas_cam_2d, camAtual);
+                if (this.tab_2d != null && this.tab_2d.IsSelected)
+                {
+                    Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+                    {
+                        if (ReferenceEquals(this.MVC?.CAM, camAtual) && canvas_cam_2d != null)
+                            CAMDesenho2DCanvas.Desenhar(canvas_cam_2d, camAtual);
+                    }));
+                }
 
                 this.viewPort3D.ShowCoordinateSystem = true;
                 this.viewPort3D.ShowFieldOfView = false;

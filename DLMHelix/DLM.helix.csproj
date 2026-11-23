@@ -170,6 +170,10 @@
       <Project>{C10DF59A-1412-423D-A61E-CF94A8EF1C25}</Project>
       <Name>DLM.IFCEngine</Name>
     </ProjectReference>
+    <ProjectReference Include="..\..\DLM.TecnoMetalDecoder\DLM.TecnoMetalDecoder\DLM.TecnoMetalDecoder.csproj">
+      <Project>{D4A7E218-6C39-4E51-9B8A-2F1E6C73D904}</Project>
+      <Name>DLM.TecnoMetalDecoder</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

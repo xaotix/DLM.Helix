@@ -3,6 +3,7 @@ using Conexoes.WPF;
 using DLM.cam;
 using DLM.desenho;
 using DLM.IFCEngine;
+using DLM.TecnoMetalDecoder;
 using DLM.vars;
 using HelixToolkit.Wpf;
 using System;
@@ -996,6 +997,61 @@ namespace DLM.helix
 
             try
             {
+                // Detecta automaticamente modelos 3D do TecnoMetal (TEC_PROFILE3D / TEC_BOLTS3D)
+                if (caminho.EndsWith(".dwg", StringComparison.OrdinalIgnoreCase))
+                {
+                    var modeloTecnoIfc = await Task.Run(() =>
+                    {
+                        if (!TecnoMetalDwgLeitor.ContemEntidadesTecnoMetal(caminho))
+                            return null;
+
+                        var opcoes = new OpcoesExportacaoIfc
+                        {
+                            NomeProjeto = Path.GetFileNameWithoutExtension(caminho),
+                            IncluirChapas = true,
+                            IncluirPerfis = true,
+                            IncluirParafusos = true,
+                            ApenasModelSpace = true,
+                            CentralizarNaOrigem = true
+                        };
+
+                        string textoIfc = TecnoMetalIfcExportador.ConverterDwgParaIfcTexto(caminho, opcoes, (atual, total, msg) =>
+                        {
+                            if (token.IsCancellationRequested) return;
+                            int pct = total > 0 ? Math.Max(0, Math.Min(70, (atual * 70) / total)) : -1;
+                            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                            {
+                                if (!token.IsCancellationRequested) MostrarProgressoIFC(true, pct, msg);
+                            }));
+                        }, token);
+
+                        if (token.IsCancellationRequested || string.IsNullOrEmpty(textoIfc))
+                            return null;
+
+                        return IfcLeitor.LerTexto(textoIfc, (atual, total, msg) =>
+                        {
+                            if (token.IsCancellationRequested) return;
+                            int pct = 70 + (total > 0 ? Math.Max(0, Math.Min(28, (atual * 28) / total)) : 0);
+                            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                            {
+                                if (!token.IsCancellationRequested) MostrarProgressoIFC(true, pct, msg);
+                            }));
+                        }, token);
+                    }, token);
+
+                    if (token.IsCancellationRequested)
+                    {
+                        MostrarProgressoIFC(false, 0, "");
+                        return;
+                    }
+
+                    if (modeloTecnoIfc != null && modeloTecnoIfc.Elementos.Count > 0)
+                    {
+                        MostrarProgressoIFC(true, 98, "Renderizando modelo 3D TecnoMetal...");
+                        AbrirModeloIFC(modeloTecnoIfc, caminho, extend);
+                        return;
+                    }
+                }
                 var dxf = await Task.Run(() =>
                 {
                     return DwgLoader.CarregarDwgOuDxf(caminho, (atual, total, msg) =>

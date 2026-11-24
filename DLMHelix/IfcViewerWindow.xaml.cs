@@ -1338,6 +1338,24 @@ namespace DLM.helix
             }
         }
 
+        private void BtnExportarVistas2D_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null || _modelo.Elementos.Count == 0)
+            {
+                MessageBox.Show("Carregue um modelo IFC/DWG primeiro.", "Exportar Vistas 2D", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+            if (_modelo.Grid == null || !_modelo.Grid.TemEixos)
+                _modelo.Grid = IfcGrid.RemapearEixos(_modelo);
+
+            var dlg = new IfcVistas2DWindow(_modelo) { Owner = this };
+            dlg.ShowDialog();
+            if (dlg.GridFoiAlterado)
+            {
+                RenderizarGrid3D();
+            }
+        }
+
         private void BtnIsolar_Click(object sender, RoutedEventArgs e)
         {
             if (_modelo == null || _selecionados.Count == 0) return;

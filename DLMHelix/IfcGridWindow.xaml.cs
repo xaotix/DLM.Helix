@@ -69,10 +69,14 @@ namespace DLM.helix
         private void BtnRegerarPilares_Click(object sender, RoutedEventArgs e)
         {
             if (_modelo == null) return;
-            var novo = IfcGrid.GerarAutomaticoDosPilares(_modelo);
+            double tol = 150.0;
+            double.TryParse((txtTolerancia.Text ?? "150").Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out tol);
+            if (tol < 10.0) tol = 10.0;
+
+            var novo = IfcGrid.RemapearEixos(_modelo, tol);
             if (!novo.TemEixos)
             {
-                MessageBox.Show("Nenhum pilar vertical foi detectado automaticamente neste modelo. Voce pode adicionar os eixos manualmente.", "Grid Automatico", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Nenhum alinhamento de pilares ou porticos foi detectado automaticamente neste modelo. Voce pode adicionar os eixos manualmente.", "Remapear Eixos", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
             novo.Visivel = chkVisivel.IsChecked == true;

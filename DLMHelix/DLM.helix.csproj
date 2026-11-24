@@ -85,6 +85,9 @@
     <Compile Include="IfcGridWindow.xaml.cs">
       <DependentUpon>IfcGridWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="IfcVistas2DWindow.xaml.cs">
+      <DependentUpon>IfcVistas2DWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="IfcViewerWindow.xaml.cs">
       <DependentUpon>IfcViewerWindow.xaml</DependentUpon>
     </Compile>
@@ -136,6 +139,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="IfcGridWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="IfcVistas2DWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

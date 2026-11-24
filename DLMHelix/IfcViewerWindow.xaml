@@ -139,7 +139,8 @@
                 <ToggleButton x:Name="tglCorte" Style="{StaticResource TglBarra}" Content="Plano Corte" IsChecked="False" Click="TglCorte_Click" ToolTip="Ativar painel de Plano de Corte (Section / Cut Plane em X, Y, Z)" />
                 <Button Style="{StaticResource BtnBarra}" Content="Medir" Click="BtnMedir_Click" ToolTip="Medir distancia 3D entre 2 pontos (dX, dY, dZ e L em mm)" />
                 <ToggleButton x:Name="tglGrid" Style="{StaticResource TglBarra}" Content="Grid" IsChecked="True" Click="TglGrid_Click" ToolTip="Mostrar ou ocultar o Grid de eixos" />
-                <Button Style="{StaticResource BtnBarra}" Content="Gerenciar Grid" Click="BtnGerenciarGrid_Click" ToolTip="Editar eixos, nomes, adicionar/remover e configurar exportacao do Grid no IFC" />
+                <Button Style="{StaticResource BtnBarra}" Content="Eixos / Grid" Click="BtnGerenciarGrid_Click" ToolTip="Abrir tela da lista de eixos para editar, adicionar, remover ou Remapear Eixos do 3D" />
+                <Button Style="{StaticResource BtnBarra}" Content="Vistas 2D" Click="BtnExportarVistas2D_Click" ToolTip="Exportar vistas 2D (DXF) pelos eixos escolhidos com profundidade configuravel" />
 
                 <Border Style="{StaticResource SepBarra}" />
 

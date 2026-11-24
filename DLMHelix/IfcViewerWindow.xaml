@@ -113,63 +113,68 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Menu Principal Organizado -->
-        <Menu Grid.Row="0" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="4,2" Foreground="#1E293B" FontSize="12">
+        <!-- Menu Principal Organizado com Icones -->
+        <Menu x:Name="menuPrincipal" Grid.Row="0" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="4,2" Foreground="#1E293B" FontSize="12">
             <MenuItem Header="_Arquivo">
-                <MenuItem Header="Abrir IFC / DWG..." Click="BtnAbrir_Click" />
-                <MenuItem Header="Juntar outro IFC / DWG (ponto interativo)..." Click="BtnJuntarIfc_Click" />
+                <MenuItem Header="Abrir IFC / DWG..." Click="BtnAbrir_Click" Tag="M1,3 L5,3 L6.5,5 L13,5 L13,12 L1,12 Z|#0284C7" />
+                <MenuItem Header="Juntar outro IFC / DWG (ponto interativo)..." Click="BtnJuntarIfc_Click" Tag="M7,2 L7,12 M2,7 L12,7|#0284C7" />
                 <Separator />
-                <MenuItem Header="Salvar IFC Completo..." Click="BtnSalvarIfc_Click" />
-                <MenuItem Header="Exportar Selecao para IFC..." Click="BtnExportarIfcSelecao_Click" />
+                <MenuItem Header="Salvar IFC Completo..." Click="BtnSalvarIfc_Click" Tag="M2,1 L10,1 L13,4 L13,13 L2,13 Z M4,1 L4,5 L9,5 L9,1|#1E293B" />
+                <MenuItem Header="Exportar Selecao para IFC..." Click="BtnExportarIfcSelecao_Click" Tag="M7,2 L7,10 M4,7 L7,10 L10,7 M2,12 L12,12|#0284C7" />
                 <Separator />
-                <MenuItem Header="Exportar DXF 3D (Tudo)..." Click="BtnExportarDxfTudo_Click" />
-                <MenuItem Header="Exportar DXF 3D (Selecao)..." Click="BtnExportarDxfSelecao_Click" />
-                <MenuItem Header="Exportar Vistas 2D pelos Eixos..." Click="BtnExportarVistas2D_Click" />
+                <MenuItem Header="Exportar DXF 3D (Tudo)..." Click="BtnExportarDxfTudo_Click" Tag="M7,1.5 L12.5,4.5 L12.5,10.5 L7,13.5 L1.5,10.5 L1.5,4.5 Z|#16A34A" />
+                <MenuItem Header="Exportar DXF 3D (Selecao)..." Click="BtnExportarDxfSelecao_Click" Tag="M2,2 L12,2 L12,12 L2,12 Z M5,5 L9,9|#16A34A" />
+                <MenuItem Header="Exportar Vistas 2D pelos Eixos..." Click="BtnExportarVistas2D_Click" Tag="M2,2 L12,2 L12,12 L2,12 Z M2,6 L12,6 M6,6 L6,12|#0284C7" />
                 <Separator />
-                <MenuItem Header="Fechar" Click="MenuFechar_Click" />
+                <MenuItem Header="Fechar" Click="MenuFechar_Click" Tag="M3,3 L11,11 M11,3 L3,11|#DC2626" />
             </MenuItem>
 
             <MenuItem Header="_Editar">
-                <MenuItem Header="Mover Selecao / IFC Importado..." Click="BtnMover_Click" />
-                <MenuItem Header="Adicionar Atributo nas Pecas..." Click="BtnAdicionarAtributo_Click" />
-                <MenuItem Header="Agrupar Pecas por Propriedade..." Click="BtnAgrupar_Click" />
+                <MenuItem Header="Mover Selecao / IFC Importado..." Click="BtnMover_Click" Tag="M7,1 L7,13 M1,7 L13,7|#1E293B" />
+                <MenuItem Header="Adicionar Atributo nas Pecas..." Click="BtnAdicionarAtributo_Click" Tag="M2,2 L8,2 L13,7 L7,13 L2,8 Z|#0284C7" />
+                <MenuItem Header="Agrupar Pecas por Propriedade..." Click="BtnAgrupar_Click" Tag="M2,2 L6,2 L6,6 L2,6 Z M8,2 L12,2 L12,6 L8,6 Z M8,8 L12,8 L12,12 L8,12 Z|#7C3AED" />
                 <Separator />
-                <MenuItem Header="Selecionar Mesmo Perfil" Click="MenuSelecionarMesmoPerfil_Click" />
-                <MenuItem Header="Selecionar Mesmo Nivel/Grupo" Click="MenuSelecionarMesmoNivel_Click" />
-                <MenuItem Header="Inverter Selecao" Click="MenuInverterSelecao_Click" />
+                <MenuItem Header="Selecionar Mesmo Perfil" Click="MenuSelecionarMesmoPerfil_Click" Tag="M2,2 L12,2 L12,12 L2,12 Z|#0284C7" />
+                <MenuItem Header="Selecionar Mesmo Nivel/Grupo" Click="MenuSelecionarMesmoNivel_Click" Tag="M2,3 L12,3 M2,7 L12,7 M2,11 L12,11|#0284C7" />
+                <MenuItem Header="Inverter Selecao" Click="MenuInverterSelecao_Click" Tag="M2,2 L12,2 L12,12 L2,12 Z M2,12 L12,2|#475569" />
             </MenuItem>
 
             <MenuItem Header="E_xibir">
-                <MenuItem Header="Enquadrar Tudo" Click="BtnZoomExtents_Click" />
-                <MenuItem Header="Enquadrar Selecao" Click="MenuEnquadrarSelecao_Click" />
+                <MenuItem Header="Enquadrar Tudo" Click="BtnZoomExtents_Click" Tag="M2,5 L2,2 L5,2 M9,2 L12,2 L12,5 M12,9 L12,12 L9,12 M5,12 L2,12 L2,9|#1E293B" />
+                <MenuItem Header="Enquadrar Selecao" Click="MenuEnquadrarSelecao_Click" Tag="M3,3 L11,3 L11,11 L3,11 Z|#0284C7" />
                 <Separator />
-                <MenuItem Header="Vista Isometrica" Click="BtnVistaIso_Click" />
-                <MenuItem Header="Vista Frontal" Click="BtnVistaFrontal_Click" />
-                <MenuItem Header="Vista Posterior" Click="BtnVistaPosterior_Click" />
-                <MenuItem Header="Vista Superior" Click="BtnVistaSuperior_Click" />
-                <MenuItem Header="Vista Inferior" Click="BtnVistaInferior_Click" />
-                <MenuItem Header="Vista Esquerda" Click="BtnVistaEsquerda_Click" />
-                <MenuItem Header="Vista Direita" Click="BtnVistaDireita_Click" />
+                <MenuItem Header="Vista Isometrica" Click="BtnVistaIso_Click" Tag="M7,1.5 L12.5,4.5 L12.5,10.5 L7,13.5 L1.5,10.5 L1.5,4.5 Z|#1E293B" />
+                <MenuItem Header="Vista Frontal" Click="BtnVistaFrontal_Click" Tag="M2,3 L12,3 L12,11 L2,11 Z|#1E293B" />
+                <MenuItem Header="Vista Posterior" Click="BtnVistaPosterior_Click" Tag="M2,3 L12,3 L12,11 L2,11 Z M2,3 L12,11|#475569" />
+                <MenuItem Header="Vista Superior" Click="BtnVistaSuperior_Click" Tag="M2,2 L12,2 L12,12 L2,12 Z M2,5 L12,5|#1E293B" />
+                <MenuItem Header="Vista Inferior" Click="BtnVistaInferior_Click" Tag="M2,2 L12,2 L12,12 L2,12 Z M2,9 L12,9|#475569" />
+                <MenuItem Header="Vista Esquerda" Click="BtnVistaEsquerda_Click" Tag="M2,2 L12,2 L12,12 L2,12 Z M5,2 L5,12|#1E293B" />
+                <MenuItem Header="Vista Direita" Click="BtnVistaDireita_Click" Tag="M2,2 L12,2 L12,12 L2,12 Z M9,2 L9,12|#1E293B" />
                 <Separator />
-                <MenuItem Header="Isolar Selecao" Click="BtnIsolar_Click" />
-                <MenuItem Header="Ocultar Selecao" Click="BtnOcultar_Click" />
-                <MenuItem Header="Mostrar Tudo" Click="BtnMostrarTudo_Click" />
+                <MenuItem Header="Isolar Selecao" Click="BtnIsolar_Click" Tag="M7,2 A5,5 0 1 0 7,12 A5,5 0 1 0 7,2|#0284C7" />
+                <MenuItem Header="Ocultar Selecao" Click="BtnOcultar_Click" Tag="M2,2 L12,12 M12,2 L2,12|#DC2626" />
+                <MenuItem Header="Mostrar Tudo" Click="BtnMostrarTudo_Click" Tag="M1,7 Q7,1 13,7 Q7,13 1,7 Z|#16A34A" />
             </MenuItem>
 
             <MenuItem Header="Ei_xos e Grid">
-                <MenuItem Header="Lista / Editar Eixos..." Click="BtnGerenciarGrid_Click" />
-                <MenuItem Header="Remapear Eixos do Modelo 3D" Click="MenuRemapearEixos_Click" />
+                <MenuItem Header="Mapear Eixos Interativo (Cubo Z 3D)..." Click="BtnMapearEixosInterativo_Click" Tag="M2,4 L7,1 L12,4 L12,10 L7,13 L2,10 Z|#0284C7" />
+                <MenuItem Header="Lista / Editar Eixos..." Click="BtnGerenciarGrid_Click" Tag="M4,1 L4,13 M10,1 L10,13 M1,4 L13,4 M1,10 L13,10|#0284C7" />
+                <MenuItem Header="Remapear Eixos Rapido" Click="MenuRemapearEixos_Click" Tag="M12,7 A5,5 0 1 1 10.5,3.5 M11.5,1.5 L11.5,4.2 L8.8,4.2|#16A34A" />
                 <Separator />
-                <MenuItem Header="Exportar Vistas 2D pelos Eixos..." Click="BtnExportarVistas2D_Click" />
-                <MenuItem Header="Quebrar IFC pelos Eixos..." Click="BtnQuebrarPorEixos_Click" />
+                <MenuItem Header="Exportar Vistas 2D pelos Eixos..." Click="BtnExportarVistas2D_Click" Tag="M2,2 L12,2 L12,12 L2,12 Z M2,6 L12,6 M6,6 L6,12|#0284C7" />
+                <MenuItem Header="Quebrar IFC pelos Eixos..." Click="BtnQuebrarPorEixos_Click" Tag="M2,2 L6,2 L6,12 L2,12 Z M8,2 L12,2 L12,12 L8,12 Z|#EA580C" />
+            </MenuItem>
+
+            <MenuItem Header="_Relatorios">
+                <MenuItem Header="Relatorios e Graficos (Multi-Nivel)..." Click="BtnRelatorios_Click" Tag="M2,12 L2,7 L5,7 L5,12 M6,12 L6,3 L9,3 L9,12 M10,12 L10,5 L13,5 L13,12|#7C3AED" />
             </MenuItem>
 
             <MenuItem Header="_Ferramentas">
-                <MenuItem Header="Medir Distancia 3D (2 Pontos)" Click="BtnMedir_Click" />
-                <MenuItem Header="Configurar Snaps (Endpoint / Midpoint / Nearest)..." Click="BtnConfigSnaps_Click" />
+                <MenuItem Header="Medir Distancia 3D (2 Pontos)" Click="BtnMedir_Click" Tag="M2,11 L11,2 M2,11 L5,11 M2,11 L2,8|#DC2626" />
+                <MenuItem Header="Configurar Snaps (Endpoint / Midpoint / Nearest)..." Click="BtnConfigSnaps_Click" Tag="M1,1 L13,1 L13,13 L1,13 Z|#16A34A" />
                 <Separator />
-                <MenuItem Header="Aplicar Cores Padrao no Modelo (Viga=Vermelho, Purlin=Amarelo...)" Click="MenuAplicarCoresPadrao_Click" />
-                <MenuItem Header="Opcoes e Configuracoes (Cores, De-Para, Grid, 3D)..." Click="BtnConfig_Click" />
+                <MenuItem Header="Aplicar Cores Padrao no Modelo (Viga=Vermelho, Purlin=Amarelo...)" Click="MenuAplicarCoresPadrao_Click" Tag="M7,2 A5,5 0 1 0 7,12 A5,5 0 1 0 7,2|#EA580C" />
+                <MenuItem Header="Opcoes e Configuracoes (Cores, De-Para, Grid, 3D)..." Click="BtnConfig_Click" Tag="M7,4.5 A2.5,2.5 0 1 0 7,9.5 A2.5,2.5 0 1 0 7,4.5 M7,1 L7,3 M7,11 L7,13|#475569" />
             </MenuItem>
         </Menu>
 
@@ -212,11 +217,36 @@
                 <Border Style="{StaticResource SepBarra}" />
 
                 <!-- Visualizacao -->
-                <ToggleButton x:Name="tglArestas" Style="{StaticResource TglBarra}" Content="Arestas" IsChecked="True" Click="TglArestas_Click" ToolTip="Mostrar/Ocultar arestas" />
-                <ToggleButton x:Name="tglPerspectiva" Style="{StaticResource TglBarra}" Content="3D Persp" IsChecked="False" Click="TglPerspectiva_Click" ToolTip="Alternar camera Ortografica / Perspectiva" />
-                <ToggleButton x:Name="tglRaioX" Style="{StaticResource TglBarra}" Content="Raio-X" IsChecked="False" Click="TglRaioX_Click" ToolTip="Modo Raio-X / Fantasma" />
-                <ToggleButton x:Name="tglCorte" Style="{StaticResource TglBarra}" Content="Corte" IsChecked="False" Click="TglCorte_Click" ToolTip="Plano de Corte (Cut Plane X, Y, Z)" />
-                <ToggleButton x:Name="tglGrid" Style="{StaticResource TglBarra}" Content="Grid" IsChecked="True" Click="TglGrid_Click" ToolTip="Mostrar/Ocultar Grid de eixos" />
+                <ToggleButton x:Name="tglArestas" Style="{StaticResource TglBarra}" IsChecked="True" Click="TglArestas_Click" ToolTip="Mostrar/Ocultar arestas">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}" StrokeThickness="1.5" Data="M2,2 L12,2 L12,12 L2,12 Z M2,2 L12,12" />
+                        <TextBlock Text="Arestas" VerticalAlignment="Center" />
+                    </StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="tglPerspectiva" Style="{StaticResource TglBarra}" IsChecked="False" Click="TglPerspectiva_Click" ToolTip="Alternar camera Ortografica / Perspectiva">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}" StrokeThickness="1.5" Data="M3,2 L11,2 L13,12 L1,12 Z" />
+                        <TextBlock Text="Persp" VerticalAlignment="Center" />
+                    </StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="tglRaioX" Style="{StaticResource TglBarra}" IsChecked="False" Click="TglRaioX_Click" ToolTip="Modo Raio-X / Fantasma">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}" StrokeThickness="1.5" Data="M1,7 Q7,1 13,7 Q7,13 1,7 Z M7,5 A2,2 0 1 0 7,9 A2,2 0 1 0 7,5" />
+                        <TextBlock Text="Raio-X" VerticalAlignment="Center" />
+                    </StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="tglCorte" Style="{StaticResource TglBarra}" IsChecked="False" Click="TglCorte_Click" ToolTip="Plano de Corte (Cut Plane X, Y, Z)">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}" StrokeThickness="1.5" Data="M2,7 L12,7 M4,3 L4,11 M10,3 L10,11" />
+                        <TextBlock Text="Corte" VerticalAlignment="Center" />
+                    </StackPanel>
+                </ToggleButton>
+                <ToggleButton x:Name="tglGrid" Style="{StaticResource TglBarra}" IsChecked="True" Click="TglGrid_Click" ToolTip="Mostrar/Ocultar Grid de eixos">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}" StrokeThickness="1.5" Data="M4,1 L4,13 M10,1 L10,13 M1,4 L13,4 M1,10 L13,10" />
+                        <TextBlock Text="Grid" VerticalAlignment="Center" />
+                    </StackPanel>
+                </ToggleButton>
 
                 <Border Style="{StaticResource SepBarra}" />
 
@@ -248,8 +278,14 @@
 
                 <Border Style="{StaticResource SepBarra}" />
 
-                <!-- Eixos, Quebra e Vistas 2D -->
-                <Button Style="{StaticResource BtnBarra}" Click="BtnGerenciarGrid_Click" ToolTip="Lista de Eixos (editar nomes, distancias, adicionar/remover, Remapear Eixos)">
+                <!-- Eixos, Quebra, Vistas 2D e Relatorios -->
+                <Button Style="{StaticResource BtnBarra}" Click="BtnMapearEixosInterativo_Click" ToolTip="Mapear Eixos Interativo com Cubo Z 3D em tempo real">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#0284C7" StrokeThickness="1.6" Data="M2,4 L7,1 L12,4 L12,10 L7,13 L2,10 Z M2,4 L7,7 L12,4 M7,7 L7,13" />
+                        <TextBlock Text="Mapear Eixos" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource BtnBarra}" Click="BtnGerenciarGrid_Click" ToolTip="Lista de Eixos (editar nomes, distancias, adicionar/remover)">
                     <StackPanel Orientation="Horizontal">
                         <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#0284C7" StrokeThickness="1.5" Data="M4,1 L4,13 M10,1 L10,13 M1,4 L13,4 M1,10 L13,10" />
                         <TextBlock Text="Eixos" VerticalAlignment="Center" />
@@ -263,8 +299,14 @@
                 </Button>
                 <Button Style="{StaticResource BtnBarra}" Click="BtnQuebrarPorEixos_Click" ToolTip="Quebrar IFC em arquivos separados pelos eixos">
                     <StackPanel Orientation="Horizontal">
-                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#1E293B" StrokeThickness="1.5" Data="M2,2 L6,2 L6,12 L2,12 Z M8,2 L12,2 L12,12 L8,12 Z" />
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#EA580C" StrokeThickness="1.5" Data="M2,2 L6,2 L6,12 L2,12 Z M8,2 L12,2 L12,12 L8,12 Z" />
                         <TextBlock Text="Quebrar" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource BtnBarra}" Click="BtnRelatorios_Click" ToolTip="Relatorios e Graficos visuais multi-nivel">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#7C3AED" StrokeThickness="1.5" Data="M2,12 L2,7 L5,7 L5,12 M6,12 L6,3 L9,3 L9,12 M10,12 L10,5 L13,5 L13,12" />
+                        <TextBlock Text="Relatorios" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
 
@@ -320,6 +362,32 @@
                     <Slider x:Name="sldCorteZ" Width="130" Minimum="0" Maximum="100" Value="100" VerticalAlignment="Center" Margin="0,0,14,0" ValueChanged="SldCorte_ValueChanged" />
 
                     <Button Style="{StaticResource BtnBarra}" Height="24" Content="Resetar Cortes" Click="BtnResetarCortes_Click" />
+                </WrapPanel>
+            </Border>
+
+            <!-- Painel Interativo de Mapeamento de Eixos (Cubo Gigante 3D em tempo real) -->
+            <Border x:Name="pnlMapearEixos" Background="#EFF6FF" BorderBrush="#2563EB" BorderThickness="0,0,0,1" Padding="10,6" Visibility="Collapsed">
+                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="MAPEAR EIXOS (CUBO Z 3D):" FontWeight="Bold" Foreground="#1D4ED8" VerticalAlignment="Center" Margin="0,0,10,0" FontSize="11.5" />
+
+                    <TextBlock Text="Ponto Zero Z (mm):" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="11" FontWeight="SemiBold" />
+                    <Slider x:Name="sldMapZ0" Width="125" VerticalAlignment="Center" Margin="0,0,4,0" ValueChanged="SldMapearEixos_ValueChanged" />
+                    <TextBox x:Name="txtMapZ0" Width="62" Height="22" Text="0" VerticalContentAlignment="Center" Padding="3,0" Margin="0,0,12,0" KeyDown="TxtMapearEixos_KeyDown" />
+
+                    <TextBlock Text="Offset Z (±/2) mm:" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="11" FontWeight="SemiBold" />
+                    <Slider x:Name="sldMapTolZ" Width="110" Minimum="100" Maximum="6000" Value="1000" VerticalAlignment="Center" Margin="0,0,4,0" ValueChanged="SldMapearEixos_ValueChanged" />
+                    <TextBox x:Name="txtMapTolZ" Width="56" Height="22" Text="1000" VerticalContentAlignment="Center" Padding="3,0" Margin="0,0,12,0" KeyDown="TxtMapearEixos_KeyDown" />
+
+                    <TextBlock Text="Tol XY (mm):" VerticalAlignment="Center" Margin="0,0,4,0" FontSize="11" FontWeight="SemiBold" />
+                    <Slider x:Name="sldMapTolXY" Width="90" Minimum="50" Maximum="2000" Value="500" VerticalAlignment="Center" Margin="0,0,4,0" ValueChanged="SldMapearEixos_ValueChanged" />
+                    <TextBox x:Name="txtMapTolXY" Width="50" Height="22" Text="500" VerticalContentAlignment="Center" Padding="3,0" Margin="0,0,12,0" KeyDown="TxtMapearEixos_KeyDown" />
+
+                    <Border Background="#DBEAFE" BorderBrush="#93C5FD" BorderThickness="1" CornerRadius="4" Padding="8,2" Margin="0,0,10,0">
+                        <TextBlock x:Name="txtPreviewEixos" Text="Pilares: 0 | Eixos X: 0 | Eixos Y: 0" FontWeight="Bold" Foreground="#1E40AF" FontSize="11.5" VerticalAlignment="Center" />
+                    </Border>
+
+                    <Button Style="{StaticResource BtnDestaque}" Height="24" Content="Aplicar Eixos" Click="BtnAplicarMapearEixos_Click" Margin="0,0,4,0" />
+                    <Button Style="{StaticResource BtnBarra}" Height="24" Content="Cancelar" Click="BtnCancelarMapearEixos_Click" />
                 </WrapPanel>
             </Border>
         </StackPanel>
@@ -496,11 +564,17 @@
                     </Border>
 
                     <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="8,6">
-                        <TextBlock x:Name="txtResumoSelecao"
-                                   Text="Nenhum elemento selecionado."
-                                   Foreground="#334155"
-                                   FontSize="11.5"
-                                   TextWrapping="Wrap" />
+                        <StackPanel>
+                            <TextBlock x:Name="txtResumoSelecao"
+                                       Text="Nenhum elemento selecionado."
+                                       Foreground="#334155"
+                                       FontSize="11.5"
+                                       TextWrapping="Wrap" />
+                            <DockPanel Margin="0,6,0,0">
+                                <TextBlock Text="Aba IFC:" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,6,0" />
+                                <ComboBox x:Name="cbFiltroAbaProps" Height="23" FontSize="11" SelectionChanged="CbFiltroAbaProps_SelectionChanged" />
+                            </DockPanel>
+                        </StackPanel>
                     </Border>
 
                     <DataGrid x:Name="dgPropriedades"

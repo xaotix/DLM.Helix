@@ -91,6 +91,9 @@
     <Compile Include="IfcSnapWindow.xaml.cs">
       <DependentUpon>IfcSnapWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="IfcRelatoriosWindow.xaml.cs">
+      <DependentUpon>IfcRelatoriosWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="IfcViewerWindow.xaml.cs">
       <DependentUpon>IfcViewerWindow.xaml</DependentUpon>
     </Compile>
@@ -150,6 +153,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="IfcSnapWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="IfcRelatoriosWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

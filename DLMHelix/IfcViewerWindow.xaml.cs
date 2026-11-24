@@ -62,6 +62,12 @@ namespace DLM.helix
         private readonly Dictionary<GeometryModel3D, List<FragmentoMalha>> _fragmentosPorMalha = new Dictionary<GeometryModel3D, List<FragmentoMalha>>();
         private readonly List<Visual3D> _visuaisGrid = new List<Visual3D>();
         private readonly List<Visual3D> _visuaisMedicao = new List<Visual3D>();
+        private readonly List<Visual3D> _visuaisCuboMapear = new List<Visual3D>();
+        private readonly List<Tuple<IfcEixoGrid, Point3D, Point3D>> _eixosRenderizados = new List<Tuple<IfcEixoGrid, Point3D, Point3D>>();
+        private IfcEixoGrid _eixoSelecionado;
+        private IfcGrid _gridBackupMapear;
+        private bool _suprimirEventoMapear;
+        private List<PropItem> _todasPropsAtual = new List<PropItem>();
         private ModelVisual3D _destaqueVisual;
 
         // Modo interativo (Juntar IFC / Mover 2 pontos / Medir 2 pontos)
@@ -86,7 +92,46 @@ namespace DLM.helix
         public IfcViewerWindow()
         {
             InitializeComponent();
+            AplicarIconesMenuPrincipal();
             AplicarConfiguracoesVisuais(false);
+        }
+
+        private void AplicarIconesMenuPrincipal()
+        {
+            if (menuPrincipal == null) return;
+            foreach (var item in menuPrincipal.Items)
+                AplicarIconeRecursivo(item as MenuItem);
+        }
+
+        private static void AplicarIconeRecursivo(MenuItem mi)
+        {
+            if (mi == null) return;
+            var tag = mi.Tag as string;
+            if (!string.IsNullOrWhiteSpace(tag))
+            {
+                var partes = tag.Split('|');
+                mi.Icon = CriarIconeMenu(partes[0], partes.Length > 1 ? partes[1] : "#1E293B");
+            }
+            foreach (var sub in mi.Items)
+                AplicarIconeRecursivo(sub as MenuItem);
+        }
+
+        private static System.Windows.Shapes.Path CriarIconeMenu(string pathData, string hexCor)
+        {
+            Color cor = Color.FromRgb(30, 41, 59);
+            IfcCor c;
+            if (IfcConfiguracao.TentarParseHex(hexCor, out c))
+                cor = Color.FromRgb(ClampByte(c.R * 255), ClampByte(c.G * 255), ClampByte(c.B * 255));
+
+            return new System.Windows.Shapes.Path
+            {
+                Width = 13,
+                Height = 13,
+                Stretch = Stretch.Uniform,
+                Stroke = new SolidColorBrush(cor),
+                StrokeThickness = 1.5,
+                Data = Geometry.Parse(pathData)
+            };
         }
 
         private void AplicarConfiguracoesVisuais(bool reconstruirCena)
@@ -268,6 +313,8 @@ namespace DLM.helix
             _fragmentosPorMalha.Clear();
             _visuaisGrid.Clear();
             _visuaisMedicao.Clear();
+            _visuaisCuboMapear.Clear();
+            _eixosRenderizados.Clear();
             _destaqueVisual = null;
         }
 
@@ -498,6 +545,7 @@ namespace DLM.helix
             for (int i = 0; i < _visuaisGrid.Count; i++)
                 vp3D.Children.Remove(_visuaisGrid[i]);
             _visuaisGrid.Clear();
+            _eixosRenderizados.Clear();
 
             if (_modelo == null || _modelo.Grid == null || !_modelo.Grid.TemEixos) return;
             if (!_modelo.Grid.Visivel || (tglGrid != null && tglGrid.IsChecked != true)) return;
@@ -516,50 +564,66 @@ namespace DLM.helix
             double z = grid.CotaZMm * esc;
 
             var ptsGrid = new Point3DCollection();
+            var ptsDestaque = new Point3DCollection();
+
             foreach (var ex in eixosX)
             {
                 double x = ex.CoordenadaMm * esc;
-                ptsGrid.Add(new Point3D(x, minY * esc, z));
-                ptsGrid.Add(new Point3D(x, maxY * esc, z));
+                var p1 = new Point3D(x, minY * esc, z);
+                var p2 = new Point3D(x, maxY * esc, z);
+                _eixosRenderizados.Add(Tuple.Create(ex, p1, p2));
 
-                AdicionarRotuloEixo(ex.Nome, new Point3D(x, (minY - 350.0) * esc, z));
-                AdicionarRotuloEixo(ex.Nome, new Point3D(x, (maxY + 350.0) * esc, z));
+                bool sel = ReferenceEquals(ex, _eixoSelecionado);
+                var dest = sel ? ptsDestaque : ptsGrid;
+                dest.Add(p1);
+                dest.Add(p2);
+
+                AdicionarRotuloEixo(ex.Nome, new Point3D(x, (minY - 350.0) * esc, z), sel);
+                AdicionarRotuloEixo(ex.Nome, new Point3D(x, (maxY + 350.0) * esc, z), sel);
             }
             foreach (var ey in eixosY)
             {
                 double y = ey.CoordenadaMm * esc;
-                ptsGrid.Add(new Point3D(minX * esc, y, z));
-                ptsGrid.Add(new Point3D(maxX * esc, y, z));
+                var p1 = new Point3D(minX * esc, y, z);
+                var p2 = new Point3D(maxX * esc, y, z);
+                _eixosRenderizados.Add(Tuple.Create(ey, p1, p2));
 
-                AdicionarRotuloEixo(ey.Nome, new Point3D((minX - 350.0) * esc, y, z));
-                AdicionarRotuloEixo(ey.Nome, new Point3D((maxX + 350.0) * esc, y, z));
+                bool sel = ReferenceEquals(ey, _eixoSelecionado);
+                var dest = sel ? ptsDestaque : ptsGrid;
+                dest.Add(p1);
+                dest.Add(p2);
+
+                AdicionarRotuloEixo(ey.Nome, new Point3D((minX - 350.0) * esc, y, z), sel);
+                AdicionarRotuloEixo(ey.Nome, new Point3D((maxX + 350.0) * esc, y, z), sel);
             }
 
             if (ptsGrid.Count > 0)
             {
                 ptsGrid.Freeze();
-                var linhas = new LinesVisual3D
-                {
-                    Points = ptsGrid,
-                    Color = Color.FromRgb(2, 132, 199),
-                    Thickness = 1.4
-                };
+                var linhas = new LinesVisual3D { Points = ptsGrid, Color = Color.FromRgb(2, 132, 199), Thickness = 1.4 };
                 vp3D.Children.Add(linhas);
                 _visuaisGrid.Add(linhas);
             }
+            if (ptsDestaque.Count > 0)
+            {
+                ptsDestaque.Freeze();
+                var linhasSel = new LinesVisual3D { Points = ptsDestaque, Color = Color.FromRgb(234, 88, 12), Thickness = 3.2 };
+                vp3D.Children.Add(linhasSel);
+                _visuaisGrid.Add(linhasSel);
+            }
         }
 
-        private void AdicionarRotuloEixo(string texto, Point3D pos)
+        private void AdicionarRotuloEixo(string texto, Point3D pos, bool selecionado = false)
         {
             if (string.IsNullOrWhiteSpace(texto)) return;
             var lbl = new BillboardTextVisual3D
             {
                 Text = " " + texto + " ",
                 Position = pos,
-                FontSize = 13,
+                FontSize = selecionado ? 14 : 13,
                 FontWeight = FontWeights.Bold,
                 Foreground = Brushes.White,
-                Background = new SolidColorBrush(Color.FromRgb(2, 132, 199)),
+                Background = new SolidColorBrush(selecionado ? Color.FromRgb(234, 88, 12) : Color.FromRgb(2, 132, 199)),
                 Padding = new Thickness(4, 2, 4, 2),
                 DepthOffset = 0.01
             };
@@ -710,8 +774,25 @@ namespace DLM.helix
             }
             else
             {
-                // Clique simples -> seleciona peca sob o cursor
+                // Clique simples -> verifica se clicou em um eixo do Grid primeiro, senao seleciona peca
                 Point mousePos = e.GetPosition(vp3D.Viewport);
+                var eixoHit = HitTestEixo(mousePos);
+                if (eixoHit != null)
+                {
+                    _eixoSelecionado = eixoHit;
+                    RenderizarGrid3D();
+                    txtStatus.Text = string.Format("Eixo selecionado: {0} ({1} = {2:0.#} mm). Botao direito para Editar, Mover ou Excluir.",
+                        eixoHit.Nome, eixoHit.EhEixoX ? "X" : "Y", eixoHit.CoordenadaMm);
+                    e.Handled = true;
+                    return;
+                }
+
+                if (_eixoSelecionado != null)
+                {
+                    _eixoSelecionado = null;
+                    RenderizarGrid3D();
+                }
+
                 bool multi = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
                 IfcMalhaElemento atingido = HitTestElemento(mousePos);
 
@@ -729,6 +810,36 @@ namespace DLM.helix
                 AtualizarContadores();
             }
             e.Handled = true;
+        }
+
+        private IfcEixoGrid HitTestEixo(Point mouseVp)
+        {
+            if (_eixosRenderizados.Count == 0) return null;
+            double melhorDist = 10.0;
+            IfcEixoGrid melhor = null;
+
+            for (int i = 0; i < _eixosRenderizados.Count; i++)
+            {
+                var item = _eixosRenderizados[i];
+                var p1 = Viewport3DHelper.Point3DtoPoint2D(vp3D.Viewport, item.Item2);
+                var p2 = Viewport3DHelper.Point3DtoPoint2D(vp3D.Viewport, item.Item3);
+                double d = DistanciaPontoSegmento2D(mouseVp, p1, p2);
+                if (d < melhorDist)
+                {
+                    melhorDist = d;
+                    melhor = item.Item1;
+                }
+            }
+            return melhor;
+        }
+
+        private static double DistanciaPontoSegmento2D(Point p, Point a, Point b)
+        {
+            Vector ab = b - a;
+            double len2 = ab.LengthSquared;
+            if (len2 < 1e-6) return (p - a).Length;
+            double t = Math.Max(0.0, Math.Min(1.0, ((p - a) * ab) / len2));
+            return (p - (a + ab * t)).Length;
         }
 
         private void SelecionarPorCaixa(Rect caixa, bool crossing)
@@ -813,15 +924,25 @@ namespace DLM.helix
             if ((up - _pontoBotaoDireitoDown).Length > 5.0)
                 return;
 
-            // Se clicou sobre uma peca e nada estava selecionado, seleciona essa peca
-            var hitEl = HitTestElemento(e.GetPosition(vp3D.Viewport));
-            if (hitEl != null && !_selecionados.Contains(hitEl))
+            // Se clicou sobre um eixo, seleciona e destaca o eixo
+            var eixoHit = HitTestEixo(e.GetPosition(vp3D.Viewport));
+            if (eixoHit != null)
             {
-                _selecionados.Clear();
-                _selecionados.Add(hitEl);
-                AtualizarDestaqueSelecao();
-                AtualizarPainelPropriedades();
-                AtualizarContadores();
+                _eixoSelecionado = eixoHit;
+                RenderizarGrid3D();
+            }
+            else
+            {
+                // Se clicou sobre uma peca e nada estava selecionado, seleciona essa peca
+                var hitEl = HitTestElemento(e.GetPosition(vp3D.Viewport));
+                if (hitEl != null && !_selecionados.Contains(hitEl))
+                {
+                    _selecionados.Clear();
+                    _selecionados.Add(hitEl);
+                    AtualizarDestaqueSelecao();
+                    AtualizarPainelPropriedades();
+                    AtualizarContadores();
+                }
             }
 
             AbrirMenuContextoViewport();
@@ -834,31 +955,45 @@ namespace DLM.helix
             bool temSel = _selecionados.Count > 0;
             bool temMod = _modelo != null && _modelo.Elementos.Count > 0;
 
-            cm.Items.Add(CriarMenuItem("Enquadrar Selecao", MenuEnquadrarSelecao_Click, temSel));
-            cm.Items.Add(CriarMenuItem("Enquadrar Tudo", BtnZoomExtents_Click, temMod));
+            if (_eixoSelecionado != null)
+            {
+                string tituloEixo = string.Format("Eixo '{0}' ({1} = {2:0.#} mm)", _eixoSelecionado.Nome, _eixoSelecionado.EhEixoX ? "X" : "Y", _eixoSelecionado.CoordenadaMm);
+                cm.Items.Add(CriarMenuItem("Editar " + tituloEixo + "...", MenuEditarEixoSelecionado_Click, true, "M2,11 L10,3 L12,5 L4,13 L2,13 Z", "#0284C7"));
+                cm.Items.Add(CriarMenuItem("Mover Eixo '" + _eixoSelecionado.Nome + "'...", MenuMoverEixoSelecionado_Click, true, "M7,1 L7,13 M1,7 L13,7", "#0284C7"));
+                cm.Items.Add(CriarMenuItem("Exportar Vista 2D do Eixo '" + _eixoSelecionado.Nome + "'...", MenuVista2DEixoSelecionado_Click, true, "M2,2 L12,2 L12,12 L2,12 Z M2,6 L12,6", "#0284C7"));
+                cm.Items.Add(CriarMenuItem("Ocultar Eixo '" + _eixoSelecionado.Nome + "'", MenuOcultarEixoSelecionado_Click, true, "M2,2 L12,12 M12,2 L2,12", "#64748B"));
+                cm.Items.Add(CriarMenuItem("Excluir Eixo '" + _eixoSelecionado.Nome + "'", MenuExcluirEixoSelecionado_Click, true, "M3,4 L11,4 M5,4 L5,12 M9,4 L9,12 M4,2 L10,2", "#DC2626"));
+                cm.Items.Add(new Separator());
+            }
+
+            cm.Items.Add(CriarMenuItem("Enquadrar Selecao", MenuEnquadrarSelecao_Click, temSel, "M3,3 L11,3 L11,11 L3,11 Z", "#0284C7"));
+            cm.Items.Add(CriarMenuItem("Enquadrar Tudo", BtnZoomExtents_Click, temMod, "M2,5 L2,2 L5,2 M9,2 L12,2 L12,5 M12,9 L12,12 L9,12 M5,12 L2,12 L2,9", "#1E293B"));
             cm.Items.Add(new Separator());
-            cm.Items.Add(CriarMenuItem("Isolar Selecao", BtnIsolar_Click, temSel));
-            cm.Items.Add(CriarMenuItem("Ocultar Selecao", BtnOcultar_Click, temSel));
-            cm.Items.Add(CriarMenuItem("Mostrar Tudo", BtnMostrarTudo_Click, temMod));
-            cm.Items.Add(CriarMenuItem("Selecionar Mesmo Perfil", MenuSelecionarMesmoPerfil_Click, temSel));
-            cm.Items.Add(CriarMenuItem("Selecionar Mesmo Nivel/Grupo", MenuSelecionarMesmoNivel_Click, temSel));
-            cm.Items.Add(CriarMenuItem("Inverter Selecao", MenuInverterSelecao_Click, temMod));
+            cm.Items.Add(CriarMenuItem("Isolar Selecao", BtnIsolar_Click, temSel, "M7,2 A5,5 0 1 0 7,12 A5,5 0 1 0 7,2", "#0284C7"));
+            cm.Items.Add(CriarMenuItem("Ocultar Selecao", BtnOcultar_Click, temSel, "M2,2 L12,12 M12,2 L2,12", "#DC2626"));
+            cm.Items.Add(CriarMenuItem("Mostrar Tudo", BtnMostrarTudo_Click, temMod, "M1,7 Q7,1 13,7 Q7,13 1,7 Z", "#16A34A"));
+            cm.Items.Add(CriarMenuItem("Selecionar Mesmo Perfil", MenuSelecionarMesmoPerfil_Click, temSel, "M2,2 L12,2 L12,12 L2,12 Z", "#0284C7"));
+            cm.Items.Add(CriarMenuItem("Selecionar Mesmo Nivel/Grupo", MenuSelecionarMesmoNivel_Click, temSel, "M2,3 L12,3 M2,7 L12,7 M2,11 L12,11", "#0284C7"));
+            cm.Items.Add(CriarMenuItem("Inverter Selecao", MenuInverterSelecao_Click, temMod, "M2,2 L12,2 L12,12 L2,12 Z M2,12 L12,2", "#475569"));
             cm.Items.Add(new Separator());
-            cm.Items.Add(CriarMenuItem("Mover Selecao / IFC Importado...", BtnMover_Click, temMod));
-            cm.Items.Add(CriarMenuItem("Adicionar Atributo na Selecao...", BtnAdicionarAtributo_Click, temMod));
-            cm.Items.Add(CriarMenuItem("Juntar outro IFC aqui...", BtnJuntarIfc_Click, true));
+            cm.Items.Add(CriarMenuItem("Mover Selecao / IFC Importado...", BtnMover_Click, temMod, "M7,1 L7,13 M1,7 L13,7", "#1E293B"));
+            cm.Items.Add(CriarMenuItem("Adicionar Atributo na Selecao...", BtnAdicionarAtributo_Click, temMod, "M2,2 L8,2 L13,7 L7,13 L2,8 Z", "#0284C7"));
+            cm.Items.Add(CriarMenuItem("Juntar outro IFC aqui...", BtnJuntarIfc_Click, true, "M7,2 L7,12 M2,7 L12,7", "#0284C7"));
+            cm.Items.Add(CriarMenuItem("Relatorios e Graficos...", BtnRelatorios_Click, temMod, "M2,12 L2,7 L5,7 L5,12 M6,12 L6,3 L9,3 L9,12 M10,12 L10,5 L13,5 L13,12", "#7C3AED"));
             cm.Items.Add(new Separator());
-            cm.Items.Add(CriarMenuItem("Exportar Selecao para IFC...", BtnExportarIfcSelecao_Click, temSel));
-            cm.Items.Add(CriarMenuItem("Exportar Selecao para DXF 3D...", BtnExportarDxfSelecao_Click, temSel));
-            cm.Items.Add(CriarMenuItem("Quebrar IFC pelos Eixos...", BtnQuebrarPorEixos_Click, temMod));
+            cm.Items.Add(CriarMenuItem("Exportar Selecao para IFC...", BtnExportarIfcSelecao_Click, temSel, "M7,2 L7,10 M4,7 L7,10 L10,7 M2,12 L12,12", "#0284C7"));
+            cm.Items.Add(CriarMenuItem("Exportar Selecao para DXF 3D...", BtnExportarDxfSelecao_Click, temSel, "M7,1.5 L12.5,4.5 L12.5,10.5 L7,13.5 L1.5,10.5 L1.5,4.5 Z", "#16A34A"));
+            cm.Items.Add(CriarMenuItem("Quebrar IFC pelos Eixos...", BtnQuebrarPorEixos_Click, temMod, "M2,2 L6,2 L6,12 L2,12 Z M8,2 L12,2 L12,12 L8,12 Z", "#EA580C"));
 
             cm.PlacementTarget = vp3D;
             cm.IsOpen = true;
         }
 
-        private static MenuItem CriarMenuItem(string header, RoutedEventHandler click, bool enabled)
+        private static MenuItem CriarMenuItem(string header, RoutedEventHandler click, bool enabled, string iconPath = null, string iconCor = "#1E293B")
         {
             var mi = new MenuItem { Header = header, IsEnabled = enabled };
+            if (!string.IsNullOrEmpty(iconPath))
+                mi.Icon = CriarIconeMenu(iconPath, iconCor);
             mi.Click += click;
             return mi;
         }
@@ -1299,7 +1434,30 @@ namespace DLM.helix
                 }
             }
 
+            _todasPropsAtual = lista;
+            if (cbFiltroAbaProps != null)
+            {
+                var abas = new List<string> { "Todas as Abas (" + lista.Count + ")" };
+                foreach (var g in lista.GroupBy(p => p.Aba).OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
+                    abas.Add(g.Key + " (" + g.Count() + ")");
+                cbFiltroAbaProps.ItemsSource = abas;
+                cbFiltroAbaProps.SelectedIndex = 0;
+            }
             dgPropriedades.ItemsSource = lista;
+        }
+
+        private void CbFiltroAbaProps_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (cbFiltroAbaProps == null || cbFiltroAbaProps.SelectedIndex <= 0)
+            {
+                dgPropriedades.ItemsSource = _todasPropsAtual;
+                return;
+            }
+            string sel = cbFiltroAbaProps.SelectedItem as string;
+            if (string.IsNullOrEmpty(sel)) return;
+            int idxPar = sel.LastIndexOf(" (");
+            string aba = idxPar > 0 ? sel.Substring(0, idxPar) : sel;
+            dgPropriedades.ItemsSource = _todasPropsAtual.Where(p => string.Equals(p.Aba, aba, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
         private void AtualizarContadores()
@@ -2141,6 +2299,339 @@ namespace DLM.helix
             ReconstruirCena3D(false);
             txtStatus.Text = "Cores padrao aplicadas (Vigas=Vermelho, Pilares=Vermelho claro, Purlins=Amarelo, Correntes=Verde, Parafusos=Cinza aco...).";
         }
+
+        #region Relatorios, Mapeamento Interativo de Eixos (Cubo 3D) e Acoes de Eixo
+
+        private void BtnRelatorios_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null || _modelo.Elementos.Count == 0)
+            {
+                MessageBox.Show("Carregue um modelo IFC/DWG primeiro.", "Relatorios", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var win = new IfcRelatoriosWindow(_modelo, elems =>
+            {
+                _selecionados.Clear();
+                foreach (var el in elems) _selecionados.Add(el);
+                AtualizarDestaqueSelecao();
+                AtualizarPainelPropriedades();
+                AtualizarContadores();
+                MenuEnquadrarSelecao_Click(null, null);
+            }) { Owner = this };
+            win.Show();
+        }
+
+        private void BtnMapearEixosInterativo_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null || !_modelo.TemGeometria)
+            {
+                MessageBox.Show("Carregue um modelo IFC/DWG primeiro.", "Mapear Eixos", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            _gridBackupMapear = _modelo.Grid;
+            _suprimirEventoMapear = true;
+
+            double minZ = Math.Floor(_modelo.Min.Z - 1000.0);
+            double maxZ = Math.Ceiling(_modelo.Max.Z + 1000.0);
+            if (maxZ <= minZ + 100.0) maxZ = minZ + 10000.0;
+
+            sldMapZ0.Minimum = minZ;
+            sldMapZ0.Maximum = maxZ;
+            double zIni = (_modelo.Min.Z <= 500.0 && _modelo.Max.Z >= -500.0) ? 0.0 : Math.Round(_modelo.Min.Z, 0);
+            sldMapZ0.Value = Math.Max(minZ, Math.Min(maxZ, zIni));
+            txtMapZ0.Text = sldMapZ0.Value.ToString("0", CultureInfo.InvariantCulture);
+
+            sldMapTolZ.Value = Math.Max(sldMapTolZ.Minimum, Math.Min(sldMapTolZ.Maximum, IfcConfiguracao.Atual.ToleranciaZEixosMm));
+            txtMapTolZ.Text = sldMapTolZ.Value.ToString("0", CultureInfo.InvariantCulture);
+
+            sldMapTolXY.Value = Math.Max(sldMapTolXY.Minimum, Math.Min(sldMapTolXY.Maximum, IfcConfiguracao.Atual.ToleranciaEixosMm));
+            txtMapTolXY.Text = sldMapTolXY.Value.ToString("0", CultureInfo.InvariantCulture);
+
+            _suprimirEventoMapear = false;
+            pnlMapearEixos.Visibility = Visibility.Visible;
+            AtualizarPreviewCuboEixos();
+        }
+
+        private void SldMapearEixos_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_suprimirEventoMapear || !IsLoaded || pnlMapearEixos.Visibility != Visibility.Visible) return;
+            _suprimirEventoMapear = true;
+            txtMapZ0.Text = sldMapZ0.Value.ToString("0", CultureInfo.InvariantCulture);
+            txtMapTolZ.Text = sldMapTolZ.Value.ToString("0", CultureInfo.InvariantCulture);
+            txtMapTolXY.Text = sldMapTolXY.Value.ToString("0", CultureInfo.InvariantCulture);
+            _suprimirEventoMapear = false;
+            AtualizarPreviewCuboEixos();
+        }
+
+        private void TxtMapearEixos_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Enter) return;
+            _suprimirEventoMapear = true;
+            double z0 = ParseDouble(txtMapZ0.Text);
+            double tz = Math.Max(10.0, ParseDouble(txtMapTolZ.Text));
+            double txy = Math.Max(0.0, ParseDouble(txtMapTolXY.Text));
+            sldMapZ0.Value = Math.Max(sldMapZ0.Minimum, Math.Min(sldMapZ0.Maximum, z0));
+            sldMapTolZ.Value = Math.Max(sldMapTolZ.Minimum, Math.Min(sldMapTolZ.Maximum, tz));
+            sldMapTolXY.Value = Math.Max(sldMapTolXY.Minimum, Math.Min(sldMapTolXY.Maximum, txy));
+            _suprimirEventoMapear = false;
+            AtualizarPreviewCuboEixos();
+        }
+
+        private void AtualizarPreviewCuboEixos()
+        {
+            if (_modelo == null || !_modelo.TemGeometria) return;
+
+            double z0 = ParseDouble(txtMapZ0.Text);
+            double tolZ = Math.Max(10.0, ParseDouble(txtMapTolZ.Text));
+            double tolXY = Math.Max(0.0, ParseDouble(txtMapTolXY.Text));
+
+            int qtdPilares = IfcGrid.ContarPilaresNoRange(_modelo, z0, tolZ);
+            var gridPrev = IfcGrid.RemapearEixos(_modelo, tolXY, tolZ, z0);
+            gridPrev.Visivel = true;
+            _modelo.Grid = gridPrev;
+            if (tglGrid != null) tglGrid.IsChecked = true;
+            RenderizarGrid3D();
+
+            txtPreviewEixos.Text = string.Format("Pilares na caixa: {0} | Eixos X: {1} | Eixos Y: {2}",
+                qtdPilares, gridPrev.EixosX.Count, gridPrev.EixosY.Count);
+
+            // Desenha o cubo gigante translúcido cobrindo toda a planta do modelo na faixa [z0 - tolZ/2, z0 + tolZ/2]
+            RemoverCuboMapear();
+            const double esc = RenderIFC.ESCALA_MM_PARA_M;
+            double folga = 1500.0;
+            double x1 = (_modelo.Min.X - folga) * esc;
+            double x2 = (_modelo.Max.X + folga) * esc;
+            double y1 = (_modelo.Min.Y - folga) * esc;
+            double y2 = (_modelo.Max.Y + folga) * esc;
+            double z1 = (z0 - tolZ * 0.5) * esc;
+            double z2 = (z0 + tolZ * 0.5) * esc;
+
+            var cx = (x1 + x2) * 0.5;
+            var cy = (y1 + y2) * 0.5;
+            var cz = (z1 + z2) * 0.5;
+            var box = new BoxVisual3D
+            {
+                Center = new Point3D(cx, cy, cz),
+                Length = Math.Max(0.5, x2 - x1),
+                Width = Math.Max(0.5, y2 - y1),
+                Height = Math.Max(0.05, z2 - z1),
+                Material = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(48, 37, 99, 235))),
+                BackMaterial = new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(35, 37, 99, 235)))
+            };
+            vp3D.Children.Add(box);
+            _visuaisCuboMapear.Add(box);
+
+            var ptsBordas = new Point3DCollection
+            {
+                new Point3D(x1,y1,z1), new Point3D(x2,y1,z1), new Point3D(x2,y1,z1), new Point3D(x2,y2,z1),
+                new Point3D(x2,y2,z1), new Point3D(x1,y2,z1), new Point3D(x1,y2,z1), new Point3D(x1,y1,z1),
+                new Point3D(x1,y1,z2), new Point3D(x2,y1,z2), new Point3D(x2,y1,z2), new Point3D(x2,y2,z2),
+                new Point3D(x2,y2,z2), new Point3D(x1,y2,z2), new Point3D(x1,y2,z2), new Point3D(x1,y1,z2),
+                new Point3D(x1,y1,z1), new Point3D(x1,y1,z2), new Point3D(x2,y1,z1), new Point3D(x2,y1,z2),
+                new Point3D(x2,y2,z1), new Point3D(x2,y2,z2), new Point3D(x1,y2,z1), new Point3D(x1,y2,z2)
+            };
+            ptsBordas.Freeze();
+            var wireframe = new LinesVisual3D { Points = ptsBordas, Color = Color.FromRgb(37, 99, 235), Thickness = 1.8 };
+            vp3D.Children.Add(wireframe);
+            _visuaisCuboMapear.Add(wireframe);
+        }
+
+        private void RemoverCuboMapear()
+        {
+            for (int i = 0; i < _visuaisCuboMapear.Count; i++)
+                vp3D.Children.Remove(_visuaisCuboMapear[i]);
+            _visuaisCuboMapear.Clear();
+        }
+
+        private void BtnAplicarMapearEixos_Click(object sender, RoutedEventArgs e)
+        {
+            RemoverCuboMapear();
+            pnlMapearEixos.Visibility = Visibility.Collapsed;
+            var cfg = IfcConfiguracao.Atual;
+            cfg.ToleranciaZEixosMm = Math.Max(10.0, ParseDouble(txtMapTolZ.Text));
+            cfg.ToleranciaEixosMm = Math.Max(0.0, ParseDouble(txtMapTolXY.Text));
+            try { cfg.Salvar(); } catch { }
+            _gridBackupMapear = null;
+            txtStatus.Text = "Mapeamento de eixos aplicado: " + txtPreviewEixos.Text;
+        }
+
+        private void BtnCancelarMapearEixos_Click(object sender, RoutedEventArgs e)
+        {
+            RemoverCuboMapear();
+            pnlMapearEixos.Visibility = Visibility.Collapsed;
+            if (_modelo != null && _gridBackupMapear != null)
+            {
+                _modelo.Grid = _gridBackupMapear;
+                RenderizarGrid3D();
+            }
+            _gridBackupMapear = null;
+        }
+
+        private void MenuEditarEixoSelecionado_Click(object sender, RoutedEventArgs e)
+        {
+            if (_eixoSelecionado == null) return;
+            var dlg = CriarJanelaDialogo("Editar Eixo", 340, 195);
+            var sp = new StackPanel { Margin = new Thickness(14) };
+            var grid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(110) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var tbNome = CriarCampoDialogo(grid, 0, "Nome do Eixo:", _eixoSelecionado.Nome);
+            var tbCoord = CriarCampoDialogo(grid, 1, (_eixoSelecionado.EhEixoX ? "Coord X (mm):" : "Coord Y (mm):"), _eixoSelecionado.CoordenadaMm.ToString("0.#", CultureInfo.InvariantCulture));
+            sp.Children.Add(grid);
+
+            var botoes = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+            var btOk = CriarBotaoDialogo("Salvar", true);
+            btOk.IsDefault = true;
+            btOk.Click += (s, ev) => { dlg.DialogResult = true; dlg.Close(); };
+            var btCancel = CriarBotaoDialogo("Cancelar", false);
+            btCancel.IsCancel = true;
+            botoes.Children.Add(btOk);
+            botoes.Children.Add(btCancel);
+            sp.Children.Add(botoes);
+
+            dlg.Content = sp;
+            if (dlg.ShowDialog() == true)
+            {
+                _eixoSelecionado.Nome = (tbNome.Text ?? "").Trim();
+                _eixoSelecionado.CoordenadaMm = ParseDouble(tbCoord.Text);
+                RenderizarGrid3D();
+            }
+        }
+
+        private void MenuMoverEixoSelecionado_Click(object sender, RoutedEventArgs e)
+        {
+            if (_eixoSelecionado == null) return;
+            var dlg = CriarJanelaDialogo("Mover Eixo '" + _eixoSelecionado.Nome + "'", 340, 165);
+            var sp = new StackPanel { Margin = new Thickness(14) };
+            var grid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(130) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var tbDelta = CriarCampoDialogo(grid, 0, "Deslocamento (mm):", "0");
+            sp.Children.Add(grid);
+
+            var botoes = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+            var btOk = CriarBotaoDialogo("Mover", true);
+            btOk.IsDefault = true;
+            btOk.Click += (s, ev) => { dlg.DialogResult = true; dlg.Close(); };
+            var btCancel = CriarBotaoDialogo("Cancelar", false);
+            btCancel.IsCancel = true;
+            botoes.Children.Add(btOk);
+            botoes.Children.Add(btCancel);
+            sp.Children.Add(botoes);
+
+            dlg.Content = sp;
+            if (dlg.ShowDialog() == true)
+            {
+                double delta = ParseDouble(tbDelta.Text);
+                _eixoSelecionado.CoordenadaMm = Math.Round(_eixoSelecionado.CoordenadaMm + delta, 1);
+                RenderizarGrid3D();
+                txtStatus.Text = string.Format("Eixo '{0}' movido para {1:0.#} mm.", _eixoSelecionado.Nome, _eixoSelecionado.CoordenadaMm);
+            }
+        }
+
+        private void MenuOcultarEixoSelecionado_Click(object sender, RoutedEventArgs e)
+        {
+            if (_eixoSelecionado == null) return;
+            _eixoSelecionado.Visivel = false;
+            _eixoSelecionado = null;
+            RenderizarGrid3D();
+        }
+
+        private void MenuExcluirEixoSelecionado_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null || _modelo.Grid == null || _eixoSelecionado == null) return;
+            if (MessageBox.Show("Excluir o eixo '" + _eixoSelecionado.Nome + "'?", "Excluir Eixo", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes)
+                return;
+            _modelo.Grid.EixosX.Remove(_eixoSelecionado);
+            _modelo.Grid.EixosY.Remove(_eixoSelecionado);
+            _eixoSelecionado = null;
+            RenderizarGrid3D();
+        }
+
+        private void MenuVista2DEixoSelecionado_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null || _modelo.Grid == null || _eixoSelecionado == null) return;
+            string pasta = null;
+            using (var fbd = new System.Windows.Forms.FolderBrowserDialog { Description = "Selecione a pasta para salvar a Vista 2D do Eixo " + _eixoSelecionado.Nome })
+            {
+                if (fbd.ShowDialog() == System.Windows.Forms.DialogResult.OK) pasta = fbd.SelectedPath;
+            }
+            if (string.IsNullOrWhiteSpace(pasta)) return;
+            var cfg = IfcConfiguracao.Atual;
+            var op = new OpcoesVista2D
+            {
+                ProfundidadeAtrasMm = cfg.ProfundidadeVista2DAtrasMm,
+                ProfundidadeFrenteMm = cfg.ProfundidadeVista2DFrenteMm,
+                IncluirEixosCruzados = cfg.IncluirEixosCruzadosVista2D,
+                IncluirCotasEixos = cfg.IncluirCotasVista2D,
+                IncluirFurosERecortes = cfg.IncluirFurosRecortesVista2D,
+                GerarArquivosIndividuais = true,
+                GerarArquivoUnico = false
+            };
+            var res = IfcExportadorVistas2D.ExportarVistas2D(_modelo, _modelo.Grid, new[] { _eixoSelecionado }, pasta, op);
+            if (res.Count > 0)
+            {
+                txtStatus.Text = "Vista 2D exportada: " + res[0].CaminhoArquivo;
+                Process.Start(new ProcessStartInfo(pasta) { UseShellExecute = true });
+            }
+        }
+
+        private Window CriarJanelaDialogo(string titulo, double w, double h)
+        {
+            return new Window
+            {
+                Title = titulo,
+                Width = w,
+                Height = h,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                ResizeMode = ResizeMode.NoResize,
+                Background = new SolidColorBrush(Color.FromRgb(248, 250, 252)),
+                Foreground = new SolidColorBrush(Color.FromRgb(30, 41, 59))
+            };
+        }
+
+        private static Button CriarBotaoDialogo(string texto, bool primario)
+        {
+            var bt = new Button
+            {
+                Content = texto,
+                OverridesDefaultStyle = true,
+                Height = 28,
+                Padding = new Thickness(14, 0, 14, 0),
+                Margin = new Thickness(6, 0, 0, 0),
+                Cursor = Cursors.Hand,
+                FontWeight = FontWeights.SemiBold,
+                FontSize = 11.5,
+                Background = primario ? new SolidColorBrush(Color.FromRgb(2, 132, 199)) : Brushes.White,
+                Foreground = primario ? Brushes.White : new SolidColorBrush(Color.FromRgb(15, 23, 42)),
+                BorderBrush = primario ? new SolidColorBrush(Color.FromRgb(3, 105, 161)) : new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+                BorderThickness = new Thickness(1)
+            };
+            var tpl = new ControlTemplate(typeof(Button));
+            var bd = new FrameworkElementFactory(typeof(Border));
+            bd.SetBinding(Border.BackgroundProperty, new System.Windows.Data.Binding("Background") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent) });
+            bd.SetBinding(Border.BorderBrushProperty, new System.Windows.Data.Binding("BorderBrush") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent) });
+            bd.SetBinding(Border.BorderThicknessProperty, new System.Windows.Data.Binding("BorderThickness") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent) });
+            bd.SetBinding(Border.PaddingProperty, new System.Windows.Data.Binding("Padding") { RelativeSource = new System.Windows.Data.RelativeSource(System.Windows.Data.RelativeSourceMode.TemplatedParent) });
+            bd.SetValue(Border.CornerRadiusProperty, new CornerRadius(4));
+            var cp = new FrameworkElementFactory(typeof(ContentPresenter));
+            cp.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+            cp.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+            bd.AppendChild(cp);
+            tpl.VisualTree = bd;
+            bt.Template = tpl;
+            return bt;
+        }
+
+        #endregion
 
         private void MenuRemapearEixos_Click(object sender, RoutedEventArgs e)
         {

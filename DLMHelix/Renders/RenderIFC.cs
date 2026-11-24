@@ -1,4 +1,4 @@
-using DLM.IFCEngine;
+ï»¿using DLM.IFCEngine;
 using HelixToolkit.Wpf;
 using System;
 using System.Collections.Generic;
@@ -9,8 +9,8 @@ namespace DLM.helix
 {
     /// <summary>
     /// Renderizador 3D de modelos IFC (lidos via DLM.IFCEngine.IfcLeitor) para HelixViewport3D.
-    /// Trabalha em metros (escala 0.001 a partir de mm, idêntica ao Chapa3d clássico) para
-    /// compatibilidade perfeita com câmera ortográfica, zoom e ViewCube sem cortes (clipping).
+    /// Trabalha em metros (escala 0.001 a partir de mm, identica ao Chapa3d classico) para
+    /// compatibilidade perfeita com camera ortografica, zoom e ViewCube sem cortes (clipping).
     /// </summary>
     public static class RenderIFC
     {
@@ -23,25 +23,21 @@ namespace DLM.helix
             public Int32Collection Indices = new Int32Collection();
         }
 
-        private const int LIMITE_TRIS_MODO_LEVE = 50000;
-        private const int LIMITE_ARESTAS_MODO_LEVE = 25000;
+        private const int LIMITE_TRIS_MODO_LEVE = 120000;
+        private const int LIMITE_PONTOS_ARESTAS = 500000;
 
         public static void Renderizar(HelixViewport3D vp, IfcModeloLido modelo, bool adicionarArestas = true)
         {
             if (vp == null || modelo == null || modelo.Elementos.Count == 0) return;
 
-            // Detecta automaticamente modelos grandes para ativar Modo Leve (evita travar a GPU/CPU no Helix WPF)
             int totalTris = 0;
-            int totalArestas = 0;
             for (int i = 0; i < modelo.Elementos.Count; i++)
             {
                 var e = modelo.Elementos[i];
-                if (e.EhAbertura) continue;
+                if (e.EhAbertura || !e.Visivel) continue;
                 totalTris += e.Triangulos.Count;
-                if (e.Arestas != null) totalArestas += e.Arestas.Count;
             }
-            bool modoLeve = totalTris > LIMITE_TRIS_MODO_LEVE || totalArestas > LIMITE_ARESTAS_MODO_LEVE;
-            bool desenharArestas = adicionarArestas && !modoLeve;
+            bool modoLeve = totalTris > LIMITE_TRIS_MODO_LEVE;
 
             var grupos = new Dictionary<string, GrupoCor>();
             var pontosArestas = new Point3DCollection();
@@ -51,7 +47,7 @@ namespace DLM.helix
 
             foreach (var el in modelo.Elementos)
             {
-                if (el.EhAbertura) continue;
+                if (el.EhAbertura || !el.Visivel) continue;
                 if (el.Vertices.Count == 0 || el.Triangulos.Count == 0) continue;
 
                 byte r = ClampByte(el.Cor.R * 255.0);
@@ -84,7 +80,7 @@ namespace DLM.helix
                     grp.Indices.Add(baseIdx + t.C);
                 }
 
-                if (desenharArestas && el.Arestas.Count > 0 && pontosArestas.Count < 220000)
+                if (adicionarArestas && el.Arestas.Count > 0 && pontosArestas.Count < LIMITE_PONTOS_ARESTAS)
                 {
                     string nomeEl = el.Nome ?? "";
                     Point3DCollection destinoArestas = pontosArestas;
@@ -102,7 +98,7 @@ namespace DLM.helix
                         destinoArestas.Add(new Point3D(ar.P2.X * ESCALA_MM_PARA_M, ar.P2.Y * ESCALA_MM_PARA_M, ar.P2.Z * ESCALA_MM_PARA_M));
                     }
                 }
-                if (desenharArestas && el.ArestasFuros != null && el.ArestasFuros.Count > 0)
+                if (adicionarArestas && el.ArestasFuros != null && el.ArestasFuros.Count > 0)
                 {
                     for (int i = 0; i < el.ArestasFuros.Count; i++)
                     {
@@ -111,7 +107,7 @@ namespace DLM.helix
                         pontosArestasFuro.Add(new Point3D(ar.P2.X * ESCALA_MM_PARA_M, ar.P2.Y * ESCALA_MM_PARA_M, ar.P2.Z * ESCALA_MM_PARA_M));
                     }
                 }
-                if (desenharArestas && el.ArestasRecortes != null && el.ArestasRecortes.Count > 0)
+                if (adicionarArestas && el.ArestasRecortes != null && el.ArestasRecortes.Count > 0)
                 {
                     for (int i = 0; i < el.ArestasRecortes.Count; i++)
                     {
@@ -126,6 +122,9 @@ namespace DLM.helix
             foreach (var grp in grupos.Values)
             {
                 if (grp.Indices.Count == 0) continue;
+
+                grp.Posicoes.Freeze();
+                grp.Indices.Freeze();
 
                 var mesh = new MeshGeometry3D
                 {
@@ -148,14 +147,15 @@ namespace DLM.helix
                 {
                     var matGroup = new MaterialGroup();
                     matGroup.Children.Add(new DiffuseMaterial(brush));
-                    matGroup.Children.Add(new SpecularMaterial(new SolidColorBrush(Color.FromArgb(80, 255, 255, 255)), 22));
+                    matGroup.Children.Add(new SpecularMaterial(new SolidColorBrush(Color.FromArgb(75, 255, 255, 255)), 24));
                     matGroup.Freeze();
                     mat = matGroup;
                 }
 
+                // BackMaterial sempre preenchido para evitar faces vazadas/estranhas
                 var gm = new GeometryModel3D(mesh, mat)
                 {
-                    BackMaterial = modoLeve ? null : mat
+                    BackMaterial = mat
                 };
                 gm.Freeze();
                 modelGroup.Children.Add(gm);
@@ -164,44 +164,44 @@ namespace DLM.helix
             modelGroup.Freeze();
             vp.Children.Add(new ModelVisual3D { Content = modelGroup });
 
-            if (desenharArestas && pontosArestas.Count > 0)
+            if (adicionarArestas && pontosArestas.Count > 0)
             {
                 pontosArestas.Freeze();
                 vp.Children.Add(new LinesVisual3D
                 {
                     Points = pontosArestas,
-                    Color = Color.FromRgb(22, 28, 36),
-                    Thickness = 0.9
+                    Color = Color.FromRgb(10, 14, 20),
+                    Thickness = 1.25
                 });
             }
-            if (desenharArestas && pontosArestasFuro.Count > 0)
+            if (adicionarArestas && pontosArestasFuro.Count > 0)
             {
                 pontosArestasFuro.Freeze();
                 vp.Children.Add(new LinesVisual3D
                 {
                     Points = pontosArestasFuro,
                     Color = Color.FromRgb(220, 38, 38),
-                    Thickness = 1.8
+                    Thickness = 2.0
                 });
             }
-            if (desenharArestas && pontosArestasRecorte.Count > 0)
+            if (adicionarArestas && pontosArestasRecorte.Count > 0)
             {
                 pontosArestasRecorte.Freeze();
                 vp.Children.Add(new LinesVisual3D
                 {
                     Points = pontosArestasRecorte,
                     Color = Color.FromRgb(234, 88, 12),
-                    Thickness = 1.8
+                    Thickness = 2.0
                 });
             }
-            if (desenharArestas && pontosArestasSolda.Count > 0)
+            if (adicionarArestas && pontosArestasSolda.Count > 0)
             {
                 pontosArestasSolda.Freeze();
                 vp.Children.Add(new LinesVisual3D
                 {
                     Points = pontosArestasSolda,
                     Color = Color.FromRgb(180, 83, 9),
-                    Thickness = 1.6
+                    Thickness = 1.8
                 });
             }
         }

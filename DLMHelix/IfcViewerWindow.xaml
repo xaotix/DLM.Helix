@@ -1,0 +1,344 @@
+<Window x:Class="DLM.helix.IfcViewerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:h="clr-namespace:HelixToolkit.Wpf;assembly=HelixToolkit.Wpf"
+        Title="Visualizador IFC / DWG - DLM"
+        Width="1360"
+        Height="840"
+        WindowState="Maximized"
+        WindowStartupLocation="CenterScreen"
+        Background="#0F172A"
+        Foreground="#E2E8F0"
+        KeyDown="Window_KeyDown">
+    <Window.Resources>
+        <Style x:Key="BtnBarra" TargetType="Button">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="9,0" />
+            <Setter Property="Margin" Value="2,0" />
+            <Setter Property="Background" Value="#1E293B" />
+            <Setter Property="BorderBrush" Value="#334155" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#F1F5F9" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#2563EB" />
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#60A5FA" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#1D4ED8" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.4" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="BtnDestaque" TargetType="Button" BasedOn="{StaticResource BtnBarra}">
+            <Setter Property="Background" Value="#0284C7" />
+            <Setter Property="BorderBrush" Value="#38BDF8" />
+        </Style>
+
+        <Style x:Key="TglBarra" TargetType="ToggleButton">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Height" Value="28" />
+            <Setter Property="Padding" Value="9,0" />
+            <Setter Property="Margin" Value="2,0" />
+            <Setter Property="Background" Value="#1E293B" />
+            <Setter Property="BorderBrush" Value="#334155" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Foreground" Value="#F1F5F9" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Border x:Name="bd"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#0EA5E9" />
+                                <Setter TargetName="bd" Property="BorderBrush" Value="#7DD3FC" />
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#2563EB" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SepBarra" TargetType="Border">
+            <Setter Property="Width" Value="1" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="Background" Value="#334155" />
+            <Setter Property="Margin" Value="5,0" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Barra Principal de Ferramentas -->
+        <Border Grid.Row="0" Background="#111827" BorderBrush="#1E293B" BorderThickness="0,0,0,1" Padding="8,6">
+            <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Style="{StaticResource BtnDestaque}" Content="Abrir IFC / DWG" Click="BtnAbrir_Click" ToolTip="Abrir arquivo IFC ou DWG" />
+                <Button Style="{StaticResource BtnBarra}" Content="Salvar IFC" Click="BtnSalvarIfc_Click" ToolTip="Salvar modelo atual (com movimentos, merges, atributos e grupos) em IFC" />
+
+                <Border Style="{StaticResource SepBarra}" />
+
+                <Button Style="{StaticResource BtnBarra}" Content="Enquadrar" Click="BtnZoomExtents_Click" />
+                <Button Style="{StaticResource BtnBarra}" Content="Iso" Click="BtnVistaIso_Click" />
+                <Button Style="{StaticResource BtnBarra}" Content="Frontal" Click="BtnVistaFrontal_Click" />
+                <Button Style="{StaticResource BtnBarra}" Content="Posterior" Click="BtnVistaPosterior_Click" />
+                <Button Style="{StaticResource BtnBarra}" Content="Superior" Click="BtnVistaSuperior_Click" />
+                <Button Style="{StaticResource BtnBarra}" Content="Inferior" Click="BtnVistaInferior_Click" />
+                <Button Style="{StaticResource BtnBarra}" Content="Esquerda" Click="BtnVistaEsquerda_Click" />
+                <Button Style="{StaticResource BtnBarra}" Content="Direita" Click="BtnVistaDireita_Click" />
+                <ToggleButton x:Name="tglArestas" Style="{StaticResource TglBarra}" Content="Arestas" IsChecked="True" Click="TglArestas_Click" />
+
+                <Border Style="{StaticResource SepBarra}" />
+
+                <Button Style="{StaticResource BtnBarra}" Content="Mover" Click="BtnMover_Click" ToolTip="Mover elementos selecionados (por delta XYZ ou clique interativo)" />
+                <Button Style="{StaticResource BtnBarra}" Content="Juntar IFC" Click="BtnJuntarIfc_Click" ToolTip="Importar outro IFC/DWG escolhendo ponto interativo no 3D" />
+                <Button Style="{StaticResource BtnBarra}" Content="+ Atributo" Click="BtnAdicionarAtributo_Click" ToolTip="Adicionar ou editar atributo nas pecas selecionadas (ou em todas)" />
+                <Button Style="{StaticResource BtnBarra}" Content="Agrupar" Click="BtnAgrupar_Click" ToolTip="Agrupar pecas por uma propriedade em comum criando novo nivel na arvore" />
+
+                <Border Style="{StaticResource SepBarra}" />
+
+                <Button Style="{StaticResource BtnBarra}" Content="DXF Tudo" Click="BtnExportarDxfTudo_Click" ToolTip="Exportar todo o modelo visivel para DXF 3D" />
+                <Button Style="{StaticResource BtnBarra}" Content="DXF Selecao" Click="BtnExportarDxfSelecao_Click" ToolTip="Exportar apenas os elementos selecionados para DXF 3D" />
+
+                <Border Style="{StaticResource SepBarra}" />
+
+                <Button Style="{StaticResource BtnBarra}" Content="Config Cores/De-Para" Click="BtnConfig_Click" ToolTip="Abrir arquivo DLM.IFCEngine.Config.json para configurar cores e De-Para de propriedades" />
+            </WrapPanel>
+        </Border>
+
+        <!-- Banner Interativo (Modo Juntar IFC / Modo Mover por Clique) -->
+        <Border x:Name="pnlModoInterativo" Grid.Row="1" Background="#0C4A6E" BorderBrush="#38BDF8" BorderThickness="0,0,0,1" Padding="10,6" Visibility="Collapsed">
+            <DockPanel LastChildFill="False">
+                <TextBlock x:Name="txtInstrucaoInterativa"
+                           DockPanel.Dock="Left"
+                           VerticalAlignment="Center"
+                           Foreground="#F0F9FF"
+                           FontWeight="SemiBold"
+                           FontSize="12"
+                           Text="Clique no ponto 3D desejado..." />
+
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="X(mm):" VerticalAlignment="Center" Margin="8,0,3,0" Foreground="#BAE6FD" FontSize="11" />
+                    <TextBox x:Name="txtPontoX" Width="68" Height="24" VerticalContentAlignment="Center" Background="#0F172A" Foreground="White" BorderBrush="#38BDF8" Text="0" />
+                    <TextBlock Text="Y(mm):" VerticalAlignment="Center" Margin="6,0,3,0" Foreground="#BAE6FD" FontSize="11" />
+                    <TextBox x:Name="txtPontoY" Width="68" Height="24" VerticalContentAlignment="Center" Background="#0F172A" Foreground="White" BorderBrush="#38BDF8" Text="0" />
+                    <TextBlock Text="Z(mm):" VerticalAlignment="Center" Margin="6,0,3,0" Foreground="#BAE6FD" FontSize="11" />
+                    <TextBox x:Name="txtPontoZ" Width="68" Height="24" VerticalContentAlignment="Center" Background="#0F172A" Foreground="White" BorderBrush="#38BDF8" Text="0" />
+                    <Button Style="{StaticResource BtnDestaque}" Height="24" Margin="8,0,0,0" Content="Aplicar Ponto" Click="BtnAplicarPontoManual_Click" />
+                    <Button Style="{StaticResource BtnBarra}" Height="24" Margin="4,0,0,0" Content="Cancelar (ESC)" Click="BtnCancelarModoInterativo_Click" />
+                </StackPanel>
+            </DockPanel>
+        </Border>
+
+        <!-- Area Principal: Arvore | Viewport 3D | Propriedades -->
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="290" MinWidth="180" />
+                <ColumnDefinition Width="4" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="4" />
+                <ColumnDefinition Width="310" MinWidth="200" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Painel Esquerdo: Arvore de Selecao -->
+            <Border Grid.Column="0" Background="#111827" BorderBrush="#1E293B" BorderThickness="0,0,1,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Background="#1E293B" Padding="8,6">
+                        <TextBlock Text="ARVORE DE SELECAO" FontSize="11" FontWeight="Bold" Foreground="#94A3B8" />
+                    </Border>
+
+                    <Grid Grid.Row="1" Margin="6">
+                        <TextBox x:Name="txtFiltroArvore"
+                                 Height="26"
+                                 Background="#0F172A"
+                                 Foreground="#F8FAFC"
+                                 BorderBrush="#334155"
+                                 Padding="6,3"
+                                 VerticalContentAlignment="Center"
+                                 ToolTip="Filtrar pecas ou grupos na arvore"
+                                 TextChanged="TxtFiltroArvore_TextChanged" />
+                    </Grid>
+
+                    <TreeView x:Name="tvArvore"
+                              Grid.Row="2"
+                              Background="#0F172A"
+                              Foreground="#E2E8F0"
+                              BorderThickness="0"
+                              Padding="4"
+                              SelectedItemChanged="TvArvore_SelectedItemChanged">
+                        <TreeView.Resources>
+                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#1D4ED8" />
+                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="#FFFFFF" />
+                            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#1E3A8A" />
+                            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}" Color="#E2E8F0" />
+                        </TreeView.Resources>
+                    </TreeView>
+
+                    <Border Grid.Row="3" Background="#1E293B" Padding="6">
+                        <UniformGrid Columns="3">
+                            <Button Style="{StaticResource BtnBarra}" Height="24" FontSize="10.5" Content="Isolar" Click="BtnIsolar_Click" />
+                            <Button Style="{StaticResource BtnBarra}" Height="24" FontSize="10.5" Content="Ocultar" Click="BtnOcultar_Click" />
+                            <Button Style="{StaticResource BtnBarra}" Height="24" FontSize="10.5" Content="Mostrar Tudo" Click="BtnMostrarTudo_Click" />
+                        </UniformGrid>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="#1E293B" />
+
+            <!-- Centro: Viewport 3D -->
+            <Grid Grid.Column="2" Background="#1D1D1D">
+                <h:HelixViewport3D x:Name="vp3D"
+                                   Background="#1B222C"
+                                   IsHeadLightEnabled="True"
+                                   ShowCoordinateSystem="True"
+                                   ShowViewCube="True"
+                                   ZoomExtentsWhenLoaded="True"
+                                   ZoomAroundMouseDownPoint="True"
+                                   RotateAroundMouseDownPoint="True"
+                                   MouseLeftButtonDown="Vp3D_MouseLeftButtonDown">
+                    <ModelVisual3D>
+                        <ModelVisual3D.Content>
+                            <AmbientLight Color="#404040" />
+                        </ModelVisual3D.Content>
+                    </ModelVisual3D>
+                    <h:HelixViewport3D.Camera>
+                        <OrthographicCamera NearPlaneDistance="-10000" FarPlaneDistance="10000" Width="10" />
+                    </h:HelixViewport3D.Camera>
+                </h:HelixViewport3D>
+
+                <!-- Overlay de Carregamento -->
+                <Border x:Name="pnlCarregando"
+                        Background="#CC0F172A"
+                        Visibility="Collapsed">
+                    <Border Background="#1E293B"
+                            BorderBrush="#38BDF8"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="22,16"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            MinWidth="320">
+                        <StackPanel>
+                            <TextBlock x:Name="txtCarregando" Text="Carregando modelo..." Foreground="#F8FAFC" FontWeight="SemiBold" FontSize="13" Margin="0,0,0,10" />
+                            <ProgressBar x:Name="pbCarregando" Height="10" Minimum="0" Maximum="100" Foreground="#38BDF8" Background="#0F172A" />
+                        </StackPanel>
+                    </Border>
+                </Border>
+            </Grid>
+
+            <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Stretch" Background="#1E293B" />
+
+            <!-- Painel Direito: Propriedades -->
+            <Border Grid.Column="4" Background="#111827" BorderBrush="#1E293B" BorderThickness="1,0,0,0">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Background="#1E293B" Padding="8,6">
+                        <DockPanel>
+                            <TextBlock Text="PROPRIEDADES" FontSize="11" FontWeight="Bold" Foreground="#94A3B8" VerticalAlignment="Center" />
+                            <Button DockPanel.Dock="Right" Style="{StaticResource BtnBarra}" Height="22" Padding="7,0" FontSize="10.5" Content="+ Atributo" Click="BtnAdicionarAtributo_Click" />
+                        </DockPanel>
+                    </Border>
+
+                    <Border Grid.Row="1" Background="#0F172A" BorderBrush="#1E293B" BorderThickness="0,0,0,1" Padding="8,6">
+                        <TextBlock x:Name="txtResumoSelecao"
+                                   Text="Nenhum elemento selecionado."
+                                   Foreground="#CBD5E1"
+                                   FontSize="11.5"
+                                   TextWrapping="Wrap" />
+                    </Border>
+
+                    <DataGrid x:Name="dgPropriedades"
+                              Grid.Row="2"
+                              AutoGenerateColumns="False"
+                              IsReadOnly="True"
+                              Background="#0F172A"
+                              Foreground="#F1F5F9"
+                              RowBackground="#0F172A"
+                              AlternatingRowBackground="#162032"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#1E293B"
+                              HeadersVisibility="Column"
+                              BorderThickness="0"
+                              FontSize="11.5">
+                        <DataGrid.ColumnHeaderStyle>
+                            <Style TargetType="DataGridColumnHeader">
+                                <Setter Property="Background" Value="#1E293B" />
+                                <Setter Property="Foreground" Value="#94A3B8" />
+                                <Setter Property="FontWeight" Value="SemiBold" />
+                                <Setter Property="Padding" Value="6,4" />
+                                <Setter Property="BorderBrush" Value="#334155" />
+                                <Setter Property="BorderThickness" Value="0,0,1,1" />
+                            </Style>
+                        </DataGrid.ColumnHeaderStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Aba" Binding="{Binding Aba}" Width="70" />
+                            <DataGridTextColumn Header="Propriedade" Binding="{Binding Nome}" Width="110" />
+                            <DataGridTextColumn Header="Valor" Binding="{Binding Valor}" Width="*" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </Border>
+        </Grid>
+
+        <!-- Barra de Status -->
+        <Border Grid.Row="3" Background="#111827" BorderBrush="#1E293B" BorderThickness="0,1,0,0" Padding="10,4">
+            <DockPanel>
+                <TextBlock x:Name="txtStatus" DockPanel.Dock="Left" Text="Pronto." Foreground="#94A3B8" FontSize="11.5" />
+                <TextBlock x:Name="txtContadores" DockPanel.Dock="Right" Text="" Foreground="#64748B" FontSize="11.5" />
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
+

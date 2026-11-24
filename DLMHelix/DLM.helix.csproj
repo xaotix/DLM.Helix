@@ -79,6 +79,9 @@
     <Compile Include="CAMViewer.Camera.cs">
       <DependentUpon>CAMViewer.xaml</DependentUpon>
     </Compile>
+    <Compile Include="IfcViewerWindow.xaml.cs">
+      <DependentUpon>IfcViewerWindow.xaml</DependentUpon>
+    </Compile>
     <Compile Include="CAMViewer.xaml.cs">
       <DependentUpon>CAMViewer.xaml</DependentUpon>
     </Compile>
@@ -122,6 +125,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="IfcViewerWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="CAMViewer.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

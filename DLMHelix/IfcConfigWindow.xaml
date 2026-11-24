@@ -1,0 +1,178 @@
+<Window x:Class="DLM.helix.IfcConfigWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Configuracao IFC - Cores e De-Para de Propriedades"
+        Width="780"
+        Height="580"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC"
+        Foreground="#1E293B">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <TabControl Grid.Row="0" Background="White" BorderBrush="#CBD5E1">
+            <!-- Aba 1: Cores -->
+            <TabItem Header="Cores das Pecas">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="Clique no quadrado de cor ou edite o codigo Hex (#RRGGBB) para personalizar as cores de exportacao IFC."
+                               Foreground="#475569"
+                               Margin="0,0,0,8" />
+
+                    <DataGrid x:Name="dgCores"
+                              Grid.Row="1"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              RowHeight="28"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#E2E8F0"
+                              BorderBrush="#CBD5E1"
+                              Background="White">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Categoria / Tipo" Binding="{Binding Categoria, UpdateSourceTrigger=PropertyChanged}" Width="220" />
+                            <DataGridTemplateColumn Header="Cor" Width="90">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Click="BtnEscolherCor_Click"
+                                                Tag="{Binding}"
+                                                Cursor="Hand"
+                                                Margin="6,2"
+                                                BorderBrush="#64748B"
+                                                BorderThickness="1"
+                                                Background="{Binding BrushCor}"
+                                                ToolTip="Clique para escolher a cor" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Codigo Hex (#RRGGBB)" Binding="{Binding Hex, UpdateSourceTrigger=PropertyChanged}" Width="160" />
+                            <DataGridTemplateColumn Header="Acao" Width="90">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Remover" Click="BtnRemoverCor_Click" Tag="{Binding}" Margin="4,2" Padding="6,1" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="+ Nova Categoria" Click="BtnAdicionarCor_Click" Padding="10,4" Margin="0,0,8,0" />
+                        <Button Content="Restaurar Cores Padrao" Click="BtnRestaurarPadrao_Click" Padding="10,4" />
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Aba 2: De-Para de Propriedades -->
+            <TabItem Header="De-Para de Propriedades">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                            <TextBlock Text="Nome da Aba (PropertySet) no IFC:" VerticalAlignment="Center" FontWeight="SemiBold" Margin="0,0,8,0" />
+                            <TextBox x:Name="txtNomeAba" Width="180" Height="26" VerticalContentAlignment="Center" Padding="6,0" />
+                            <CheckBox x:Name="chkExportarNaoMapeadas"
+                                      Content="Exportar propriedades nao listadas abaixo com o nome original"
+                                      VerticalAlignment="Center"
+                                      Margin="18,0,0,0" />
+                        </StackPanel>
+                        <TextBlock Text="Defina o De -> Para dos nomes de saida. Deixe a coluna 'Nome na Saida (Para)' vazia para omitir a propriedade."
+                                   Foreground="#475569"
+                                   FontSize="11.5" />
+                    </StackPanel>
+
+                    <DataGrid x:Name="dgDePara"
+                              Grid.Row="1"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              RowHeight="26"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#E2E8F0"
+                              BorderBrush="#CBD5E1"
+                              Background="White">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Propriedade Interna (De)" Binding="{Binding De, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                            <DataGridTextColumn Header="Nome na Saida IFC (Para)" Binding="{Binding Para, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                            <DataGridTemplateColumn Header="Acao" Width="90">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Remover" Click="BtnRemoverDePara_Click" Tag="{Binding}" Margin="4,2" Padding="6,1" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="+ Adicionar Mapeamento" Click="BtnAdicionarDePara_Click" Padding="10,4" />
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Aba 3: Propriedades Fixas -->
+            <TabItem Header="Propriedades Fixas Globais">
+                <Grid Margin="10">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="Propriedades adicionadas automaticamente a TODAS as pecas exportadas no IFC (ex: Obra, Cliente, Revisao)."
+                               Foreground="#475569"
+                               Margin="0,0,0,8" />
+
+                    <DataGrid x:Name="dgFixas"
+                              Grid.Row="1"
+                              AutoGenerateColumns="False"
+                              CanUserAddRows="False"
+                              RowHeight="26"
+                              GridLinesVisibility="Horizontal"
+                              HorizontalGridLinesBrush="#E2E8F0"
+                              BorderBrush="#CBD5E1"
+                              Background="White">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Nome da Propriedade" Binding="{Binding De, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                            <DataGridTextColumn Header="Valor Fixo" Binding="{Binding Para, UpdateSourceTrigger=PropertyChanged}" Width="*" />
+                            <DataGridTemplateColumn Header="Acao" Width="90">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Remover" Click="BtnRemoverFixa_Click" Tag="{Binding}" Margin="4,2" Padding="6,1" />
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                        <Button Content="+ Adicionar Propriedade Fixa" Click="BtnAdicionarFixa_Click" Padding="10,4" />
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- Rodape -->
+        <DockPanel Grid.Row="1" Margin="0,10,0,0">
+            <TextBlock x:Name="txtCaminhoCfg" DockPanel.Dock="Left" VerticalAlignment="Center" Foreground="#64748B" FontSize="11" />
+            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Salvar e Aplicar" Click="BtnSalvar_Click" IsDefault="True" Background="#0284C7" Foreground="White" FontWeight="SemiBold" Padding="16,6" Margin="0,0,8,0" BorderThickness="0" />
+                <Button Content="Cancelar" IsCancel="True" Padding="14,6" />
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>
+

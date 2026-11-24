@@ -41,13 +41,21 @@ namespace DLM.helix
 
         private readonly HashSet<IfcMalhaElemento> _selecionados = new HashSet<IfcMalhaElemento>();
         private readonly Dictionary<ModelVisual3D, IfcMalhaElemento> _visualParaElemento = new Dictionary<ModelVisual3D, IfcMalhaElemento>();
-        private readonly Dictionary<IfcMalhaElemento, ModelVisual3D> _elementoParaVisual = new Dictionary<IfcMalhaElemento, ModelVisual3D>();
+        private readonly List<Visual3D> _visuaisGrid = new List<Visual3D>();
         private ModelVisual3D _destaqueVisual;
 
+        // Modo interativo (Juntar IFC / Mover 2 pontos)
         private ModoInterativo _modoInterativo = ModoInterativo.Nenhum;
         private IfcModeloLido _modeloPendenteJuntar;
         private string _nomeGrupoPendenteJuntar;
+        private List<IfcMalhaElemento> _alvoMoverInterativo;
         private IfcVetor _pontoBaseMover;
+
+        // Caixa de selecao (Marquee) e clique direito
+        private bool _arrastandoCaixa;
+        private Point _pontoInicioCaixa;
+        private Point _pontoBotaoDireitoDown;
+
         private CancellationTokenSource _cts;
 
         public IfcViewerWindow()
@@ -73,7 +81,7 @@ namespace DLM.helix
             _arquivoAtual = caminho;
             _dwgDireto = null;
             _selecionados.Clear();
-            Title = "Visualizador IFC / DWG - " + Path.GetFileName(caminho);
+            Title = "Visualizador e Editor IFC / DWG - " + Path.GetFileName(caminho);
             MostrarCarregando(true, 5, "Abrindo " + Path.GetFileName(caminho) + "...");
 
             try
@@ -93,7 +101,6 @@ namespace DLM.helix
                 }
                 else if (ext == ".DWG")
                 {
-                    // Tenta primeiro TecnoMetal (preservando furos, recortes, parafusos e propriedades DLM)
                     var modeloTecno = await Task.Run(() => TecnoMetalDwgLeitor.LerArquivo(caminho, true, prog, ct), ct);
                     if (ct.IsCancellationRequested) return;
 
@@ -114,13 +121,12 @@ namespace DLM.helix
                         if (ct.IsCancellationRequested) return;
 
                         var modelo = await Task.Run(() => IfcLeitor.LerTexto(textoIfc, prog, ct), ct);
-                        if (modelo != null) modelo.Arquivo = caminho;
                         if (ct.IsCancellationRequested) return;
+                        if (modelo != null) modelo.Arquivo = caminho;
                         AbrirModelo(modelo, caminho);
                     }
                     else
                     {
-                        // DWG generico: leitura direta via ACadSharp (sem conversao DXF)
                         var dwgRes = await Task.Run(() => RenderACadSharp.CarregarDwgDireto(caminho, prog, ct), ct);
                         if (ct.IsCancellationRequested) return;
 
@@ -170,31 +176,41 @@ namespace DLM.helix
                 _arquivoAtual = caminhoOrigem;
 
             _selecionados.Clear();
-            if (_modelo != null && _modelo.RaizesArvore.Count == 0)
-                IfcEditor.ConstruirArvorePadrao(_modelo);
+            if (_modelo != null)
+            {
+                if (_modelo.RaizesArvore.Count == 0)
+                    IfcEditor.ConstruirArvorePadrao(_modelo);
+                if (_modelo.Grid == null || !_modelo.Grid.TemEixos)
+                    _modelo.Grid = IfcGrid.GerarAutomaticoDosPilares(_modelo);
+            }
 
-            Title = "Visualizador IFC / DWG - " + (!string.IsNullOrWhiteSpace(_arquivoAtual) ? Path.GetFileName(_arquivoAtual) : "Modelo 3D");
+            Title = "Visualizador e Editor IFC / DWG - " + (!string.IsNullOrWhiteSpace(_arquivoAtual) ? Path.GetFileName(_arquivoAtual) : "Modelo 3D");
 
             ReconstruirCena3D(true);
             ReconstruirArvore();
             AtualizarPainelPropriedades();
             AtualizarContadores();
-            txtStatus.Text = "Modelo carregado.";
+
+            int eixos = (_modelo != null && _modelo.Grid != null) ? (_modelo.Grid.EixosX.Count + _modelo.Grid.EixosY.Count) : 0;
+            txtStatus.Text = eixos > 0
+                ? string.Format("Modelo carregado. Grid automatico gerado com {0} eixos a partir dos pilares.", eixos)
+                : "Modelo carregado. Dica: Shift+Arrastar faz caixa de selecao; Botao Direito abre menu de acoes.";
         }
 
-        #region Renderizacao 3D e Selecao
+        #region Renderizacao 3D, Grid 3D e Destaque de Selecao
 
         private void LimparViewport()
         {
             for (int i = vp3D.Children.Count - 1; i >= 0; i--)
             {
                 var child = vp3D.Children[i];
-                if (child is ModelVisual3D mv && mv.Content is Light) continue;
-                if (child is DefaultLights) continue;
+                if (child is LightSetup) continue;
+                if (child is ModelVisual3D mv && (mv.Content is Light || mv.Content is Model3DGroup mg && mg.Children.All(c => c is Light)))
+                    continue;
                 vp3D.Children.RemoveAt(i);
             }
             _visualParaElemento.Clear();
-            _elementoParaVisual.Clear();
+            _visuaisGrid.Clear();
             _destaqueVisual = null;
         }
 
@@ -250,8 +266,8 @@ namespace DLM.helix
 
                 var matGroup = new MaterialGroup();
                 matGroup.Children.Add(new DiffuseMaterial(brush));
-                if (totalVisiveis < 4000)
-                    matGroup.Children.Add(new SpecularMaterial(new SolidColorBrush(Color.FromArgb(70, 255, 255, 255)), 24));
+                if (totalVisiveis < 5000)
+                    matGroup.Children.Add(new SpecularMaterial(new SolidColorBrush(Color.FromArgb(55, 255, 255, 255)), 24));
                 matGroup.Freeze();
 
                 var gm = new GeometryModel3D(mesh, matGroup) { BackMaterial = matGroup };
@@ -260,7 +276,6 @@ namespace DLM.helix
                 var mv = new ModelVisual3D { Content = gm };
                 vp3D.Children.Add(mv);
                 _visualParaElemento[mv] = el;
-                _elementoParaVisual[el] = mv;
 
                 if (mostrarArestas)
                 {
@@ -303,7 +318,7 @@ namespace DLM.helix
             if (mostrarArestas && pontosArestas.Count > 0)
             {
                 pontosArestas.Freeze();
-                vp3D.Children.Add(new LinesVisual3D { Points = pontosArestas, Color = Color.FromRgb(10, 14, 20), Thickness = 1.25 });
+                vp3D.Children.Add(new LinesVisual3D { Points = pontosArestas, Color = Color.FromRgb(15, 23, 42), Thickness = 1.2 });
             }
             if (mostrarArestas && pontosFuros.Count > 0)
             {
@@ -321,8 +336,83 @@ namespace DLM.helix
                 vp3D.Children.Add(new LinesVisual3D { Points = pontosSoldas, Color = Color.FromRgb(180, 83, 9), Thickness = 1.8 });
             }
 
+            RenderizarGrid3D();
             AtualizarDestaqueSelecao();
             if (enquadrar) AplicarVistaIsometrica();
+        }
+
+        private void RenderizarGrid3D()
+        {
+            for (int i = 0; i < _visuaisGrid.Count; i++)
+                vp3D.Children.Remove(_visuaisGrid[i]);
+            _visuaisGrid.Clear();
+
+            if (_modelo == null || _modelo.Grid == null || !_modelo.Grid.TemEixos) return;
+            if (!_modelo.Grid.Visivel || (tglGrid != null && tglGrid.IsChecked != true)) return;
+
+            var grid = _modelo.Grid;
+            var eixosX = grid.EixosX.Where(e => e.Visivel).OrderBy(e => e.CoordenadaMm).ToList();
+            var eixosY = grid.EixosY.Where(e => e.Visivel).OrderBy(e => e.CoordenadaMm).ToList();
+            if (eixosX.Count == 0 && eixosY.Count == 0) return;
+
+            const double esc = RenderIFC.ESCALA_MM_PARA_M;
+            double folga = Math.Max(1000.0, grid.FolgaMm);
+            double minX = (eixosX.Count > 0 ? Math.Min(_modelo.Min.X, eixosX[0].CoordenadaMm) : _modelo.Min.X) - folga;
+            double maxX = (eixosX.Count > 0 ? Math.Max(_modelo.Max.X, eixosX[eixosX.Count - 1].CoordenadaMm) : _modelo.Max.X) + folga;
+            double minY = (eixosY.Count > 0 ? Math.Min(_modelo.Min.Y, eixosY[0].CoordenadaMm) : _modelo.Min.Y) - folga;
+            double maxY = (eixosY.Count > 0 ? Math.Max(_modelo.Max.Y, eixosY[eixosY.Count - 1].CoordenadaMm) : _modelo.Max.Y) + folga;
+            double z = grid.CotaZMm * esc;
+
+            var ptsGrid = new Point3DCollection();
+            foreach (var ex in eixosX)
+            {
+                double x = ex.CoordenadaMm * esc;
+                ptsGrid.Add(new Point3D(x, minY * esc, z));
+                ptsGrid.Add(new Point3D(x, maxY * esc, z));
+
+                AdicionarRotuloEixo(ex.Nome, new Point3D(x, (minY - 350.0) * esc, z));
+                AdicionarRotuloEixo(ex.Nome, new Point3D(x, (maxY + 350.0) * esc, z));
+            }
+            foreach (var ey in eixosY)
+            {
+                double y = ey.CoordenadaMm * esc;
+                ptsGrid.Add(new Point3D(minX * esc, y, z));
+                ptsGrid.Add(new Point3D(maxX * esc, y, z));
+
+                AdicionarRotuloEixo(ey.Nome, new Point3D((minX - 350.0) * esc, y, z));
+                AdicionarRotuloEixo(ey.Nome, new Point3D((maxX + 350.0) * esc, y, z));
+            }
+
+            if (ptsGrid.Count > 0)
+            {
+                ptsGrid.Freeze();
+                var linhas = new LinesVisual3D
+                {
+                    Points = ptsGrid,
+                    Color = Color.FromRgb(2, 132, 199),
+                    Thickness = 1.4
+                };
+                vp3D.Children.Add(linhas);
+                _visuaisGrid.Add(linhas);
+            }
+        }
+
+        private void AdicionarRotuloEixo(string texto, Point3D pos)
+        {
+            if (string.IsNullOrWhiteSpace(texto)) return;
+            var lbl = new BillboardTextVisual3D
+            {
+                Text = " " + texto + " ",
+                Position = pos,
+                FontSize = 13,
+                FontWeight = FontWeights.Bold,
+                Foreground = Brushes.White,
+                Background = new SolidColorBrush(Color.FromRgb(2, 132, 199)),
+                Padding = new Thickness(4, 2, 4, 2),
+                DepthOffset = 0.01
+            };
+            vp3D.Children.Add(lbl);
+            _visuaisGrid.Add(lbl);
         }
 
         private void AtualizarDestaqueSelecao()
@@ -363,8 +453,8 @@ namespace DLM.helix
             mesh.Freeze();
 
             var mat = new MaterialGroup();
-            mat.Children.Add(new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(215, 250, 204, 21))));
-            mat.Children.Add(new EmissiveMaterial(new SolidColorBrush(Color.FromArgb(90, 250, 204, 21))));
+            mat.Children.Add(new DiffuseMaterial(new SolidColorBrush(Color.FromArgb(225, 245, 158, 11))));
+            mat.Children.Add(new EmissiveMaterial(new SolidColorBrush(Color.FromArgb(80, 251, 191, 36))));
             mat.Freeze();
 
             var gm = new GeometryModel3D(mesh, mat) { BackMaterial = mat };
@@ -374,7 +464,11 @@ namespace DLM.helix
             vp3D.Children.Add(_destaqueVisual);
         }
 
-        private void Vp3D_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        #endregion
+
+        #region Mouse Interativo: Caixa de Selecao, Clique Simples e Menu Botao Direito
+
+        private void Vp3D_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
             Point mousePos = e.GetPosition(vp3D.Viewport);
 
@@ -389,25 +483,26 @@ namespace DLM.helix
                 return;
             }
 
-            // Selecao de elemento por clique (Ctrl para multiselecao)
-            bool multi = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
-            IfcMalhaElemento atingido = null;
+            bool modoCaixa = (tglCaixaSelecao != null && tglCaixaSelecao.IsChecked == true)
+                             || (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
 
-            VisualTreeHelper.HitTest(vp3D.Viewport, null, res =>
+            if (modoCaixa)
             {
-                var ray = res as RayMeshGeometry3DHitTestResult;
-                if (ray != null && ray.VisualHit is ModelVisual3D mv)
-                {
-                    if (mv == _destaqueVisual) return HitTestResultBehavior.Continue;
-                    IfcMalhaElemento el;
-                    if (_visualParaElemento.TryGetValue(mv, out el))
-                    {
-                        atingido = el;
-                        return HitTestResultBehavior.Stop;
-                    }
-                }
-                return HitTestResultBehavior.Continue;
-            }, new PointHitTestParameters(mousePos));
+                _arrastandoCaixa = true;
+                _pontoInicioCaixa = e.GetPosition(gridViewport);
+                Canvas.SetLeft(rectSelecao, _pontoInicioCaixa.X);
+                Canvas.SetTop(rectSelecao, _pontoInicioCaixa.Y);
+                rectSelecao.Width = 0;
+                rectSelecao.Height = 0;
+                rectSelecao.Visibility = Visibility.Visible;
+                vp3D.CaptureMouse();
+                e.Handled = true;
+                return;
+            }
+
+            // Selecao por clique direto na peca
+            bool multi = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+            IfcMalhaElemento atingido = HitTestElemento(mousePos);
 
             if (!multi) _selecionados.Clear();
             if (atingido != null)
@@ -423,11 +518,216 @@ namespace DLM.helix
             AtualizarContadores();
         }
 
+        private void Vp3D_PreviewMouseMove(object sender, MouseEventArgs e)
+        {
+            if (!_arrastandoCaixa) return;
+
+            Point atual = e.GetPosition(gridViewport);
+            double x = Math.Min(_pontoInicioCaixa.X, atual.X);
+            double y = Math.Min(_pontoInicioCaixa.Y, atual.Y);
+            double w = Math.Abs(atual.X - _pontoInicioCaixa.X);
+            double h = Math.Abs(atual.Y - _pontoInicioCaixa.Y);
+
+            bool crossing = atual.X < _pontoInicioCaixa.X;
+            if (crossing)
+            {
+                rectSelecao.Stroke = new SolidColorBrush(Color.FromRgb(22, 163, 74));
+                rectSelecao.Fill = new SolidColorBrush(Color.FromArgb(45, 34, 197, 94));
+                rectSelecao.StrokeDashArray = new DoubleCollection { 4, 2 };
+            }
+            else
+            {
+                rectSelecao.Stroke = new SolidColorBrush(Color.FromRgb(37, 99, 235));
+                rectSelecao.Fill = new SolidColorBrush(Color.FromArgb(45, 59, 130, 246));
+                rectSelecao.StrokeDashArray = null;
+            }
+
+            Canvas.SetLeft(rectSelecao, x);
+            Canvas.SetTop(rectSelecao, y);
+            rectSelecao.Width = w;
+            rectSelecao.Height = h;
+            e.Handled = true;
+        }
+
+        private void Vp3D_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            if (!_arrastandoCaixa) return;
+
+            _arrastandoCaixa = false;
+            rectSelecao.Visibility = Visibility.Collapsed;
+            vp3D.ReleaseMouseCapture();
+
+            Point fim = e.GetPosition(gridViewport);
+            double x1 = Math.Min(_pontoInicioCaixa.X, fim.X);
+            double y1 = Math.Min(_pontoInicioCaixa.Y, fim.Y);
+            double x2 = Math.Max(_pontoInicioCaixa.X, fim.X);
+            double y2 = Math.Max(_pontoInicioCaixa.Y, fim.Y);
+            bool crossing = fim.X < _pontoInicioCaixa.X;
+
+            if (x2 - x1 > 4 && y2 - y1 > 4)
+            {
+                SelecionarPorCaixa(new Rect(x1, y1, x2 - x1, y2 - y1), crossing);
+            }
+            e.Handled = true;
+        }
+
+        private void SelecionarPorCaixa(Rect caixa, bool crossing)
+        {
+            if (_modelo == null) return;
+            bool multi = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+            if (!multi) _selecionados.Clear();
+
+            const double esc = RenderIFC.ESCALA_MM_PARA_M;
+            int encontrados = 0;
+
+            for (int i = 0; i < _modelo.Elementos.Count; i++)
+            {
+                var el = _modelo.Elementos[i];
+                if (el.EhAbertura || !el.Visivel || el.Vertices.Count == 0) continue;
+
+                var min = IfcVetor.Zero;
+                var max = IfcVetor.Zero;
+                bool tem = false;
+                el.ExpandirLimites(ref min, ref max, ref tem);
+                if (!tem) continue;
+
+                // Projeta centro e 8 cantos da bounding box para 2D na tela
+                var centro3D = new Point3D(((min.X + max.X) * 0.5) * esc, ((min.Y + max.Y) * 0.5) * esc, ((min.Z + max.Z) * 0.5) * esc);
+                var centro2D = Viewport3DHelper.Point3DtoPoint2D(vp3D.Viewport, centro3D);
+
+                bool seleciona;
+                if (!crossing)
+                {
+                    // Window (azul): centro dentro da caixa
+                    seleciona = caixa.Contains(centro2D);
+                }
+                else
+                {
+                    // Crossing (verde): qualquer canto ou centro dentro/cruzando a caixa
+                    var cantos = new[]
+                    {
+                        new Point3D(min.X * esc, min.Y * esc, min.Z * esc),
+                        new Point3D(max.X * esc, min.Y * esc, min.Z * esc),
+                        new Point3D(min.X * esc, max.Y * esc, min.Z * esc),
+                        new Point3D(max.X * esc, max.Y * esc, min.Z * esc),
+                        new Point3D(min.X * esc, min.Y * esc, max.Z * esc),
+                        new Point3D(max.X * esc, min.Y * esc, max.Z * esc),
+                        new Point3D(min.X * esc, max.Y * esc, max.Z * esc),
+                        new Point3D(max.X * esc, max.Y * esc, max.Z * esc)
+                    };
+                    double bxMin = double.MaxValue, byMin = double.MaxValue, bxMax = double.MinValue, byMax = double.MinValue;
+                    for (int k = 0; k < cantos.Length; k++)
+                    {
+                        var p2 = Viewport3DHelper.Point3DtoPoint2D(vp3D.Viewport, cantos[k]);
+                        if (p2.X < bxMin) bxMin = p2.X;
+                        if (p2.Y < byMin) byMin = p2.Y;
+                        if (p2.X > bxMax) bxMax = p2.X;
+                        if (p2.Y > byMax) byMax = p2.Y;
+                    }
+                    var rectEl = new Rect(new Point(bxMin, byMin), new Point(bxMax, byMax));
+                    seleciona = caixa.IntersectsWith(rectEl);
+                }
+
+                if (seleciona)
+                {
+                    _selecionados.Add(el);
+                    encontrados++;
+                }
+            }
+
+            AtualizarDestaqueSelecao();
+            AtualizarPainelPropriedades();
+            AtualizarContadores();
+            txtStatus.Text = string.Format("Caixa ({0}): {1} elemento(s) selecionado(s).", crossing ? "Crossing" : "Window", encontrados);
+        }
+
+        private void Vp3D_PreviewMouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            _pontoBotaoDireitoDown = e.GetPosition(vp3D);
+        }
+
+        private void Vp3D_PreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
+        {
+            Point up = e.GetPosition(vp3D);
+            // Se o usuario apenas clicou (nao arrastou para orbitar a camera), abre o Menu de Contexto!
+            if ((up - _pontoBotaoDireitoDown).Length > 5.0)
+                return;
+
+            // Se clicou sobre uma peca e nada estava selecionado, seleciona essa peca
+            var hitEl = HitTestElemento(e.GetPosition(vp3D.Viewport));
+            if (hitEl != null && !_selecionados.Contains(hitEl))
+            {
+                _selecionados.Clear();
+                _selecionados.Add(hitEl);
+                AtualizarDestaqueSelecao();
+                AtualizarPainelPropriedades();
+                AtualizarContadores();
+            }
+
+            AbrirMenuContextoViewport();
+            e.Handled = true;
+        }
+
+        private void AbrirMenuContextoViewport()
+        {
+            var cm = new ContextMenu();
+            bool temSel = _selecionados.Count > 0;
+            bool temMod = _modelo != null && _modelo.Elementos.Count > 0;
+
+            cm.Items.Add(CriarMenuItem("Enquadrar Selecao", MenuEnquadrarSelecao_Click, temSel));
+            cm.Items.Add(CriarMenuItem("Enquadrar Tudo", BtnZoomExtents_Click, temMod));
+            cm.Items.Add(new Separator());
+            cm.Items.Add(CriarMenuItem("Isolar Selecao", BtnIsolar_Click, temSel));
+            cm.Items.Add(CriarMenuItem("Ocultar Selecao", BtnOcultar_Click, temSel));
+            cm.Items.Add(CriarMenuItem("Mostrar Tudo", BtnMostrarTudo_Click, temMod));
+            cm.Items.Add(CriarMenuItem("Selecionar Mesmo Perfil", MenuSelecionarMesmoPerfil_Click, temSel));
+            cm.Items.Add(CriarMenuItem("Selecionar Mesmo Nivel/Grupo", MenuSelecionarMesmoNivel_Click, temSel));
+            cm.Items.Add(CriarMenuItem("Inverter Selecao", MenuInverterSelecao_Click, temMod));
+            cm.Items.Add(new Separator());
+            cm.Items.Add(CriarMenuItem("Mover Selecao / IFC Importado...", BtnMover_Click, temMod));
+            cm.Items.Add(CriarMenuItem("Adicionar Atributo na Selecao...", BtnAdicionarAtributo_Click, temMod));
+            cm.Items.Add(CriarMenuItem("Juntar outro IFC aqui...", BtnJuntarIfc_Click, true));
+            cm.Items.Add(new Separator());
+            cm.Items.Add(CriarMenuItem("Exportar Selecao para IFC...", BtnExportarIfcSelecao_Click, temSel));
+            cm.Items.Add(CriarMenuItem("Exportar Selecao para DXF 3D...", BtnExportarDxfSelecao_Click, temSel));
+            cm.Items.Add(CriarMenuItem("Quebrar IFC pelos Eixos...", BtnQuebrarPorEixos_Click, temMod));
+
+            cm.PlacementTarget = vp3D;
+            cm.IsOpen = true;
+        }
+
+        private static MenuItem CriarMenuItem(string header, RoutedEventHandler click, bool enabled)
+        {
+            var mi = new MenuItem { Header = header, IsEnabled = enabled };
+            mi.Click += click;
+            return mi;
+        }
+
+        private IfcMalhaElemento HitTestElemento(Point mousePos)
+        {
+            IfcMalhaElemento atingido = null;
+            VisualTreeHelper.HitTest(vp3D.Viewport, null, res =>
+            {
+                var ray = res as RayMeshGeometry3DHitTestResult;
+                if (ray != null && ray.VisualHit is ModelVisual3D mv)
+                {
+                    if (mv == _destaqueVisual) return HitTestResultBehavior.Continue;
+                    IfcMalhaElemento el;
+                    if (_visualParaElemento.TryGetValue(mv, out el))
+                    {
+                        atingido = el;
+                        return HitTestResultBehavior.Stop;
+                    }
+                }
+                return HitTestResultBehavior.Continue;
+            }, new PointHitTestParameters(mousePos));
+            return atingido;
+        }
+
         private bool TentarObterPonto3D(Point mousePos, out IfcVetor ptMm)
         {
             ptMm = IfcVetor.Zero;
 
-            // 1. Tenta hit direto na geometria
             var hit = vp3D.FindNearestPoint(mousePos);
             if (hit.HasValue)
             {
@@ -436,7 +736,6 @@ namespace DLM.helix
                 return true;
             }
 
-            // 2. Fallback: intersecao com plano horizontal Z = Min.Z (ou 0)
             double zPlanoM = (_modelo != null && _modelo.TemGeometria) ? _modelo.Min.Z * RenderIFC.ESCALA_MM_PARA_M : 0.0;
             var ray = Viewport3DHelper.Point2DtoRay3D(vp3D.Viewport, mousePos);
             if (ray != null)
@@ -449,13 +748,82 @@ namespace DLM.helix
                     return true;
                 }
             }
-
             return false;
+        }
+
+        private void MenuEnquadrarSelecao_Click(object sender, RoutedEventArgs e)
+        {
+            if (_selecionados.Count == 0) return;
+            var min = IfcVetor.Zero;
+            var max = IfcVetor.Zero;
+            bool tem = false;
+            foreach (var el in _selecionados) el.ExpandirLimites(ref min, ref max, ref tem);
+            if (!tem) return;
+
+            const double esc = RenderIFC.ESCALA_MM_PARA_M;
+            var rect = new Rect3D(
+                min.X * esc, min.Y * esc, min.Z * esc,
+                Math.Max(0.1, (max.X - min.X) * esc),
+                Math.Max(0.1, (max.Y - min.Y) * esc),
+                Math.Max(0.1, (max.Z - min.Z) * esc));
+            vp3D.ZoomExtents(rect, 250);
+        }
+
+        private void MenuSelecionarMesmoPerfil_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null || _selecionados.Count == 0) return;
+            var refEl = _selecionados.First();
+            string perfil = refEl.ObterPropriedade("Perfil") ?? refEl.Descricao ?? refEl.Entidade;
+            if (string.IsNullOrWhiteSpace(perfil)) return;
+
+            _selecionados.Clear();
+            foreach (var el in _modelo.Elementos)
+            {
+                if (el.EhAbertura || !el.Visivel) continue;
+                string p = el.ObterPropriedade("Perfil") ?? el.Descricao ?? el.Entidade;
+                if (string.Equals(p, perfil, StringComparison.OrdinalIgnoreCase))
+                    _selecionados.Add(el);
+            }
+            AtualizarDestaqueSelecao();
+            AtualizarPainelPropriedades();
+            AtualizarContadores();
+        }
+
+        private void MenuSelecionarMesmoNivel_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null || _selecionados.Count == 0) return;
+            string nivel = _selecionados.First().NivelArvore ?? "";
+            _selecionados.Clear();
+            foreach (var el in _modelo.Elementos)
+            {
+                if (el.EhAbertura || !el.Visivel) continue;
+                if (string.Equals(el.NivelArvore ?? "", nivel, StringComparison.OrdinalIgnoreCase))
+                    _selecionados.Add(el);
+            }
+            AtualizarDestaqueSelecao();
+            AtualizarPainelPropriedades();
+            AtualizarContadores();
+        }
+
+        private void MenuInverterSelecao_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null) return;
+            var nova = new HashSet<IfcMalhaElemento>();
+            foreach (var el in _modelo.Elementos)
+            {
+                if (!el.EhAbertura && el.Visivel && !_selecionados.Contains(el))
+                    nova.Add(el);
+            }
+            _selecionados.Clear();
+            foreach (var el in nova) _selecionados.Add(el);
+            AtualizarDestaqueSelecao();
+            AtualizarPainelPropriedades();
+            AtualizarContadores();
         }
 
         #endregion
 
-        #region Arvore de Selecao e Propriedades
+        #region Arvore e Propriedades
 
         private void ReconstruirArvore()
         {
@@ -511,7 +879,7 @@ namespace DLM.helix
             var tb = new TextBlock
             {
                 Text = no.Nome,
-                Foreground = no.EhFolha ? Brushes.WhiteSmoke : new SolidColorBrush(Color.FromRgb(147, 197, 253)),
+                Foreground = no.EhFolha ? new SolidColorBrush(Color.FromRgb(30, 41, 59)) : new SolidColorBrush(Color.FromRgb(3, 105, 161)),
                 FontWeight = no.EhFolha ? FontWeights.Normal : FontWeights.SemiBold,
                 FontSize = 11.5,
                 VerticalAlignment = VerticalAlignment.Center
@@ -548,17 +916,14 @@ namespace DLM.helix
             AtualizarContadores();
         }
 
-        private void TxtFiltroArvore_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            ReconstruirArvore();
-        }
+        private void TxtFiltroArvore_TextChanged(object sender, TextChangedEventArgs e) => ReconstruirArvore();
 
         private void AtualizarPainelPropriedades()
         {
             var lista = new List<PropItem>();
             if (_selecionados.Count == 0)
             {
-                txtResumoSelecao.Text = "Nenhum elemento selecionado. Clique em uma peca no 3D ou na arvore.";
+                txtResumoSelecao.Text = "Nenhum elemento selecionado. Clique, use Shift+Arrastar (caixa) ou a arvore.";
                 dgPropriedades.ItemsSource = lista;
                 return;
             }
@@ -586,17 +951,12 @@ namespace DLM.helix
                 lista.Add(new PropItem { Aba = "Geral", Nome = "Cor", Valor = IfcConfiguracao.FormatarHex(el.Cor) });
 
                 foreach (var pset in el.Propriedades.OrderBy(p => p.Key, StringComparer.OrdinalIgnoreCase))
-                {
                     foreach (var kv in pset.Value.OrderBy(k => k.Key, StringComparer.OrdinalIgnoreCase))
-                    {
                         lista.Add(new PropItem { Aba = pset.Key, Nome = kv.Key, Valor = kv.Value });
-                    }
-                }
             }
             else
             {
                 txtResumoSelecao.Text = string.Format("{0} elementos selecionados.", _selecionados.Count);
-                // Mostra propriedades em comum
                 var primeiro = _selecionados.First();
                 foreach (var pset in primeiro.Propriedades)
                 {
@@ -608,12 +968,7 @@ namespace DLM.helix
                             string v;
                             return el.Propriedades.TryGetValue(pset.Key, out d) && d.TryGetValue(kv.Key, out v) && v == kv.Value;
                         });
-                        lista.Add(new PropItem
-                        {
-                            Aba = pset.Key,
-                            Nome = kv.Key,
-                            Valor = todosIguais ? kv.Value : "(Varios valores)"
-                        });
+                        lista.Add(new PropItem { Aba = pset.Key, Nome = kv.Key, Valor = todosIguais ? kv.Value : "(Varios valores)" });
                     }
                 }
             }
@@ -631,7 +986,7 @@ namespace DLM.helix
 
         #endregion
 
-        #region Ferramentas: Vistas, Mover, Juntar IFC, Atributos, Agrupar, DXF, Config
+        #region Acoes Principais: Abrir, Salvar, Vistas, Grid, Mover, Juntar, Atributos, Agrupar, Quebrar, DXF, Config
 
         private void BtnAbrir_Click(object sender, RoutedEventArgs e)
         {
@@ -678,6 +1033,41 @@ namespace DLM.helix
             }
         }
 
+        private async void BtnExportarIfcSelecao_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null || _selecionados.Count == 0)
+            {
+                MessageBox.Show("Selecione ao menos um elemento para exportar em IFC.", "Exportar IFC Selecao", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var sfd = new SaveFileDialog
+            {
+                Title = "Exportar Selecao para IFC",
+                Filter = "Arquivo IFC (*.ifc)|*.ifc",
+                FileName = (!string.IsNullOrWhiteSpace(_arquivoAtual) ? Path.GetFileNameWithoutExtension(_arquivoAtual) : "modelo") + "_selecao.ifc"
+            };
+            if (sfd.ShowDialog() != true) return;
+
+            MostrarCarregando(true, 50, "Exportando selecao para IFC...");
+            try
+            {
+                string dest = sfd.FileName;
+                var sel = _selecionados.ToList();
+                var grid = (_modelo.Grid != null && _modelo.Grid.ExportarNoIfc) ? _modelo.Grid : null;
+                await Task.Run(() => IfcEditor.SalvarSelecaoParaIfc(sel, dest, grid));
+                txtStatus.Text = string.Format("IFC da selecao ({0} pecas) salvo em: {1}", sel.Count, dest);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao exportar IFC da selecao: " + ex.Message, "Exportar IFC", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                MostrarCarregando(false, 0, "");
+            }
+        }
+
         private void BtnZoomExtents_Click(object sender, RoutedEventArgs e) => vp3D.ZoomExtents(250);
         private void BtnVistaIso_Click(object sender, RoutedEventArgs e) => AplicarVistaIsometrica();
         private void BtnVistaFrontal_Click(object sender, RoutedEventArgs e) => DefinirVista(new Vector3D(0, 1, 0), new Vector3D(0, 0, 1));
@@ -687,10 +1077,7 @@ namespace DLM.helix
         private void BtnVistaEsquerda_Click(object sender, RoutedEventArgs e) => DefinirVista(new Vector3D(1, 0, 0), new Vector3D(0, 0, 1));
         private void BtnVistaDireita_Click(object sender, RoutedEventArgs e) => DefinirVista(new Vector3D(-1, 0, 0), new Vector3D(0, 0, 1));
 
-        private void AplicarVistaIsometrica()
-        {
-            DefinirVista(new Vector3D(-1, -1, -0.8), new Vector3D(0, 0, 1));
-        }
+        private void AplicarVistaIsometrica() => DefinirVista(new Vector3D(-1, -1, -0.8), new Vector3D(0, 0, 1));
 
         private void DefinirVista(Vector3D direcao, Vector3D up)
         {
@@ -702,16 +1089,34 @@ namespace DLM.helix
             vp3D.ZoomExtents(200);
         }
 
-        private void TglArestas_Click(object sender, RoutedEventArgs e)
+        private void TglArestas_Click(object sender, RoutedEventArgs e) => ReconstruirCena3D(false);
+
+        private void TglGrid_Click(object sender, RoutedEventArgs e)
         {
-            ReconstruirCena3D(false);
+            if (_modelo != null && _modelo.Grid != null)
+                _modelo.Grid.Visivel = tglGrid.IsChecked == true;
+            RenderizarGrid3D();
+        }
+
+        private void BtnGerenciarGrid_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null) return;
+            if (_modelo.Grid == null) _modelo.Grid = new IfcGrid();
+
+            var dlg = new IfcGridWindow(_modelo, _modelo.Grid) { Owner = this };
+            if (dlg.ShowDialog() == true)
+            {
+                tglGrid.IsChecked = _modelo.Grid.Visivel;
+                RenderizarGrid3D();
+                txtStatus.Text = string.Format("Grid atualizado: {0} eixo(s) X, {1} eixo(s) Y (Exportar no IFC: {2}).",
+                    _modelo.Grid.EixosX.Count, _modelo.Grid.EixosY.Count, _modelo.Grid.ExportarNoIfc ? "Sim" : "Nao");
+            }
         }
 
         private void BtnIsolar_Click(object sender, RoutedEventArgs e)
         {
             if (_modelo == null || _selecionados.Count == 0) return;
-            foreach (var el in _modelo.Elementos)
-                el.Visivel = _selecionados.Contains(el);
+            foreach (var el in _modelo.Elementos) el.Visivel = _selecionados.Contains(el);
             ReconstruirCena3D(false);
             ReconstruirArvore();
             AtualizarContadores();
@@ -720,8 +1125,7 @@ namespace DLM.helix
         private void BtnOcultar_Click(object sender, RoutedEventArgs e)
         {
             if (_modelo == null || _selecionados.Count == 0) return;
-            foreach (var el in _selecionados)
-                el.Visivel = false;
+            foreach (var el in _selecionados) el.Visivel = false;
             _selecionados.Clear();
             ReconstruirCena3D(false);
             ReconstruirArvore();
@@ -732,8 +1136,7 @@ namespace DLM.helix
         private void BtnMostrarTudo_Click(object sender, RoutedEventArgs e)
         {
             if (_modelo == null) return;
-            foreach (var el in _modelo.Elementos)
-                el.Visivel = true;
+            foreach (var el in _modelo.Elementos) el.Visivel = true;
             ReconstruirCena3D(false);
             ReconstruirArvore();
             AtualizarContadores();
@@ -741,29 +1144,37 @@ namespace DLM.helix
 
         private void BtnMover_Click(object sender, RoutedEventArgs e)
         {
-            if (_modelo == null || _selecionados.Count == 0)
-            {
-                MessageBox.Show("Selecione ao menos um elemento na arvore ou no 3D para mover.", "Mover Elementos", MessageBoxButton.OK, MessageBoxImage.Information);
-                return;
-            }
+            if (_modelo == null || _modelo.Elementos.Count == 0) return;
+
+            var origens = IfcEditor.ListarOrigens(_modelo);
 
             var dlg = new Window
             {
-                Title = "Mover Elementos (" + _selecionados.Count + " selecionados)",
-                Width = 360,
-                Height = 230,
+                Title = "Mover Elementos / IFC Importado",
+                Width = 420,
+                Height = 320,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 ResizeMode = ResizeMode.NoResize,
-                Background = new SolidColorBrush(Color.FromRgb(15, 23, 42)),
-                Foreground = Brushes.White
+                Background = new SolidColorBrush(Color.FromRgb(248, 250, 252)),
+                Foreground = new SolidColorBrush(Color.FromRgb(30, 41, 59))
             };
 
             var sp = new StackPanel { Margin = new Thickness(14) };
-            sp.Children.Add(new TextBlock { Text = "Informe o deslocamento em mm ou escolha clique interativo:", Margin = new Thickness(0, 0, 0, 10), TextWrapping = TextWrapping.Wrap });
+            sp.Children.Add(new TextBlock { Text = "O que deseja mover?", FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 6) });
+
+            var rbSelecao = new RadioButton { Content = string.Format("Somente a Selecao atual ({0} pecas)", _selecionados.Count), IsChecked = _selecionados.Count > 0, IsEnabled = _selecionados.Count > 0, Margin = new Thickness(0, 2, 0, 2) };
+            var rbOrigem = new RadioButton { Content = "Todo um IFC importado / grupo:", IsChecked = _selecionados.Count == 0, Margin = new Thickness(0, 2, 0, 2) };
+            var cbOrigem = new ComboBox { ItemsSource = origens, SelectedIndex = origens.Count > 0 ? origens.Count - 1 : -1, Height = 24, Margin = new Thickness(20, 2, 0, 4) };
+            var rbTudo = new RadioButton { Content = "Todo o modelo", Margin = new Thickness(0, 2, 0, 10) };
+
+            sp.Children.Add(rbSelecao);
+            sp.Children.Add(rbOrigem);
+            sp.Children.Add(cbOrigem);
+            sp.Children.Add(rbTudo);
 
             var grid = new Grid { Margin = new Thickness(0, 0, 0, 12) };
-            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(60) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(65) });
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
             for (int r = 0; r < 3; r++) grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
@@ -776,7 +1187,7 @@ namespace DLM.helix
             var botoes = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
             var btInterativo = new Button { Content = "Clique 2 Pontos no 3D", Padding = new Thickness(10, 5, 10, 5), Margin = new Thickness(0, 0, 8, 0) };
             btInterativo.Click += (s, ev) => { clicouInterativo = true; dlg.DialogResult = false; dlg.Close(); };
-            var btOk = new Button { Content = "Mover", IsDefault = true, Padding = new Thickness(14, 5, 14, 5), Margin = new Thickness(0, 0, 8, 0) };
+            var btOk = new Button { Content = "Mover", IsDefault = true, Padding = new Thickness(14, 5, 14, 5), Margin = new Thickness(0, 0, 8, 0), Background = new SolidColorBrush(Color.FromRgb(2, 132, 199)), Foreground = Brushes.White };
             btOk.Click += (s, ev) => { dlg.DialogResult = true; dlg.Close(); };
             var btCancel = new Button { Content = "Cancelar", IsCancel = true, Padding = new Thickness(10, 5, 10, 5) };
             botoes.Children.Add(btInterativo);
@@ -787,9 +1198,20 @@ namespace DLM.helix
             dlg.Content = sp;
             bool? res = dlg.ShowDialog();
 
+            List<IfcMalhaElemento> alvo;
+            if (rbSelecao.IsChecked == true)
+                alvo = _selecionados.ToList();
+            else if (rbOrigem.IsChecked == true && cbOrigem.SelectedItem != null)
+                alvo = IfcEditor.ObterElementosPorOrigem(_modelo, cbOrigem.SelectedItem.ToString());
+            else
+                alvo = _modelo.Elementos.Where(el => !el.EhAbertura).ToList();
+
+            if (alvo.Count == 0) return;
+
             if (clicouInterativo)
             {
-                AtivarModoInterativo(ModoInterativo.MoverPontoBase, "MOVER (1/2): Clique no ponto BASE no 3D (ou informe X, Y, Z e clique em Aplicar Ponto).");
+                _alvoMoverInterativo = alvo;
+                AtivarModoInterativo(ModoInterativo.MoverPontoBase, string.Format("MOVER {0} pecas (1/2): Clique no ponto BASE no 3D.", alvo.Count));
                 return;
             }
 
@@ -798,7 +1220,7 @@ namespace DLM.helix
                 double dx = ParseDouble(tbX.Text);
                 double dy = ParseDouble(tbY.Text);
                 double dz = ParseDouble(tbZ.Text);
-                int n = IfcEditor.MoverElementos(_modelo, _selecionados, new IfcVetor(dx, dy, dz));
+                int n = IfcEditor.MoverElementos(_modelo, alvo, new IfcVetor(dx, dy, dz));
                 ReconstruirCena3D(false);
                 AtualizarPainelPropriedades();
                 txtStatus.Text = string.Format("{0} elemento(s) movido(s) em ({1:0.#}, {2:0.#}, {3:0.#}) mm.", n, dx, dy, dz);
@@ -885,6 +1307,7 @@ namespace DLM.helix
         {
             _modoInterativo = ModoInterativo.Nenhum;
             _modeloPendenteJuntar = null;
+            _alvoMoverInterativo = null;
             pnlModoInterativo.Visibility = Visibility.Collapsed;
             vp3D.Cursor = Cursors.Arrow;
         }
@@ -919,8 +1342,9 @@ namespace DLM.helix
             else if (_modoInterativo == ModoInterativo.MoverPontoDestino)
             {
                 var delta = ptMm - _pontoBaseMover;
+                var alvo = _alvoMoverInterativo ?? _selecionados.ToList();
                 CancelarModoInterativo();
-                int n = IfcEditor.MoverElementos(_modelo, _selecionados, delta);
+                int n = IfcEditor.MoverElementos(_modelo, alvo, delta);
                 ReconstruirCena3D(false);
                 AtualizarPainelPropriedades();
                 txtStatus.Text = string.Format("{0} elemento(s) movido(s) em ({1:0.#}, {2:0.#}, {3:0.#}) mm.", n, delta.X, delta.Y, delta.Z);
@@ -942,10 +1366,20 @@ namespace DLM.helix
 
         private void Window_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Escape && _modoInterativo != ModoInterativo.Nenhum)
+            if (e.Key == Key.Escape)
             {
-                CancelarModoInterativo();
-                txtStatus.Text = "Operacao cancelada.";
+                if (_modoInterativo != ModoInterativo.Nenhum)
+                {
+                    CancelarModoInterativo();
+                    txtStatus.Text = "Operacao cancelada.";
+                }
+                else if (_selecionados.Count > 0)
+                {
+                    _selecionados.Clear();
+                    AtualizarDestaqueSelecao();
+                    AtualizarPainelPropriedades();
+                    AtualizarContadores();
+                }
             }
         }
 
@@ -953,16 +1387,18 @@ namespace DLM.helix
         {
             if (_modelo == null || _modelo.Elementos.Count == 0) return;
 
+            var origens = IfcEditor.ListarOrigens(_modelo);
+
             var dlg = new Window
             {
-                Title = "Adicionar / Editar Atributo",
-                Width = 380,
-                Height = 250,
+                Title = "Adicionar / Editar Atributo nas Pecas",
+                Width = 420,
+                Height = 310,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 ResizeMode = ResizeMode.NoResize,
-                Background = new SolidColorBrush(Color.FromRgb(15, 23, 42)),
-                Foreground = Brushes.White
+                Background = new SolidColorBrush(Color.FromRgb(248, 250, 252)),
+                Foreground = new SolidColorBrush(Color.FromRgb(30, 41, 59))
             };
 
             var sp = new StackPanel { Margin = new Thickness(14) };
@@ -976,17 +1412,19 @@ namespace DLM.helix
             var tbValor = CriarCampoDialogo(grid, 2, "Valor:", "");
             sp.Children.Add(grid);
 
-            var chkTodas = new CheckBox
-            {
-                Content = string.Format("Aplicar em TODAS as pecas (desmarcado = {0} selecionadas)", _selecionados.Count),
-                IsChecked = _selecionados.Count == 0,
-                Foreground = Brushes.WhiteSmoke,
-                Margin = new Thickness(0, 4, 0, 12)
-            };
-            sp.Children.Add(chkTodas);
+            sp.Children.Add(new TextBlock { Text = "Aplicar em:", FontWeight = FontWeights.Bold, Margin = new Thickness(0, 2, 0, 4) });
+            var rbSel = new RadioButton { Content = string.Format("Somente na Selecao atual ({0} pecas)", _selecionados.Count), IsChecked = _selecionados.Count > 0, IsEnabled = _selecionados.Count > 0, Margin = new Thickness(0, 2, 0, 2) };
+            var rbOrig = new RadioButton { Content = "No IFC importado / grupo:", Margin = new Thickness(0, 2, 0, 2) };
+            var cbOrig = new ComboBox { ItemsSource = origens, SelectedIndex = origens.Count > 0 ? origens.Count - 1 : -1, Height = 24, Margin = new Thickness(20, 2, 0, 4) };
+            var rbTodas = new RadioButton { Content = "Em TODAS as pecas do modelo", IsChecked = _selecionados.Count == 0, Margin = new Thickness(0, 2, 0, 10) };
+
+            sp.Children.Add(rbSel);
+            sp.Children.Add(rbOrig);
+            sp.Children.Add(cbOrig);
+            sp.Children.Add(rbTodas);
 
             var botoes = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-            var btOk = new Button { Content = "Aplicar", IsDefault = true, Padding = new Thickness(14, 5, 14, 5), Margin = new Thickness(0, 0, 8, 0) };
+            var btOk = new Button { Content = "Aplicar", IsDefault = true, Padding = new Thickness(14, 5, 14, 5), Margin = new Thickness(0, 0, 8, 0), Background = new SolidColorBrush(Color.FromRgb(2, 132, 199)), Foreground = Brushes.White };
             btOk.Click += (s, ev) => { dlg.DialogResult = true; dlg.Close(); };
             var btCancel = new Button { Content = "Cancelar", IsCancel = true, Padding = new Thickness(10, 5, 10, 5) };
             botoes.Children.Add(btOk);
@@ -997,9 +1435,13 @@ namespace DLM.helix
             if (dlg.ShowDialog() != true) return;
             if (string.IsNullOrWhiteSpace(tbNome.Text)) return;
 
-            IEnumerable<IfcMalhaElemento> alvo = chkTodas.IsChecked == true
-                ? _modelo.Elementos.Where(el => !el.EhAbertura)
-                : (IEnumerable<IfcMalhaElemento>)_selecionados;
+            IEnumerable<IfcMalhaElemento> alvo;
+            if (rbSel.IsChecked == true)
+                alvo = _selecionados;
+            else if (rbOrig.IsChecked == true && cbOrig.SelectedItem != null)
+                alvo = IfcEditor.ObterElementosPorOrigem(_modelo, cbOrig.SelectedItem.ToString());
+            else
+                alvo = _modelo.Elementos.Where(el => !el.EhAbertura);
 
             int n = IfcEditor.DefinirAtributo(alvo, tbAba.Text, tbNome.Text, tbValor.Text);
             AtualizarPainelPropriedades();
@@ -1016,50 +1458,29 @@ namespace DLM.helix
             {
                 Title = "Agrupar Pecas por Propriedade",
                 Width = 390,
-                Height = 230,
+                Height = 235,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 ResizeMode = ResizeMode.NoResize,
-                Background = new SolidColorBrush(Color.FromRgb(15, 23, 42)),
-                Foreground = Brushes.White
+                Background = new SolidColorBrush(Color.FromRgb(248, 250, 252)),
+                Foreground = new SolidColorBrush(Color.FromRgb(30, 41, 59))
             };
 
             var sp = new StackPanel { Margin = new Thickness(14) };
             sp.Children.Add(new TextBlock { Text = "Escolha a propriedade em comum para criar o novo nivel na arvore:", Margin = new Thickness(0, 0, 0, 8), TextWrapping = TextWrapping.Wrap });
 
-            var cbProp = new ComboBox
-            {
-                ItemsSource = props,
-                IsEditable = true,
-                SelectedIndex = props.Count > 0 ? 0 : -1,
-                Height = 26,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
+            var cbProp = new ComboBox { ItemsSource = props, IsEditable = true, SelectedIndex = props.Count > 0 ? 0 : -1, Height = 26, Margin = new Thickness(0, 0, 0, 10) };
             sp.Children.Add(cbProp);
 
             sp.Children.Add(new TextBlock { Text = "Nome do novo nivel (opcional):", Margin = new Thickness(0, 0, 0, 4) });
-            var tbNivel = new TextBox
-            {
-                Height = 26,
-                Background = new SolidColorBrush(Color.FromRgb(30, 41, 59)),
-                Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(71, 85, 105)),
-                VerticalContentAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
+            var tbNivel = new TextBox { Height = 26, Background = Brushes.White, BorderBrush = new SolidColorBrush(Color.FromRgb(203, 213, 225)), VerticalContentAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 0, 0, 10) };
             sp.Children.Add(tbNivel);
 
-            var chkSubstituir = new CheckBox
-            {
-                Content = "Substituir organizacao atual da arvore",
-                IsChecked = true,
-                Foreground = Brushes.WhiteSmoke,
-                Margin = new Thickness(0, 0, 0, 10)
-            };
+            var chkSubstituir = new CheckBox { Content = "Substituir organizacao atual da arvore", IsChecked = true, Margin = new Thickness(0, 0, 0, 10) };
             sp.Children.Add(chkSubstituir);
 
             var botoes = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
-            var btOk = new Button { Content = "Agrupar", IsDefault = true, Padding = new Thickness(14, 5, 14, 5), Margin = new Thickness(0, 0, 8, 0) };
+            var btOk = new Button { Content = "Agrupar", IsDefault = true, Padding = new Thickness(14, 5, 14, 5), Margin = new Thickness(0, 0, 8, 0), Background = new SolidColorBrush(Color.FromRgb(2, 132, 199)), Foreground = Brushes.White };
             btOk.Click += (s, ev) => { dlg.DialogResult = true; dlg.Close(); };
             var btCancel = new Button { Content = "Cancelar", IsCancel = true, Padding = new Thickness(10, 5, 10, 5) };
             botoes.Children.Add(btOk);
@@ -1068,15 +1489,93 @@ namespace DLM.helix
 
             dlg.Content = sp;
             if (dlg.ShowDialog() != true) return;
+            if (string.IsNullOrWhiteSpace(cbProp.Text)) return;
 
-            string propEscolhida = cbProp.Text;
-            if (string.IsNullOrWhiteSpace(propEscolhida)) return;
-
-            var noRaiz = IfcEditor.AgruparPorPropriedade(_modelo, propEscolhida, tbNivel.Text, chkSubstituir.IsChecked == true);
+            var noRaiz = IfcEditor.AgruparPorPropriedade(_modelo, cbProp.Text, tbNivel.Text, chkSubstituir.IsChecked == true);
             ReconstruirArvore();
             AtualizarPainelPropriedades();
             if (noRaiz != null)
                 txtStatus.Text = string.Format("Agrupamento criado: {0}", noRaiz.Nome);
+        }
+
+        private async void BtnQuebrarPorEixos_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null || _modelo.Elementos.Count == 0) return;
+
+            if (_modelo.Grid == null || !_modelo.Grid.TemEixos)
+            {
+                MessageBox.Show("Nao ha eixos definidos no Grid. Abra 'Gerenciar Grid' para gerar ou adicionar os eixos primeiro.", "Quebrar IFC pelos Eixos", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var dlg = new Window
+            {
+                Title = "Quebrar IFC pelos Eixos do Grid",
+                Width = 400,
+                Height = 240,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                ResizeMode = ResizeMode.NoResize,
+                Background = new SolidColorBrush(Color.FromRgb(248, 250, 252)),
+                Foreground = new SolidColorBrush(Color.FromRgb(30, 41, 59))
+            };
+
+            var sp = new StackPanel { Margin = new Thickness(14) };
+            sp.Children.Add(new TextBlock { Text = "Como deseja dividir o modelo pelos eixos?", FontWeight = FontWeights.Bold, Margin = new Thickness(0, 0, 0, 8) });
+
+            var chkX = new CheckBox { Content = string.Format("Quebrar pelos Eixos X ({0} eixos)", _modelo.Grid.EixosX.Count), IsChecked = _modelo.Grid.EixosX.Count > 0, Margin = new Thickness(0, 3, 0, 3) };
+            var chkY = new CheckBox { Content = string.Format("Quebrar pelos Eixos Y ({0} eixos)", _modelo.Grid.EixosY.Count), IsChecked = _modelo.Grid.EixosY.Count > 0, Margin = new Thickness(0, 3, 0, 3) };
+            var chkGrid = new CheckBox { Content = "Exportar o Grid (IfcGrid) em cada arquivo gerado", IsChecked = _modelo.Grid.ExportarNoIfc, Margin = new Thickness(0, 8, 0, 14) };
+            sp.Children.Add(chkX);
+            sp.Children.Add(chkY);
+            sp.Children.Add(chkGrid);
+
+            var botoes = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right };
+            var btOk = new Button { Content = "Escolher Pasta e Quebrar...", IsDefault = true, Padding = new Thickness(14, 5, 14, 5), Margin = new Thickness(0, 0, 8, 0), Background = new SolidColorBrush(Color.FromRgb(2, 132, 199)), Foreground = Brushes.White };
+            btOk.Click += (s, ev) => { dlg.DialogResult = true; dlg.Close(); };
+            var btCancel = new Button { Content = "Cancelar", IsCancel = true, Padding = new Thickness(10, 5, 10, 5) };
+            botoes.Children.Add(btOk);
+            botoes.Children.Add(btCancel);
+            sp.Children.Add(botoes);
+
+            dlg.Content = sp;
+            if (dlg.ShowDialog() != true) return;
+            if (chkX.IsChecked != true && chkY.IsChecked != true) return;
+
+            string pastaDestino = null;
+            using (var fbd = new System.Windows.Forms.FolderBrowserDialog { Description = "Selecione a pasta para salvar os IFCs quebrados pelos eixos" })
+            {
+                if (fbd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                    pastaDestino = fbd.SelectedPath;
+            }
+            if (string.IsNullOrWhiteSpace(pastaDestino)) return;
+
+            MostrarCarregando(true, 40, "Quebrando IFC pelos eixos...");
+            try
+            {
+                var mod = _modelo;
+                var grid = _modelo.Grid;
+                bool qx = chkX.IsChecked == true;
+                bool qy = chkY.IsChecked == true;
+                bool incGrid = chkGrid.IsChecked == true;
+
+                var resultados = await Task.Run(() => IfcEditor.QuebrarPorEixos(mod, grid, pastaDestino, qx, qy, incGrid));
+                txtStatus.Text = string.Format("IFC quebrado em {0} arquivo(s) na pasta: {1}", resultados.Count, pastaDestino);
+                MessageBox.Show(
+                    string.Format("Quebra concluida! {0} arquivo(s) IFC gerado(s) em:\n{1}", resultados.Count, pastaDestino),
+                    "Quebrar IFC pelos Eixos",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Information);
+                Process.Start(new ProcessStartInfo(pastaDestino) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao quebrar IFC: " + ex.Message, "Quebrar IFC", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                MostrarCarregando(false, 0, "");
+            }
         }
 
         private async void BtnExportarDxfTudo_Click(object sender, RoutedEventArgs e)
@@ -1089,7 +1588,7 @@ namespace DLM.helix
         {
             if (_modelo == null || _selecionados.Count == 0)
             {
-                MessageBox.Show("Selecione ao menos um elemento para exportar em DXF.", "Exportar DXF", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("Selecione ao menos um elemento para exportar em DXF 3D.", "Exportar DXF 3D", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
             await ExportarDxfAsync(true);
@@ -1100,9 +1599,9 @@ namespace DLM.helix
             var sfd = new SaveFileDialog
             {
                 Title = apenasSelecao ? "Exportar Selecao para DXF 3D" : "Exportar Modelo para DXF 3D",
-                Filter = "Desenho DXF (*.dxf)|*.dxf",
+                Filter = "Desenho DXF 3D (*.dxf)|*.dxf",
                 FileName = (!string.IsNullOrWhiteSpace(_arquivoAtual) ? Path.GetFileNameWithoutExtension(_arquivoAtual) : "modelo")
-                    + (apenasSelecao ? "_selecao.dxf" : "_3d.dxf")
+                    + (apenasSelecao ? "_selecao_3d.dxf" : "_3d.dxf")
             };
             if (sfd.ShowDialog() != true) return;
 
@@ -1122,11 +1621,11 @@ namespace DLM.helix
                     qtd = await Task.Run(() => IfcExportadorDxf.ExportarTudoParaDxf(mod, dest, true, true, true));
                 }
 
-                txtStatus.Text = string.Format("DXF exportado ({0} elementos): {1}", qtd, dest);
+                txtStatus.Text = string.Format("DXF 3D exportado ({0} elementos): {1}", qtd, dest);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Erro ao exportar DXF: " + ex.Message, "Exportar DXF", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("Erro ao exportar DXF 3D: " + ex.Message, "Exportar DXF 3D", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -1136,28 +1635,10 @@ namespace DLM.helix
 
         private void BtnConfig_Click(object sender, RoutedEventArgs e)
         {
-            try
+            var dlg = new IfcConfigWindow { Owner = this };
+            if (dlg.ShowDialog() == true)
             {
-                var cfg = IfcConfiguracao.Atual;
-                string caminho = IfcConfiguracao.CaminhoArquivoPadrao;
-                if (!File.Exists(caminho))
-                    cfg.Salvar(caminho);
-
-                Process.Start(new ProcessStartInfo(caminho) { UseShellExecute = true });
-                var r = MessageBox.Show(
-                    "Arquivo de configuracao aberto:\n" + caminho + "\n\nApos editar e salvar as cores e o De-Para de propriedades, clique em Sim para recarregar agora.",
-                    "Configuracao IFC (Cores e De-Para)",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Information);
-                if (r == MessageBoxResult.Yes)
-                {
-                    IfcConfiguracao.Recarregar(caminho);
-                    txtStatus.Text = "Configuracao de cores e De-Para recarregada.";
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Erro ao abrir configuracao: " + ex.Message, "Configuracao IFC", MessageBoxButton.OK, MessageBoxImage.Error);
+                txtStatus.Text = "Configuracao de cores e De-Para salva e aplicada.";
             }
         }
 
@@ -1167,7 +1648,7 @@ namespace DLM.helix
 
         private static TextBox CriarCampoDialogo(Grid grid, int row, string rotulo, string valorInicial)
         {
-            var lbl = new TextBlock { Text = rotulo, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 3, 6, 3) };
+            var lbl = new TextBlock { Text = rotulo, VerticalAlignment = VerticalAlignment.Center, Margin = new Thickness(0, 3, 6, 3), FontWeight = FontWeights.SemiBold };
             Grid.SetRow(lbl, row);
             Grid.SetColumn(lbl, 0);
             grid.Children.Add(lbl);
@@ -1177,9 +1658,9 @@ namespace DLM.helix
                 Text = valorInicial,
                 Height = 25,
                 Margin = new Thickness(0, 3, 0, 3),
-                Background = new SolidColorBrush(Color.FromRgb(30, 41, 59)),
-                Foreground = Brushes.White,
-                BorderBrush = new SolidColorBrush(Color.FromRgb(71, 85, 105)),
+                Background = Brushes.White,
+                Foreground = new SolidColorBrush(Color.FromRgb(15, 23, 42)),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(203, 213, 225)),
                 VerticalContentAlignment = VerticalAlignment.Center,
                 Padding = new Thickness(5, 0, 5, 0)
             };
@@ -1228,4 +1709,3 @@ namespace DLM.helix
         #endregion
     }
 }
-

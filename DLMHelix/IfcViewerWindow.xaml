@@ -108,61 +108,178 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Barra Principal de Ferramentas (Tema Claro e Nitido) -->
-        <Border Grid.Row="0" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="0,0,0,1" Padding="8,6">
+        <!-- Menu Principal Organizado -->
+        <Menu Grid.Row="0" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="4,2" Foreground="#1E293B" FontSize="12">
+            <MenuItem Header="_Arquivo">
+                <MenuItem Header="Abrir IFC / DWG..." Click="BtnAbrir_Click" />
+                <MenuItem Header="Juntar outro IFC / DWG (ponto interativo)..." Click="BtnJuntarIfc_Click" />
+                <Separator />
+                <MenuItem Header="Salvar IFC Completo..." Click="BtnSalvarIfc_Click" />
+                <MenuItem Header="Exportar Selecao para IFC..." Click="BtnExportarIfcSelecao_Click" />
+                <Separator />
+                <MenuItem Header="Exportar DXF 3D (Tudo)..." Click="BtnExportarDxfTudo_Click" />
+                <MenuItem Header="Exportar DXF 3D (Selecao)..." Click="BtnExportarDxfSelecao_Click" />
+                <MenuItem Header="Exportar Vistas 2D pelos Eixos..." Click="BtnExportarVistas2D_Click" />
+                <Separator />
+                <MenuItem Header="Fechar" Click="MenuFechar_Click" />
+            </MenuItem>
+
+            <MenuItem Header="_Editar">
+                <MenuItem Header="Mover Selecao / IFC Importado..." Click="BtnMover_Click" />
+                <MenuItem Header="Adicionar Atributo nas Pecas..." Click="BtnAdicionarAtributo_Click" />
+                <MenuItem Header="Agrupar Pecas por Propriedade..." Click="BtnAgrupar_Click" />
+                <Separator />
+                <MenuItem Header="Selecionar Mesmo Perfil" Click="MenuSelecionarMesmoPerfil_Click" />
+                <MenuItem Header="Selecionar Mesmo Nivel/Grupo" Click="MenuSelecionarMesmoNivel_Click" />
+                <MenuItem Header="Inverter Selecao" Click="MenuInverterSelecao_Click" />
+            </MenuItem>
+
+            <MenuItem Header="E_xibir">
+                <MenuItem Header="Enquadrar Tudo" Click="BtnZoomExtents_Click" />
+                <MenuItem Header="Enquadrar Selecao" Click="MenuEnquadrarSelecao_Click" />
+                <Separator />
+                <MenuItem Header="Vista Isometrica" Click="BtnVistaIso_Click" />
+                <MenuItem Header="Vista Frontal" Click="BtnVistaFrontal_Click" />
+                <MenuItem Header="Vista Posterior" Click="BtnVistaPosterior_Click" />
+                <MenuItem Header="Vista Superior" Click="BtnVistaSuperior_Click" />
+                <MenuItem Header="Vista Inferior" Click="BtnVistaInferior_Click" />
+                <MenuItem Header="Vista Esquerda" Click="BtnVistaEsquerda_Click" />
+                <MenuItem Header="Vista Direita" Click="BtnVistaDireita_Click" />
+                <Separator />
+                <MenuItem Header="Isolar Selecao" Click="BtnIsolar_Click" />
+                <MenuItem Header="Ocultar Selecao" Click="BtnOcultar_Click" />
+                <MenuItem Header="Mostrar Tudo" Click="BtnMostrarTudo_Click" />
+            </MenuItem>
+
+            <MenuItem Header="Ei_xos e Grid">
+                <MenuItem Header="Lista / Editar Eixos..." Click="BtnGerenciarGrid_Click" />
+                <MenuItem Header="Remapear Eixos do Modelo 3D" Click="MenuRemapearEixos_Click" />
+                <Separator />
+                <MenuItem Header="Exportar Vistas 2D pelos Eixos..." Click="BtnExportarVistas2D_Click" />
+                <MenuItem Header="Quebrar IFC pelos Eixos..." Click="BtnQuebrarPorEixos_Click" />
+            </MenuItem>
+
+            <MenuItem Header="_Ferramentas">
+                <MenuItem Header="Medir Distancia 3D (2 Pontos)" Click="BtnMedir_Click" />
+                <Separator />
+                <MenuItem Header="Opcoes e Configuracoes (Cores, De-Para, Grid, 3D)..." Click="BtnConfig_Click" />
+            </MenuItem>
+        </Menu>
+
+        <!-- Barra de Ferramentas Visual com Icones Vetoriais Nitidos -->
+        <Border Grid.Row="1" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="0,0,0,1" Padding="8,5">
             <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Style="{StaticResource BtnDestaque}" Content="Abrir IFC / DWG" Click="BtnAbrir_Click" ToolTip="Abrir arquivo IFC ou DWG" />
-                <Button Style="{StaticResource BtnBarra}" Content="Salvar IFC" Click="BtnSalvarIfc_Click" ToolTip="Salvar modelo completo em IFC (inclui Grid se habilitado)" />
-                <Button Style="{StaticResource BtnBarra}" Content="IFC Selecao" Click="BtnExportarIfcSelecao_Click" ToolTip="Exportar somente os elementos selecionados para IFC" />
+                <!-- Arquivo -->
+                <Button Style="{StaticResource BtnDestaque}" Click="BtnAbrir_Click" ToolTip="Abrir arquivo IFC ou DWG">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" Stroke="White" StrokeThickness="1.6" Data="M1,3 L5,3 L6.5,5 L13,5 L13,12 L1,12 Z" />
+                        <TextBlock Text="Abrir" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource BtnBarra}" Click="BtnSalvarIfc_Click" ToolTip="Salvar modelo completo em IFC">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" Stroke="#1E293B" StrokeThickness="1.5" Data="M2,1 L10,1 L13,4 L13,13 L2,13 Z M4,1 L4,5 L9,5 L9,1 M4,13 L4,8 L11,8 L11,13" />
+                        <TextBlock Text="Salvar" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource BtnBarra}" Click="BtnJuntarIfc_Click" ToolTip="Juntar outro IFC/DWG escolhendo ponto interativo no 3D">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" Stroke="#0284C7" StrokeThickness="1.7" Data="M7,2 L7,12 M2,7 L12,7" />
+                        <TextBlock Text="Juntar IFC" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
                 <Border Style="{StaticResource SepBarra}" />
 
-                <Button Style="{StaticResource BtnBarra}" Content="Enquadrar" Click="BtnZoomExtents_Click" />
-                <Button Style="{StaticResource BtnBarra}" Content="Iso" Click="BtnVistaIso_Click" />
-                <Button Style="{StaticResource BtnBarra}" Content="Frontal" Click="BtnVistaFrontal_Click" />
-                <Button Style="{StaticResource BtnBarra}" Content="Posterior" Click="BtnVistaPosterior_Click" />
-                <Button Style="{StaticResource BtnBarra}" Content="Superior" Click="BtnVistaSuperior_Click" />
-                <Button Style="{StaticResource BtnBarra}" Content="Inferior" Click="BtnVistaInferior_Click" />
-                <Button Style="{StaticResource BtnBarra}" Content="Esquerda" Click="BtnVistaEsquerda_Click" />
-                <Button Style="{StaticResource BtnBarra}" Content="Direita" Click="BtnVistaDireita_Click" />
+                <!-- Vistas -->
+                <Button Style="{StaticResource BtnBarra}" Click="BtnZoomExtents_Click" ToolTip="Enquadrar Tudo (Zoom Extents)">
+                    <Path Width="13" Height="13" Stretch="Uniform" Stroke="#1E293B" StrokeThickness="1.6" Data="M2,5 L2,2 L5,2 M9,2 L12,2 L12,5 M12,9 L12,12 L9,12 M5,12 L2,12 L2,9" />
+                </Button>
+                <Button Style="{StaticResource BtnBarra}" Click="BtnVistaIso_Click" ToolTip="Vista Isometrica">
+                    <Path Width="13" Height="13" Stretch="Uniform" Stroke="#1E293B" StrokeThickness="1.5" Data="M7,1.5 L12.5,4.5 L12.5,10.5 L7,13.5 L1.5,10.5 L1.5,4.5 Z M1.5,4.5 L7,7.5 L12.5,4.5 M7,7.5 L7,13.5" />
+                </Button>
+                <Button Style="{StaticResource BtnBarra}" Content="F" Width="28" Padding="0" Click="BtnVistaFrontal_Click" ToolTip="Vista Frontal" />
+                <Button Style="{StaticResource BtnBarra}" Content="S" Width="28" Padding="0" Click="BtnVistaSuperior_Click" ToolTip="Vista Superior" />
+                <Button Style="{StaticResource BtnBarra}" Content="L" Width="28" Padding="0" Click="BtnVistaEsquerda_Click" ToolTip="Vista Lateral Esquerda" />
 
                 <Border Style="{StaticResource SepBarra}" />
 
-                <ToggleButton x:Name="tglCaixaSelecao" Style="{StaticResource TglBarra}" Content="Caixa Selecao" IsChecked="False" ToolTip="Arraste com o botao esquerdo para selecionar por caixa (ou segure Shift + arrastar a qualquer momento)" />
-                <ToggleButton x:Name="tglArestas" Style="{StaticResource TglBarra}" Content="Arestas" IsChecked="True" Click="TglArestas_Click" />
-                <ToggleButton x:Name="tglPerspectiva" Style="{StaticResource TglBarra}" Content="Perspectiva" IsChecked="False" Click="TglPerspectiva_Click" ToolTip="Alternar entre camera Ortografica e Perspectiva" />
-                <ToggleButton x:Name="tglRaioX" Style="{StaticResource TglBarra}" Content="Raio-X" IsChecked="False" Click="TglRaioX_Click" ToolTip="Modo Raio-X / Fantasma: deixa pecas nao selecionadas semitransparentes (estilo xBimXplorer)" />
-                <ToggleButton x:Name="tglCorte" Style="{StaticResource TglBarra}" Content="Plano Corte" IsChecked="False" Click="TglCorte_Click" ToolTip="Ativar painel de Plano de Corte (Section / Cut Plane em X, Y, Z)" />
-                <Button Style="{StaticResource BtnBarra}" Content="Medir" Click="BtnMedir_Click" ToolTip="Medir distancia 3D entre 2 pontos (dX, dY, dZ e L em mm)" />
-                <ToggleButton x:Name="tglGrid" Style="{StaticResource TglBarra}" Content="Grid" IsChecked="True" Click="TglGrid_Click" ToolTip="Mostrar ou ocultar o Grid de eixos" />
-                <Button Style="{StaticResource BtnBarra}" Content="Eixos / Grid" Click="BtnGerenciarGrid_Click" ToolTip="Abrir tela da lista de eixos para editar, adicionar, remover ou Remapear Eixos do 3D" />
-                <Button Style="{StaticResource BtnBarra}" Content="Vistas 2D" Click="BtnExportarVistas2D_Click" ToolTip="Exportar vistas 2D (DXF) pelos eixos escolhidos com profundidade configuravel" />
+                <!-- Visualizacao -->
+                <ToggleButton x:Name="tglArestas" Style="{StaticResource TglBarra}" Content="Arestas" IsChecked="True" Click="TglArestas_Click" ToolTip="Mostrar/Ocultar arestas" />
+                <ToggleButton x:Name="tglPerspectiva" Style="{StaticResource TglBarra}" Content="3D Persp" IsChecked="False" Click="TglPerspectiva_Click" ToolTip="Alternar camera Ortografica / Perspectiva" />
+                <ToggleButton x:Name="tglRaioX" Style="{StaticResource TglBarra}" Content="Raio-X" IsChecked="False" Click="TglRaioX_Click" ToolTip="Modo Raio-X / Fantasma" />
+                <ToggleButton x:Name="tglCorte" Style="{StaticResource TglBarra}" Content="Corte" IsChecked="False" Click="TglCorte_Click" ToolTip="Plano de Corte (Cut Plane X, Y, Z)" />
+                <ToggleButton x:Name="tglGrid" Style="{StaticResource TglBarra}" Content="Grid" IsChecked="True" Click="TglGrid_Click" ToolTip="Mostrar/Ocultar Grid de eixos" />
 
                 <Border Style="{StaticResource SepBarra}" />
 
-                <Button Style="{StaticResource BtnBarra}" Content="Mover" Click="BtnMover_Click" ToolTip="Mover selecao, todo um IFC importado ou todo o modelo (Delta ou 2 pontos)" />
-                <Button Style="{StaticResource BtnBarra}" Content="Juntar IFC" Click="BtnJuntarIfc_Click" ToolTip="Importar outro IFC/DWG escolhendo ponto interativo no 3D" />
-                <Button Style="{StaticResource BtnBarra}" Content="+ Atributo" Click="BtnAdicionarAtributo_Click" ToolTip="Inserir atributo na selecao, no IFC importado ou em todas as pecas" />
-                <Button Style="{StaticResource BtnBarra}" Content="Agrupar" Click="BtnAgrupar_Click" ToolTip="Agrupar pecas por propriedade em comum criando novo nivel na arvore" />
-                <Button Style="{StaticResource BtnBarra}" Content="Quebrar p/ Eixos" Click="BtnQuebrarPorEixos_Click" ToolTip="Quebrar o IFC em arquivos separados pelos eixos do Grid" />
+                <!-- Edicao & Medicao -->
+                <Button Style="{StaticResource BtnBarra}" Click="BtnMover_Click" ToolTip="Mover selecao, IFC importado ou modelo todo">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#1E293B" StrokeThickness="1.5" Data="M7,1 L7,13 M1,7 L13,7 M5,3 L7,1 L9,3 M5,11 L7,13 L9,11 M3,5 L1,7 L3,9 M11,5 L13,7 L11,9" />
+                        <TextBlock Text="Mover" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource BtnBarra}" Click="BtnAdicionarAtributo_Click" ToolTip="Inserir atributo na selecao, no IFC importado ou em tudo">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#1E293B" StrokeThickness="1.5" Data="M2,2 L8,2 L13,7 L7,13 L2,8 Z M5,5 L5.5,5.5" />
+                        <TextBlock Text="+Atributo" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource BtnBarra}" Click="BtnAgrupar_Click" ToolTip="Agrupar pecas por propriedade em comum criando novo nivel na arvore">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#1E293B" StrokeThickness="1.5" Data="M2,2 L6,2 L6,6 L2,6 Z M8,2 L12,2 L12,6 L8,6 Z M8,8 L12,8 L12,12 L8,12 Z M4,6 L4,10 L8,10" />
+                        <TextBlock Text="Agrupar" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource BtnBarra}" Click="BtnMedir_Click" ToolTip="Medir distancia 3D entre 2 pontos">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#DC2626" StrokeThickness="1.6" Data="M2,11 L11,2 M2,11 L5,11 M2,11 L2,8 M11,2 L8,2 M11,2 L11,5" />
+                        <TextBlock Text="Medir" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
                 <Border Style="{StaticResource SepBarra}" />
 
-                <Button Style="{StaticResource BtnBarra}" Content="DXF 3D Tudo" Click="BtnExportarDxfTudo_Click" ToolTip="Exportar todo o modelo visivel para DXF 3D" />
-                <Button Style="{StaticResource BtnBarra}" Content="DXF 3D Selecao" Click="BtnExportarDxfSelecao_Click" ToolTip="Exportar apenas os elementos selecionados para DXF 3D" />
+                <!-- Eixos, Quebra e Vistas 2D -->
+                <Button Style="{StaticResource BtnBarra}" Click="BtnGerenciarGrid_Click" ToolTip="Lista de Eixos (editar nomes, distancias, adicionar/remover, Remapear Eixos)">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#0284C7" StrokeThickness="1.5" Data="M4,1 L4,13 M10,1 L10,13 M1,4 L13,4 M1,10 L13,10" />
+                        <TextBlock Text="Eixos" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource BtnBarra}" Click="BtnExportarVistas2D_Click" ToolTip="Exportar vistas 2D (DXF) pelos eixos escolhidos com profundidade">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#0284C7" StrokeThickness="1.5" Data="M2,2 L12,2 L12,12 L2,12 Z M2,6 L12,6 M6,6 L6,12" />
+                        <TextBlock Text="Vistas 2D" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <Button Style="{StaticResource BtnBarra}" Click="BtnQuebrarPorEixos_Click" ToolTip="Quebrar IFC em arquivos separados pelos eixos">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#1E293B" StrokeThickness="1.5" Data="M2,2 L6,2 L6,12 L2,12 Z M8,2 L12,2 L12,12 L8,12 Z" />
+                        <TextBlock Text="Quebrar" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
 
                 <Border Style="{StaticResource SepBarra}" />
 
-                <Button Style="{StaticResource BtnBarra}" Content="Configurar Cores/De-Para" Click="BtnConfig_Click" ToolTip="Abrir tela de configuracao de cores e De-Para de propriedades de saida" />
+                <!-- Opcoes -->
+                <Button Style="{StaticResource BtnBarra}" Click="BtnConfig_Click" ToolTip="Tela de Opcoes completa (Cores, De-Para, Grid, 3D, Vistas 2D)">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#475569" StrokeThickness="1.5" Data="M7,4.5 A2.5,2.5 0 1 0 7,9.5 A2.5,2.5 0 1 0 7,4.5 M7,1 L7,3 M7,11 L7,13 M1,7 L3,7 M11,7 L13,7 M2.8,2.8 L4.2,4.2 M9.8,9.8 L11.2,11.2 M11.2,2.8 L9.8,4.2 M4.2,9.8 L2.8,11.2" />
+                        <TextBlock Text="Opcoes" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
             </WrapPanel>
         </Border>
 
         <!-- Banner Interativo (Modo Juntar IFC / Modo Mover / Modo Medir) -->
-        <StackPanel Grid.Row="1">
+        <StackPanel Grid.Row="2">
             <Border x:Name="pnlModoInterativo" Background="#E0F2FE" BorderBrush="#0284C7" BorderThickness="0,0,0,1" Padding="10,6" Visibility="Collapsed">
                 <DockPanel LastChildFill="False">
                     <TextBlock x:Name="txtInstrucaoInterativa"
@@ -205,7 +322,7 @@
         </StackPanel>
 
         <!-- Area Principal: Arvore | Viewport 3D | Propriedades -->
-        <Grid Grid.Row="2">
+        <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="290" MinWidth="180" />
                 <ColumnDefinition Width="4" />
@@ -401,9 +518,9 @@
         </Grid>
 
         <!-- Barra de Status -->
-        <Border Grid.Row="3" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="0,1,0,0" Padding="10,4">
+        <Border Grid.Row="4" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="0,1,0,0" Padding="10,4">
             <DockPanel>
-                <TextBlock x:Name="txtStatus" DockPanel.Dock="Left" Text="Pronto. Dica: Shift+Arrastar faz caixa de selecao; Botao Direito abre menu de acoes." Foreground="#475569" FontSize="11.5" />
+                <TextBlock x:Name="txtStatus" DockPanel.Dock="Left" Text="Pronto. Arraste com o botao esquerdo para caixa de selecao (Azul=Window, Verde=Crossing); Botao direito abre menu." Foreground="#475569" FontSize="11.5" />
                 <TextBlock x:Name="txtContadores" DockPanel.Dock="Right" Text="" Foreground="#64748B" FontSize="11.5" FontWeight="SemiBold" />
             </DockPanel>
         </Border>

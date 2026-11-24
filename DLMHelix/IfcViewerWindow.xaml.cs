@@ -83,6 +83,37 @@ namespace DLM.helix
         public IfcViewerWindow()
         {
             InitializeComponent();
+            AplicarConfiguracoesVisuais(false);
+        }
+
+        private void AplicarConfiguracoesVisuais(bool reconstruirCena)
+        {
+            var cfg = IfcConfiguracao.Atual;
+            if (tglArestas != null) tglArestas.IsChecked = cfg.MostrarArestasPadrao;
+            if (tglGrid != null) tglGrid.IsChecked = cfg.MostrarGridPadrao;
+            if (tglPerspectiva != null && tglPerspectiva.IsChecked != cfg.CameraPerspectivaPadrao)
+            {
+                tglPerspectiva.IsChecked = cfg.CameraPerspectivaPadrao;
+                TglPerspectiva_Click(null, null);
+            }
+
+            IfcCor cTopo, cBase;
+            Color colTopo = IfcConfiguracao.TentarParseHex(cfg.CorFundoTopo, out cTopo)
+                ? Color.FromRgb(ClampByte(cTopo.R * 255), ClampByte(cTopo.G * 255), ClampByte(cTopo.B * 255))
+                : Color.FromRgb(239, 244, 249);
+            Color colBase = IfcConfiguracao.TentarParseHex(cfg.CorFundoBase, out cBase)
+                ? Color.FromRgb(ClampByte(cBase.R * 255), ClampByte(cBase.G * 255), ClampByte(cBase.B * 255))
+                : Color.FromRgb(215, 225, 236);
+
+            if (gridViewport != null)
+            {
+                var grad = new LinearGradientBrush(colTopo, colBase, new Point(0, 0), new Point(0, 1));
+                grad.Freeze();
+                gridViewport.Background = grad;
+            }
+
+            if (reconstruirCena && _modelo != null)
+                ReconstruirCena3D(false);
         }
 
         /// <summary>
@@ -601,39 +632,17 @@ namespace DLM.helix
                 return;
             }
 
-            bool modoCaixa = (tglCaixaSelecao != null && tglCaixaSelecao.IsChecked == true)
-                             || (Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift;
-
-            if (modoCaixa)
-            {
-                _arrastandoCaixa = true;
-                _pontoInicioCaixa = e.GetPosition(gridViewport);
-                Canvas.SetLeft(rectSelecao, _pontoInicioCaixa.X);
-                Canvas.SetTop(rectSelecao, _pontoInicioCaixa.Y);
-                rectSelecao.Width = 0;
-                rectSelecao.Height = 0;
-                rectSelecao.Visibility = Visibility.Visible;
-                vp3D.CaptureMouse();
-                e.Handled = true;
-                return;
-            }
-
-            // Selecao por clique direto na peca
-            bool multi = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
-            IfcMalhaElemento atingido = HitTestElemento(mousePos);
-
-            if (!multi) _selecionados.Clear();
-            if (atingido != null)
-            {
-                if (multi && _selecionados.Contains(atingido))
-                    _selecionados.Remove(atingido);
-                else
-                    _selecionados.Add(atingido);
-            }
-
-            AtualizarDestaqueSelecao();
-            AtualizarPainelPropriedades();
-            AtualizarContadores();
+            // Caixa de selecao SEMPRE ativa no botao esquerdo:
+            // se arrastar (>= 5 px) abre a caixa; se clicar (< 5 px) seleciona a peca clicada.
+            _arrastandoCaixa = true;
+            _pontoInicioCaixa = e.GetPosition(gridViewport);
+            Canvas.SetLeft(rectSelecao, _pontoInicioCaixa.X);
+            Canvas.SetTop(rectSelecao, _pontoInicioCaixa.Y);
+            rectSelecao.Width = 0;
+            rectSelecao.Height = 0;
+            rectSelecao.Visibility = Visibility.Collapsed;
+            vp3D.CaptureMouse();
+            e.Handled = true;
         }
 
         private void Vp3D_PreviewMouseMove(object sender, MouseEventArgs e)
@@ -646,24 +655,28 @@ namespace DLM.helix
             double w = Math.Abs(atual.X - _pontoInicioCaixa.X);
             double h = Math.Abs(atual.Y - _pontoInicioCaixa.Y);
 
-            bool crossing = atual.X < _pontoInicioCaixa.X;
-            if (crossing)
+            if (w >= 5 || h >= 5)
             {
-                rectSelecao.Stroke = new SolidColorBrush(Color.FromRgb(22, 163, 74));
-                rectSelecao.Fill = new SolidColorBrush(Color.FromArgb(45, 34, 197, 94));
-                rectSelecao.StrokeDashArray = new DoubleCollection { 4, 2 };
-            }
-            else
-            {
-                rectSelecao.Stroke = new SolidColorBrush(Color.FromRgb(37, 99, 235));
-                rectSelecao.Fill = new SolidColorBrush(Color.FromArgb(45, 59, 130, 246));
-                rectSelecao.StrokeDashArray = null;
-            }
+                rectSelecao.Visibility = Visibility.Visible;
+                bool crossing = atual.X < _pontoInicioCaixa.X;
+                if (crossing)
+                {
+                    rectSelecao.Stroke = new SolidColorBrush(Color.FromRgb(22, 163, 74));
+                    rectSelecao.Fill = new SolidColorBrush(Color.FromArgb(45, 34, 197, 94));
+                    rectSelecao.StrokeDashArray = new DoubleCollection { 4, 2 };
+                }
+                else
+                {
+                    rectSelecao.Stroke = new SolidColorBrush(Color.FromRgb(37, 99, 235));
+                    rectSelecao.Fill = new SolidColorBrush(Color.FromArgb(45, 59, 130, 246));
+                    rectSelecao.StrokeDashArray = null;
+                }
 
-            Canvas.SetLeft(rectSelecao, x);
-            Canvas.SetTop(rectSelecao, y);
-            rectSelecao.Width = w;
-            rectSelecao.Height = h;
+                Canvas.SetLeft(rectSelecao, x);
+                Canvas.SetTop(rectSelecao, y);
+                rectSelecao.Width = w;
+                rectSelecao.Height = h;
+            }
             e.Handled = true;
         }
 
@@ -682,9 +695,29 @@ namespace DLM.helix
             double y2 = Math.Max(_pontoInicioCaixa.Y, fim.Y);
             bool crossing = fim.X < _pontoInicioCaixa.X;
 
-            if (x2 - x1 > 4 && y2 - y1 > 4)
+            if (x2 - x1 >= 5 || y2 - y1 >= 5)
             {
-                SelecionarPorCaixa(new Rect(x1, y1, x2 - x1, y2 - y1), crossing);
+                SelecionarPorCaixa(new Rect(x1, y1, Math.Max(1, x2 - x1), Math.Max(1, y2 - y1)), crossing);
+            }
+            else
+            {
+                // Clique simples -> seleciona peca sob o cursor
+                Point mousePos = e.GetPosition(vp3D.Viewport);
+                bool multi = (Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control;
+                IfcMalhaElemento atingido = HitTestElemento(mousePos);
+
+                if (!multi) _selecionados.Clear();
+                if (atingido != null)
+                {
+                    if (multi && _selecionados.Contains(atingido))
+                        _selecionados.Remove(atingido);
+                    else
+                        _selecionados.Add(atingido);
+                }
+
+                AtualizarDestaqueSelecao();
+                AtualizarPainelPropriedades();
+                AtualizarContadores();
             }
             e.Handled = true;
         }
@@ -1920,8 +1953,20 @@ namespace DLM.helix
             var dlg = new IfcConfigWindow { Owner = this };
             if (dlg.ShowDialog() == true)
             {
-                txtStatus.Text = "Configuracao de cores e De-Para salva e aplicada.";
+                AplicarConfiguracoesVisuais(true);
+                txtStatus.Text = "Opcoes e configuracoes salvas e aplicadas.";
             }
+        }
+
+        private void MenuFechar_Click(object sender, RoutedEventArgs e) => Close();
+
+        private void MenuRemapearEixos_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null) return;
+            _modelo.Grid = IfcGrid.RemapearEixos(_modelo, IfcConfiguracao.Atual.ToleranciaEixosMm);
+            RenderizarGrid3D();
+            txtStatus.Text = string.Format("Eixos remapeados (tolerancia {0:0.#} mm): {1} eixo(s) X, {2} eixo(s) Y.",
+                IfcConfiguracao.Atual.ToleranciaEixosMm, _modelo.Grid.EixosX.Count, _modelo.Grid.EixosY.Count);
         }
 
         #endregion

@@ -1,9 +1,9 @@
 <Window x:Class="DLM.helix.IfcConfigWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Configuracao IFC - Cores e De-Para de Propriedades"
-        Width="780"
-        Height="580"
+        Title="Opcoes e Configuracoes - Visualizador e Motor IFC"
+        Width="820"
+        Height="620"
         WindowStartupLocation="CenterOwner"
         Background="#F8FAFC"
         Foreground="#1E293B">
@@ -14,7 +14,115 @@
         </Grid.RowDefinitions>
 
         <TabControl Grid.Row="0" Background="White" BorderBrush="#CBD5E1">
-            <!-- Aba 1: Cores -->
+            <!-- Aba 1: Opcoes Gerais (Visualizacao 3D, Grid/Eixos, Vistas 2D, Exportacao IFC) -->
+            <TabItem Header="Geral / 3D / Grid / Vistas 2D">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="12">
+                    <StackPanel>
+                        <!-- Grupo: Grid / Eixos -->
+                        <GroupBox Header="Grid e Eixos Estruturais" Margin="0,0,0,10" Padding="8" BorderBrush="#CBD5E1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="230" />
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Tolerancia minima entre eixos (mm):" VerticalAlignment="Center" Margin="0,3" />
+                                <TextBox x:Name="txtTolEixos" Grid.Row="0" Grid.Column="1" Height="24" VerticalContentAlignment="Center" Padding="4,0" Margin="0,3" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Nao cria 2 eixos se a distancia for &lt;= tolerancia (padrao 500 mm)" Foreground="#64748B" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Folga / extensao das linhas (mm):" VerticalAlignment="Center" Margin="0,3" />
+                                <TextBox x:Name="txtFolgaGrid" Grid.Row="1" Grid.Column="1" Height="24" VerticalContentAlignment="Center" Padding="4,0" Margin="0,3" />
+
+                                <WrapPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="0,6,0,0">
+                                    <CheckBox x:Name="chkMostrarGridPadrao" Content="Mostrar Grid automaticamente ao abrir modelo" Margin="0,0,18,0" />
+                                    <CheckBox x:Name="chkExportarGridPadrao" Content="Exportar Grid (IfcGrid) junto com o IFC por padrao" />
+                                </WrapPanel>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Grupo: Visualizacao 3D -->
+                        <GroupBox Header="Visualizacao 3D" Margin="0,0,0,10" Padding="8" BorderBrush="#CBD5E1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="230" />
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="160" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Espessura arestas principais:" VerticalAlignment="Center" Margin="0,3" />
+                                <TextBox x:Name="txtEspArestas" Grid.Row="0" Grid.Column="1" Height="24" VerticalContentAlignment="Center" Padding="4,0" Margin="0,3" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Espessura furos/recortes:" VerticalAlignment="Center" Margin="14,3,0,3" />
+                                <TextBox x:Name="txtEspFuros" Grid.Row="0" Grid.Column="3" Width="90" HorizontalAlignment="Left" Height="24" VerticalContentAlignment="Center" Padding="4,0" Margin="0,3" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Cor fundo viewport (Topo / Base):" VerticalAlignment="Center" Margin="0,3" />
+                                <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal" Margin="0,3">
+                                    <Button x:Name="btnCorFundoTopo" Width="70" Height="24" Content="Topo" Click="BtnCorFundoTopo_Click" Margin="0,0,6,0" BorderBrush="#64748B" />
+                                    <TextBox x:Name="txtCorFundoTopo" Width="80" Height="24" VerticalContentAlignment="Center" Padding="4,0" Margin="0,0,16,0" />
+                                    <Button x:Name="btnCorFundoBase" Width="70" Height="24" Content="Base" Click="BtnCorFundoBase_Click" Margin="0,0,6,0" BorderBrush="#64748B" />
+                                    <TextBox x:Name="txtCorFundoBase" Width="80" Height="24" VerticalContentAlignment="Center" Padding="4,0" />
+                                </StackPanel>
+
+                                <WrapPanel Grid.Row="2" Grid.ColumnSpan="4" Margin="0,6,0,0">
+                                    <CheckBox x:Name="chkMostrarArestasPadrao" Content="Mostrar arestas por padrao" Margin="0,0,16,0" />
+                                    <CheckBox x:Name="chkPerspectivaPadrao" Content="Abrir em camera Perspectiva" Margin="0,0,16,0" />
+                                    <CheckBox x:Name="chkUsarSpecular" Content="Iluminacao especular (brilho metalico)" />
+                                </WrapPanel>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Grupo: Vistas 2D -->
+                        <GroupBox Header="Exportacao de Vistas 2D (DXF)" Margin="0,0,0,10" Padding="8" BorderBrush="#CBD5E1">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="230" />
+                                    <ColumnDefinition Width="120" />
+                                    <ColumnDefinition Width="160" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Profundidade padrao atras (-) mm:" VerticalAlignment="Center" Margin="0,3" />
+                                <TextBox x:Name="txtProfAtras" Grid.Row="0" Grid.Column="1" Height="24" VerticalContentAlignment="Center" Padding="4,0" Margin="0,3" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" Text="Profundidade frente (+) mm:" VerticalAlignment="Center" Margin="14,3,0,3" />
+                                <TextBox x:Name="txtProfFrente" Grid.Row="0" Grid.Column="3" Width="90" HorizontalAlignment="Left" Height="24" VerticalContentAlignment="Center" Padding="4,0" Margin="0,3" />
+
+                                <WrapPanel Grid.Row="1" Grid.ColumnSpan="4" Margin="0,6,0,0">
+                                    <CheckBox x:Name="chkV2DEixos" Content="Incluir eixos cruzados e bolhas" Margin="0,0,16,0" />
+                                    <CheckBox x:Name="chkV2DCotas" Content="Incluir cotas entre eixos" Margin="0,0,16,0" />
+                                    <CheckBox x:Name="chkV2DFuros" Content="Incluir furos e recortes" />
+                                </WrapPanel>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Grupo: Exportacao IFC -->
+                        <GroupBox Header="Exportacao IFC (Elementos Padrao)" Padding="8" BorderBrush="#CBD5E1">
+                            <WrapPanel Orientation="Horizontal">
+                                <CheckBox x:Name="chkExpChapas" Content="Chapas" Margin="0,0,18,0" />
+                                <CheckBox x:Name="chkExpPerfis" Content="Perfis" Margin="0,0,18,0" />
+                                <CheckBox x:Name="chkExpFuros" Content="Furos e Recortes" Margin="0,0,18,0" />
+                                <CheckBox x:Name="chkExpParafusos" Content="Parafusos, Porcas e Arruelas" />
+                            </WrapPanel>
+                        </GroupBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Aba 2: Cores -->
             <TabItem Header="Cores das Pecas">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -66,12 +174,12 @@
 
                     <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
                         <Button Content="+ Nova Categoria" Click="BtnAdicionarCor_Click" Padding="10,4" Margin="0,0,8,0" />
-                        <Button Content="Restaurar Cores Padrao" Click="BtnRestaurarPadrao_Click" Padding="10,4" />
+                        <Button Content="Restaurar Tudo Padrao" Click="BtnRestaurarPadrao_Click" Padding="10,4" />
                     </StackPanel>
                 </Grid>
             </TabItem>
 
-            <!-- Aba 2: De-Para de Propriedades -->
+            <!-- Aba 3: De-Para de Propriedades -->
             <TabItem Header="De-Para de Propriedades">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -122,7 +230,7 @@
                 </Grid>
             </TabItem>
 
-            <!-- Aba 3: Propriedades Fixas -->
+            <!-- Aba 4: Propriedades Fixas -->
             <TabItem Header="Propriedades Fixas Globais">
                 <Grid Margin="10">
                     <Grid.RowDefinitions>
@@ -175,4 +283,3 @@
         </DockPanel>
     </Grid>
 </Window>
-

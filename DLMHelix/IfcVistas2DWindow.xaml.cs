@@ -42,6 +42,13 @@ namespace DLM.helix
             InitializeComponent();
             _modelo = modelo;
 
+            var cfg = IfcConfiguracao.Atual;
+            txtProfAtras.Text = cfg.ProfundidadeVista2DAtrasMm.ToString("0.#", CultureInfo.InvariantCulture);
+            txtProfFrente.Text = cfg.ProfundidadeVista2DFrenteMm.ToString("0.#", CultureInfo.InvariantCulture);
+            chkEixosCruzados.IsChecked = cfg.IncluirEixosCruzadosVista2D;
+            chkCotas.IsChecked = cfg.IncluirCotasVista2D;
+            chkFuros.IsChecked = cfg.IncluirFurosRecortesVista2D;
+
             if (_modelo != null && !string.IsNullOrWhiteSpace(_modelo.Arquivo))
                 txtPrefixo.Text = Path.GetFileNameWithoutExtension(_modelo.Arquivo);
 

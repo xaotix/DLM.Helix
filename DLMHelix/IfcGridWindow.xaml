@@ -1,9 +1,9 @@
 <Window x:Class="DLM.helix.IfcGridWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Gerenciar Grid / Eixos Estruturais"
-        Width="760"
-        Height="540"
+        Title="Lista e Gerenciamento de Eixos / Grid"
+        Width="860"
+        Height="560"
         WindowStartupLocation="CenterOwner"
         Background="#F8FAFC"
         Foreground="#1E293B">
@@ -26,7 +26,7 @@
             </WrapPanel>
         </Border>
 
-        <!-- Listas de Eixos X e Y -->
+        <!-- Listas de Eixos X e Y com Distancia entre Eixos -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
@@ -42,19 +42,24 @@
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Text="Eixos em X (ex: 1, 2, 3...)" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,6" />
+                    <DockPanel Grid.Row="0" Margin="0,0,0,6">
+                        <TextBlock Text="Eixos em X (ex: 1, 2, 3...)" FontWeight="Bold" Foreground="#1E293B" />
+                        <TextBlock x:Name="txtTotalX" DockPanel.Dock="Right" Foreground="#64748B" FontSize="11" />
+                    </DockPanel>
                     <DataGrid x:Name="dgEixosX"
                               Grid.Row="1"
                               AutoGenerateColumns="False"
                               CanUserAddRows="False"
                               RowHeight="26"
                               GridLinesVisibility="Horizontal"
-                              HorizontalGridLinesBrush="#E2E8F0">
+                              HorizontalGridLinesBrush="#E2E8F0"
+                              CellEditEnding="DgEixos_CellEditEnding">
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="Ver" Binding="{Binding Visivel, UpdateSourceTrigger=PropertyChanged}" Width="40" />
-                            <DataGridTextColumn Header="Nome" Binding="{Binding Nome, UpdateSourceTrigger=PropertyChanged}" Width="75" />
+                            <DataGridCheckBoxColumn Header="Ver" Binding="{Binding Visivel, UpdateSourceTrigger=PropertyChanged}" Width="38" />
+                            <DataGridTextColumn Header="Nome" Binding="{Binding Nome, UpdateSourceTrigger=PropertyChanged}" Width="62" />
                             <DataGridTextColumn Header="Coord X (mm)" Binding="{Binding CoordenadaMm, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-                            <DataGridTemplateColumn Header="" Width="65">
+                            <DataGridTextColumn Header="Distancia (mm)" Binding="{Binding DistanciaAnteriorTexto}" IsReadOnly="True" Width="95" />
+                            <DataGridTemplateColumn Header="" Width="62">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Content="Remover" Click="BtnRemoverX_Click" Tag="{Binding}" Padding="4,1" FontSize="11" />
@@ -75,19 +80,24 @@
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <TextBlock Grid.Row="0" Text="Eixos em Y (ex: A, B, C...)" FontWeight="Bold" Foreground="#1E293B" Margin="0,0,0,6" />
+                    <DockPanel Grid.Row="0" Margin="0,0,0,6">
+                        <TextBlock Text="Eixos em Y (ex: A, B, C...)" FontWeight="Bold" Foreground="#1E293B" />
+                        <TextBlock x:Name="txtTotalY" DockPanel.Dock="Right" Foreground="#64748B" FontSize="11" />
+                    </DockPanel>
                     <DataGrid x:Name="dgEixosY"
                               Grid.Row="1"
                               AutoGenerateColumns="False"
                               CanUserAddRows="False"
                               RowHeight="26"
                               GridLinesVisibility="Horizontal"
-                              HorizontalGridLinesBrush="#E2E8F0">
+                              HorizontalGridLinesBrush="#E2E8F0"
+                              CellEditEnding="DgEixos_CellEditEnding">
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="Ver" Binding="{Binding Visivel, UpdateSourceTrigger=PropertyChanged}" Width="40" />
-                            <DataGridTextColumn Header="Nome" Binding="{Binding Nome, UpdateSourceTrigger=PropertyChanged}" Width="75" />
+                            <DataGridCheckBoxColumn Header="Ver" Binding="{Binding Visivel, UpdateSourceTrigger=PropertyChanged}" Width="38" />
+                            <DataGridTextColumn Header="Nome" Binding="{Binding Nome, UpdateSourceTrigger=PropertyChanged}" Width="62" />
                             <DataGridTextColumn Header="Coord Y (mm)" Binding="{Binding CoordenadaMm, UpdateSourceTrigger=PropertyChanged}" Width="*" />
-                            <DataGridTemplateColumn Header="" Width="65">
+                            <DataGridTextColumn Header="Distancia (mm)" Binding="{Binding DistanciaAnteriorTexto}" IsReadOnly="True" Width="95" />
+                            <DataGridTemplateColumn Header="" Width="62">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate>
                                         <Button Content="Remover" Click="BtnRemoverY_Click" Tag="{Binding}" Padding="4,1" FontSize="11" />
@@ -104,8 +114,8 @@
         <!-- Rodape -->
         <DockPanel Grid.Row="2" Margin="0,10,0,0">
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Tol (mm):" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="#475569" FontWeight="SemiBold" />
-                <TextBox x:Name="txtTolerancia" Width="58" Height="26" Text="150" VerticalContentAlignment="Center" Padding="4,0" Margin="0,0,6,0" />
+                <TextBlock Text="Tolerancia minima (mm):" VerticalAlignment="Center" Margin="0,0,5,0" Foreground="#475569" FontWeight="SemiBold" />
+                <TextBox x:Name="txtTolerancia" Width="62" Height="26" Text="500" VerticalContentAlignment="Center" Padding="4,0" Margin="0,0,6,0" ToolTip="Nao cria 2 eixos se a distancia entre eles for igual ou menor a este valor" />
                 <Button Content="Remapear Eixos (Ler 3D)" Click="BtnRegerarPilares_Click" Padding="12,6" Background="#E0F2FE" BorderBrush="#0284C7" Foreground="#0369A1" FontWeight="SemiBold" />
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
@@ -115,4 +125,3 @@
         </DockPanel>
     </Grid>
 </Window>
-

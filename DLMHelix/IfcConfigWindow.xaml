@@ -115,13 +115,20 @@
                         </GroupBox>
 
                         <!-- Grupo: Exportacao IFC -->
-                        <GroupBox Header="Exportacao IFC (Elementos Padrao)" Padding="8" BorderBrush="#CBD5E1">
-                            <WrapPanel Orientation="Horizontal">
-                                <CheckBox x:Name="chkExpChapas" Content="Chapas" Margin="0,0,18,0" />
-                                <CheckBox x:Name="chkExpPerfis" Content="Perfis" Margin="0,0,18,0" />
-                                <CheckBox x:Name="chkExpFuros" Content="Furos e Recortes" Margin="0,0,18,0" />
-                                <CheckBox x:Name="chkExpParafusos" Content="Parafusos, Porcas e Arruelas" />
-                            </WrapPanel>
+                        <GroupBox Header="Exportacao IFC (Elementos e Cores)" Padding="8" BorderBrush="#CBD5E1">
+                            <StackPanel>
+                                <CheckBox x:Name="chkUsarCoresDwg"
+                                          Content="Usar cores setadas no DWG ao converter TecnoMetal para IFC (desmarcado = usar cores padrao por categoria)"
+                                          FontWeight="SemiBold"
+                                          Foreground="#0369A1"
+                                          Margin="0,0,0,8" />
+                                <WrapPanel Orientation="Horizontal">
+                                    <CheckBox x:Name="chkExpChapas" Content="Chapas" Margin="0,0,18,0" />
+                                    <CheckBox x:Name="chkExpPerfis" Content="Perfis" Margin="0,0,18,0" />
+                                    <CheckBox x:Name="chkExpFuros" Content="Furos e Recortes" Margin="0,0,18,0" />
+                                    <CheckBox x:Name="chkExpParafusos" Content="Parafusos, Porcas e Arruelas" />
+                                </WrapPanel>
+                            </StackPanel>
                         </GroupBox>
                     </StackPanel>
                 </ScrollViewer>

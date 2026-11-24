@@ -111,6 +111,7 @@ namespace DLM.helix
             chkV2DCotas.IsChecked = cfg.IncluirCotasVista2D;
             chkV2DFuros.IsChecked = cfg.IncluirFurosRecortesVista2D;
 
+            chkUsarCoresDwg.IsChecked = cfg.UsarCoresDoDwg;
             chkExpChapas.IsChecked = cfg.IncluirChapasPadrao;
             chkExpPerfis.IsChecked = cfg.IncluirPerfisPadrao;
             chkExpFuros.IsChecked = cfg.IncluirFurosPadrao;
@@ -247,6 +248,7 @@ namespace DLM.helix
                     IncluirCotasVista2D = chkV2DCotas.IsChecked == true,
                     IncluirFurosRecortesVista2D = chkV2DFuros.IsChecked == true,
 
+                    UsarCoresDoDwg = chkUsarCoresDwg.IsChecked == true,
                     IncluirChapasPadrao = chkExpChapas.IsChecked == true,
                     IncluirPerfisPadrao = chkExpPerfis.IsChecked == true,
                     IncluirFurosPadrao = chkExpFuros.IsChecked == true,

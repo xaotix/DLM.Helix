@@ -27,12 +27,30 @@ namespace DLM.helix
             public string Valor { get; set; }
         }
 
+        private struct FragmentoMalha
+        {
+            public int InicioVertice;
+            public int FimVertice;
+            public IfcMalhaElemento Elemento;
+        }
+
+        private class LoteMaterial
+        {
+            public Color Cor;
+            public bool Transparente;
+            public Point3DCollection Posicoes = new Point3DCollection();
+            public Int32Collection Indices = new Int32Collection();
+            public List<FragmentoMalha> Fragmentos = new List<FragmentoMalha>();
+        }
+
         private enum ModoInterativo
         {
             Nenhum,
             JuntarIfcPonto,
             MoverPontoBase,
-            MoverPontoDestino
+            MoverPontoDestino,
+            MedirPonto1,
+            MedirPonto2
         }
 
         private IfcModeloLido _modelo;
@@ -40,16 +58,20 @@ namespace DLM.helix
         private string _arquivoAtual;
 
         private readonly HashSet<IfcMalhaElemento> _selecionados = new HashSet<IfcMalhaElemento>();
-        private readonly Dictionary<ModelVisual3D, IfcMalhaElemento> _visualParaElemento = new Dictionary<ModelVisual3D, IfcMalhaElemento>();
+        // Inspirado no xBimXplorer (XbimMeshFragmentMap): batching por material + busca binaria O(log N) no HitTest
+        private readonly Dictionary<GeometryModel3D, List<FragmentoMalha>> _fragmentosPorMalha = new Dictionary<GeometryModel3D, List<FragmentoMalha>>();
         private readonly List<Visual3D> _visuaisGrid = new List<Visual3D>();
+        private readonly List<Visual3D> _visuaisMedicao = new List<Visual3D>();
         private ModelVisual3D _destaqueVisual;
 
-        // Modo interativo (Juntar IFC / Mover 2 pontos)
+        // Modo interativo (Juntar IFC / Mover 2 pontos / Medir 2 pontos)
         private ModoInterativo _modoInterativo = ModoInterativo.Nenhum;
         private IfcModeloLido _modeloPendenteJuntar;
         private string _nomeGrupoPendenteJuntar;
         private List<IfcMalhaElemento> _alvoMoverInterativo;
         private IfcVetor _pontoBaseMover;
+        private IfcVetor _pontoMedir1;
+        private bool _suprimirEventoCorte;
 
         // Caixa de selecao (Marquee) e clique direito
         private bool _arrastandoCaixa;
@@ -209,9 +231,37 @@ namespace DLM.helix
                     continue;
                 vp3D.Children.RemoveAt(i);
             }
-            _visualParaElemento.Clear();
+            _fragmentosPorMalha.Clear();
             _visuaisGrid.Clear();
+            _visuaisMedicao.Clear();
             _destaqueVisual = null;
+        }
+
+        private bool PassaNoPlanoDeCorte(IfcMalhaElemento el)
+        {
+            if (_modelo == null || !_modelo.TemGeometria) return true;
+            bool cx = chkCorteX != null && chkCorteX.IsChecked == true;
+            bool cy = chkCorteY != null && chkCorteY.IsChecked == true;
+            bool cz = chkCorteZ != null && chkCorteZ.IsChecked == true;
+            if (!cx && !cy && !cz) return true;
+
+            var c = el.ObterCentro();
+            if (cx)
+            {
+                double limX = _modelo.Min.X + (_modelo.Max.X - _modelo.Min.X) * (sldCorteX.Value / 100.0);
+                if (c.X > limX) return false;
+            }
+            if (cy)
+            {
+                double limY = _modelo.Min.Y + (_modelo.Max.Y - _modelo.Min.Y) * (sldCorteY.Value / 100.0);
+                if (c.Y > limY) return false;
+            }
+            if (cz)
+            {
+                double limZ = _modelo.Min.Z + (_modelo.Max.Z - _modelo.Min.Z) * (sldCorteZ.Value / 100.0);
+                if (c.Z > limZ) return false;
+            }
+            return true;
         }
 
         private void ReconstruirCena3D(bool enquadrar)
@@ -220,64 +270,76 @@ namespace DLM.helix
             if (_modelo == null || _modelo.Elementos.Count == 0) return;
 
             bool mostrarArestas = tglArestas != null && tglArestas.IsChecked == true;
+            bool modoRaioX = tglRaioX != null && tglRaioX.IsChecked == true;
             const double esc = RenderIFC.ESCALA_MM_PARA_M;
 
+            // Batching por cor/opacidade (pratica xBimXplorer): reduz milhares de ModelVisual3D para ~10 GeometryModel3D congelados
+            var lotes = new Dictionary<string, LoteMaterial>();
             var pontosArestas = new Point3DCollection();
             var pontosFuros = new Point3DCollection();
             var pontosRecortes = new Point3DCollection();
             var pontosSoldas = new Point3DCollection();
 
-            int totalVisiveis = 0;
+            int totalTris = 0;
             for (int i = 0; i < _modelo.Elementos.Count; i++)
             {
                 var el = _modelo.Elementos[i];
                 if (el.EhAbertura || !el.Visivel) continue;
                 if (el.Vertices.Count == 0 || el.Triangulos.Count == 0) continue;
-                totalVisiveis++;
+                if (!PassaNoPlanoDeCorte(el)) continue;
 
-                var pos = new Point3DCollection(el.Vertices.Count);
+                totalTris += el.Triangulos.Count;
+
+                byte r, g, b, a;
+                bool fantasma = modoRaioX && !_selecionados.Contains(el);
+                if (fantasma)
+                {
+                    r = 160; g = 175; b = 192; a = 52;
+                }
+                else
+                {
+                    r = ClampByte(el.Cor.R * 255.0);
+                    g = ClampByte(el.Cor.G * 255.0);
+                    b = ClampByte(el.Cor.B * 255.0);
+                    a = ClampByte((1.0 - Math.Max(0.0, Math.Min(0.92, el.Transparencia))) * 255.0);
+                }
+
+                string chave = a + "_" + r + "_" + g + "_" + b;
+                LoteMaterial lote;
+                if (!lotes.TryGetValue(chave, out lote))
+                {
+                    lote = new LoteMaterial
+                    {
+                        Cor = Color.FromArgb(a, r, g, b),
+                        Transparente = a < 250
+                    };
+                    lotes[chave] = lote;
+                }
+
+                int inicioVert = lote.Posicoes.Count;
                 for (int v = 0; v < el.Vertices.Count; v++)
                 {
                     var p = el.Vertices[v];
-                    pos.Add(new Point3D(p.X * esc, p.Y * esc, p.Z * esc));
+                    lote.Posicoes.Add(new Point3D(p.X * esc, p.Y * esc, p.Z * esc));
                 }
-                pos.Freeze();
+                int fimVert = lote.Posicoes.Count - 1;
 
-                var idx = new Int32Collection(el.Triangulos.Count * 3);
                 for (int t = 0; t < el.Triangulos.Count; t++)
                 {
                     var tr = el.Triangulos[t];
-                    idx.Add(tr.A);
-                    idx.Add(tr.B);
-                    idx.Add(tr.C);
+                    lote.Indices.Add(inicioVert + tr.A);
+                    lote.Indices.Add(inicioVert + tr.B);
+                    lote.Indices.Add(inicioVert + tr.C);
                 }
-                idx.Freeze();
 
-                var mesh = new MeshGeometry3D { Positions = pos, TriangleIndices = idx };
-                mesh.Freeze();
+                lote.Fragmentos.Add(new FragmentoMalha
+                {
+                    InicioVertice = inicioVert,
+                    FimVertice = fimVert,
+                    Elemento = el
+                });
 
-                byte r = ClampByte(el.Cor.R * 255.0);
-                byte g = ClampByte(el.Cor.G * 255.0);
-                byte b = ClampByte(el.Cor.B * 255.0);
-                byte a = ClampByte((1.0 - Math.Max(0.0, Math.Min(0.92, el.Transparencia))) * 255.0);
-
-                var brush = new SolidColorBrush(Color.FromArgb(a, r, g, b));
-                brush.Freeze();
-
-                var matGroup = new MaterialGroup();
-                matGroup.Children.Add(new DiffuseMaterial(brush));
-                if (totalVisiveis < 5000)
-                    matGroup.Children.Add(new SpecularMaterial(new SolidColorBrush(Color.FromArgb(55, 255, 255, 255)), 24));
-                matGroup.Freeze();
-
-                var gm = new GeometryModel3D(mesh, matGroup) { BackMaterial = matGroup };
-                gm.Freeze();
-
-                var mv = new ModelVisual3D { Content = gm };
-                vp3D.Children.Add(mv);
-                _visualParaElemento[mv] = el;
-
-                if (mostrarArestas)
+                if (mostrarArestas && !fantasma)
                 {
                     if (el.Arestas != null && el.Arestas.Count > 0 && pontosArestas.Count < 500000)
                     {
@@ -313,6 +375,62 @@ namespace DLM.helix
                         }
                     }
                 }
+            }
+
+            // Separa Opacos primeiro e Transparentes depois (pratica xBimXplorer para evitar artefatos de Z-buffer)
+            bool usarSpecular = totalTris < 150000;
+            var grupoOpacos = new Model3DGroup();
+            var grupoTransp = new Model3DGroup();
+
+            foreach (var lote in lotes.Values)
+            {
+                if (lote.Indices.Count == 0) continue;
+                lote.Posicoes.Freeze();
+                lote.Indices.Freeze();
+
+                var mesh = new MeshGeometry3D
+                {
+                    Positions = lote.Posicoes,
+                    TriangleIndices = lote.Indices
+                };
+                mesh.Freeze();
+
+                var brush = new SolidColorBrush(lote.Cor);
+                brush.Freeze();
+
+                Material mat;
+                if (usarSpecular && !lote.Transparente)
+                {
+                    var mg = new MaterialGroup();
+                    mg.Children.Add(new DiffuseMaterial(brush));
+                    mg.Children.Add(new SpecularMaterial(new SolidColorBrush(Color.FromArgb(55, 255, 255, 255)), 24));
+                    mg.Freeze();
+                    mat = mg;
+                }
+                else
+                {
+                    var dm = new DiffuseMaterial(brush);
+                    dm.Freeze();
+                    mat = dm;
+                }
+
+                var gm = new GeometryModel3D(mesh, mat) { BackMaterial = mat };
+                gm.Freeze();
+                _fragmentosPorMalha[gm] = lote.Fragmentos;
+
+                if (lote.Transparente) grupoTransp.Children.Add(gm);
+                else grupoOpacos.Children.Add(gm);
+            }
+
+            if (grupoOpacos.Children.Count > 0)
+            {
+                grupoOpacos.Freeze();
+                vp3D.Children.Add(new ModelVisual3D { Content = grupoOpacos });
+            }
+            if (grupoTransp.Children.Count > 0)
+            {
+                grupoTransp.Freeze();
+                vp3D.Children.Add(new ModelVisual3D { Content = grupoTransp });
             }
 
             if (mostrarArestas && pontosArestas.Count > 0)
@@ -709,19 +827,38 @@ namespace DLM.helix
             VisualTreeHelper.HitTest(vp3D.Viewport, null, res =>
             {
                 var ray = res as RayMeshGeometry3DHitTestResult;
-                if (ray != null && ray.VisualHit is ModelVisual3D mv)
+                if (ray != null)
                 {
-                    if (mv == _destaqueVisual) return HitTestResultBehavior.Continue;
-                    IfcMalhaElemento el;
-                    if (_visualParaElemento.TryGetValue(mv, out el))
+                    if (ray.VisualHit == _destaqueVisual) return HitTestResultBehavior.Continue;
+                    var gm = ray.ModelHit as GeometryModel3D;
+                    List<FragmentoMalha> frags;
+                    if (gm != null && _fragmentosPorMalha.TryGetValue(gm, out frags))
                     {
-                        atingido = el;
-                        return HitTestResultBehavior.Stop;
+                        var el = BuscarFragmentoPorVertice(frags, ray.VertexIndex1);
+                        if (el != null)
+                        {
+                            atingido = el;
+                            return HitTestResultBehavior.Stop;
+                        }
                     }
                 }
                 return HitTestResultBehavior.Continue;
             }, new PointHitTestParameters(mousePos));
             return atingido;
+        }
+
+        private static IfcMalhaElemento BuscarFragmentoPorVertice(List<FragmentoMalha> frags, int vertexIndex)
+        {
+            int lo = 0, hi = frags.Count - 1;
+            while (lo <= hi)
+            {
+                int mid = (lo + hi) >> 1;
+                var f = frags[mid];
+                if (vertexIndex < f.InicioVertice) hi = mid - 1;
+                else if (vertexIndex > f.FimVertice) lo = mid + 1;
+                else return f.Elemento;
+            }
+            return null;
         }
 
         private bool TentarObterPonto3D(Point mousePos, out IfcVetor ptMm)
@@ -1091,6 +1228,94 @@ namespace DLM.helix
 
         private void TglArestas_Click(object sender, RoutedEventArgs e) => ReconstruirCena3D(false);
 
+        private void TglPerspectiva_Click(object sender, RoutedEventArgs e)
+        {
+            var camAtual = vp3D.Camera as ProjectionCamera;
+            if (camAtual == null) return;
+            var pos = camAtual.Position;
+            var look = camAtual.LookDirection;
+            var up = camAtual.UpDirection;
+
+            if (tglPerspectiva.IsChecked == true)
+            {
+                vp3D.Camera = new PerspectiveCamera
+                {
+                    Position = pos,
+                    LookDirection = look,
+                    UpDirection = up,
+                    FieldOfView = 45,
+                    NearPlaneDistance = 0.05,
+                    FarPlaneDistance = 50000
+                };
+            }
+            else
+            {
+                vp3D.Camera = new OrthographicCamera
+                {
+                    Position = pos,
+                    LookDirection = look,
+                    UpDirection = up,
+                    Width = Math.Max(1.0, look.Length),
+                    NearPlaneDistance = -10000,
+                    FarPlaneDistance = 10000
+                };
+            }
+        }
+
+        private void TglRaioX_Click(object sender, RoutedEventArgs e)
+        {
+            ReconstruirCena3D(false);
+            txtStatus.Text = tglRaioX.IsChecked == true
+                ? "Modo Raio-X ativado: pecas nao selecionadas em transparencia."
+                : "Modo Raio-X desativado.";
+        }
+
+        private void TglCorte_Click(object sender, RoutedEventArgs e)
+        {
+            pnlPlanoCorte.Visibility = tglCorte.IsChecked == true ? Visibility.Visible : Visibility.Collapsed;
+            if (tglCorte.IsChecked != true)
+                BtnResetarCortes_Click(null, null);
+        }
+
+        private void Corte_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_suprimirEventoCorte) return;
+            ReconstruirCena3D(false);
+        }
+
+        private void SldCorte_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (_suprimirEventoCorte || !IsLoaded) return;
+            if ((sender == sldCorteX && chkCorteX.IsChecked == true) ||
+                (sender == sldCorteY && chkCorteY.IsChecked == true) ||
+                (sender == sldCorteZ && chkCorteZ.IsChecked == true))
+            {
+                ReconstruirCena3D(false);
+            }
+        }
+
+        private void BtnResetarCortes_Click(object sender, RoutedEventArgs e)
+        {
+            _suprimirEventoCorte = true;
+            chkCorteX.IsChecked = false;
+            chkCorteY.IsChecked = false;
+            chkCorteZ.IsChecked = false;
+            sldCorteX.Value = 100;
+            sldCorteY.Value = 100;
+            sldCorteZ.Value = 100;
+            _suprimirEventoCorte = false;
+            ReconstruirCena3D(false);
+        }
+
+        private void BtnMedir_Click(object sender, RoutedEventArgs e)
+        {
+            for (int i = 0; i < _visuaisMedicao.Count; i++)
+                vp3D.Children.Remove(_visuaisMedicao[i]);
+            _visuaisMedicao.Clear();
+
+            AtivarModoInterativo(ModoInterativo.MedirPonto1, "MEDIR (1/2): Clique no primeiro ponto no 3D (ESC limpa/cancela).");
+        }
+
         private void TglGrid_Click(object sender, RoutedEventArgs e)
         {
             if (_modelo != null && _modelo.Grid != null)
@@ -1348,6 +1573,45 @@ namespace DLM.helix
                 ReconstruirCena3D(false);
                 AtualizarPainelPropriedades();
                 txtStatus.Text = string.Format("{0} elemento(s) movido(s) em ({1:0.#}, {2:0.#}, {3:0.#}) mm.", n, delta.X, delta.Y, delta.Z);
+            }
+            else if (_modoInterativo == ModoInterativo.MedirPonto1)
+            {
+                _pontoMedir1 = ptMm;
+                AtivarModoInterativo(
+                    ModoInterativo.MedirPonto2,
+                    string.Format("MEDIR (2/2): P1 ({0:0.#}, {1:0.#}, {2:0.#}) mm definido. Clique no segundo ponto.", ptMm.X, ptMm.Y, ptMm.Z));
+            }
+            else if (_modoInterativo == ModoInterativo.MedirPonto2)
+            {
+                var p1 = _pontoMedir1;
+                var p2 = ptMm;
+                var d = p2 - p1;
+                double dist = Math.Sqrt(d.X * d.X + d.Y * d.Y + d.Z * d.Z);
+                CancelarModoInterativo();
+
+                const double esc = RenderIFC.ESCALA_MM_PARA_M;
+                var pts = new Point3DCollection { new Point3D(p1.X * esc, p1.Y * esc, p1.Z * esc), new Point3D(p2.X * esc, p2.Y * esc, p2.Z * esc) };
+                pts.Freeze();
+                var linha = new LinesVisual3D { Points = pts, Color = Color.FromRgb(220, 38, 38), Thickness = 2.6 };
+                vp3D.Children.Add(linha);
+                _visuaisMedicao.Add(linha);
+
+                var meio = new Point3D(((p1.X + p2.X) * 0.5) * esc, ((p1.Y + p2.Y) * 0.5) * esc, ((p1.Z + p2.Z) * 0.5) * esc);
+                var rotulo = new BillboardTextVisual3D
+                {
+                    Text = string.Format(" L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}, dZ={3:0.#}) ", dist, d.X, d.Y, d.Z),
+                    Position = meio,
+                    FontSize = 12,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = Brushes.White,
+                    Background = new SolidColorBrush(Color.FromRgb(220, 38, 38)),
+                    Padding = new Thickness(5, 2, 5, 2),
+                    DepthOffset = 0.02
+                };
+                vp3D.Children.Add(rotulo);
+                _visuaisMedicao.Add(rotulo);
+
+                txtStatus.Text = string.Format("Medicao: L = {0:0.#} mm | dX = {1:0.#} mm | dY = {2:0.#} mm | dZ = {3:0.#} mm", dist, d.X, d.Y, d.Z);
             }
         }
 

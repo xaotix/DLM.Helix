@@ -134,6 +134,10 @@
 
                 <ToggleButton x:Name="tglCaixaSelecao" Style="{StaticResource TglBarra}" Content="Caixa Selecao" IsChecked="False" ToolTip="Arraste com o botao esquerdo para selecionar por caixa (ou segure Shift + arrastar a qualquer momento)" />
                 <ToggleButton x:Name="tglArestas" Style="{StaticResource TglBarra}" Content="Arestas" IsChecked="True" Click="TglArestas_Click" />
+                <ToggleButton x:Name="tglPerspectiva" Style="{StaticResource TglBarra}" Content="Perspectiva" IsChecked="False" Click="TglPerspectiva_Click" ToolTip="Alternar entre camera Ortografica e Perspectiva" />
+                <ToggleButton x:Name="tglRaioX" Style="{StaticResource TglBarra}" Content="Raio-X" IsChecked="False" Click="TglRaioX_Click" ToolTip="Modo Raio-X / Fantasma: deixa pecas nao selecionadas semitransparentes (estilo xBimXplorer)" />
+                <ToggleButton x:Name="tglCorte" Style="{StaticResource TglBarra}" Content="Plano Corte" IsChecked="False" Click="TglCorte_Click" ToolTip="Ativar painel de Plano de Corte (Section / Cut Plane em X, Y, Z)" />
+                <Button Style="{StaticResource BtnBarra}" Content="Medir" Click="BtnMedir_Click" ToolTip="Medir distancia 3D entre 2 pontos (dX, dY, dZ e L em mm)" />
                 <ToggleButton x:Name="tglGrid" Style="{StaticResource TglBarra}" Content="Grid" IsChecked="True" Click="TglGrid_Click" ToolTip="Mostrar ou ocultar o Grid de eixos" />
                 <Button Style="{StaticResource BtnBarra}" Content="Gerenciar Grid" Click="BtnGerenciarGrid_Click" ToolTip="Editar eixos, nomes, adicionar/remover e configurar exportacao do Grid no IFC" />
 
@@ -156,29 +160,48 @@
             </WrapPanel>
         </Border>
 
-        <!-- Banner Interativo (Modo Juntar IFC / Modo Mover por Clique) -->
-        <Border x:Name="pnlModoInterativo" Grid.Row="1" Background="#E0F2FE" BorderBrush="#0284C7" BorderThickness="0,0,0,1" Padding="10,6" Visibility="Collapsed">
-            <DockPanel LastChildFill="False">
-                <TextBlock x:Name="txtInstrucaoInterativa"
-                           DockPanel.Dock="Left"
-                           VerticalAlignment="Center"
-                           Foreground="#0C4A6E"
-                           FontWeight="SemiBold"
-                           FontSize="12"
-                           Text="Clique no ponto 3D desejado..." />
+        <!-- Banner Interativo (Modo Juntar IFC / Modo Mover / Modo Medir) -->
+        <StackPanel Grid.Row="1">
+            <Border x:Name="pnlModoInterativo" Background="#E0F2FE" BorderBrush="#0284C7" BorderThickness="0,0,0,1" Padding="10,6" Visibility="Collapsed">
+                <DockPanel LastChildFill="False">
+                    <TextBlock x:Name="txtInstrucaoInterativa"
+                               DockPanel.Dock="Left"
+                               VerticalAlignment="Center"
+                               Foreground="#0C4A6E"
+                               FontWeight="SemiBold"
+                               FontSize="12"
+                               Text="Clique no ponto 3D desejado..." />
 
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                    <TextBlock Text="X(mm):" VerticalAlignment="Center" Margin="8,0,3,0" Foreground="#0369A1" FontSize="11" FontWeight="SemiBold" />
-                    <TextBox x:Name="txtPontoX" Width="68" Height="24" VerticalContentAlignment="Center" Background="White" Foreground="#0F172A" BorderBrush="#0284C7" Text="0" />
-                    <TextBlock Text="Y(mm):" VerticalAlignment="Center" Margin="6,0,3,0" Foreground="#0369A1" FontSize="11" FontWeight="SemiBold" />
-                    <TextBox x:Name="txtPontoY" Width="68" Height="24" VerticalContentAlignment="Center" Background="White" Foreground="#0F172A" BorderBrush="#0284C7" Text="0" />
-                    <TextBlock Text="Z(mm):" VerticalAlignment="Center" Margin="6,0,3,0" Foreground="#0369A1" FontSize="11" FontWeight="SemiBold" />
-                    <TextBox x:Name="txtPontoZ" Width="68" Height="24" VerticalContentAlignment="Center" Background="White" Foreground="#0F172A" BorderBrush="#0284C7" Text="0" />
-                    <Button Style="{StaticResource BtnDestaque}" Height="24" Margin="8,0,0,0" Content="Aplicar Ponto" Click="BtnAplicarPontoManual_Click" />
-                    <Button Style="{StaticResource BtnBarra}" Height="24" Margin="4,0,0,0" Content="Cancelar (ESC)" Click="BtnCancelarModoInterativo_Click" />
-                </StackPanel>
-            </DockPanel>
-        </Border>
+                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="X(mm):" VerticalAlignment="Center" Margin="8,0,3,0" Foreground="#0369A1" FontSize="11" FontWeight="SemiBold" />
+                        <TextBox x:Name="txtPontoX" Width="68" Height="24" VerticalContentAlignment="Center" Background="White" Foreground="#0F172A" BorderBrush="#0284C7" Text="0" />
+                        <TextBlock Text="Y(mm):" VerticalAlignment="Center" Margin="6,0,3,0" Foreground="#0369A1" FontSize="11" FontWeight="SemiBold" />
+                        <TextBox x:Name="txtPontoY" Width="68" Height="24" VerticalContentAlignment="Center" Background="White" Foreground="#0F172A" BorderBrush="#0284C7" Text="0" />
+                        <TextBlock Text="Z(mm):" VerticalAlignment="Center" Margin="6,0,3,0" Foreground="#0369A1" FontSize="11" FontWeight="SemiBold" />
+                        <TextBox x:Name="txtPontoZ" Width="68" Height="24" VerticalContentAlignment="Center" Background="White" Foreground="#0F172A" BorderBrush="#0284C7" Text="0" />
+                        <Button Style="{StaticResource BtnDestaque}" Height="24" Margin="8,0,0,0" Content="Aplicar Ponto" Click="BtnAplicarPontoManual_Click" />
+                        <Button Style="{StaticResource BtnBarra}" Height="24" Margin="4,0,0,0" Content="Cancelar (ESC)" Click="BtnCancelarModoInterativo_Click" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- Barra de Plano de Corte (Cut Plane / Section Box estilo xBimXplorer) -->
+            <Border x:Name="pnlPlanoCorte" Background="#F8FAFC" BorderBrush="#CBD5E1" BorderThickness="0,0,0,1" Padding="10,5" Visibility="Collapsed">
+                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="PLANO DE CORTE:" FontWeight="Bold" Foreground="#0369A1" VerticalAlignment="Center" Margin="0,0,10,0" FontSize="11" />
+                    <CheckBox x:Name="chkCorteX" Content="Corte X" VerticalAlignment="Center" Margin="0,0,4,0" Click="Corte_Changed" />
+                    <Slider x:Name="sldCorteX" Width="130" Minimum="0" Maximum="100" Value="100" VerticalAlignment="Center" Margin="0,0,14,0" ValueChanged="SldCorte_ValueChanged" />
+
+                    <CheckBox x:Name="chkCorteY" Content="Corte Y" VerticalAlignment="Center" Margin="0,0,4,0" Click="Corte_Changed" />
+                    <Slider x:Name="sldCorteY" Width="130" Minimum="0" Maximum="100" Value="100" VerticalAlignment="Center" Margin="0,0,14,0" ValueChanged="SldCorte_ValueChanged" />
+
+                    <CheckBox x:Name="chkCorteZ" Content="Corte Z" VerticalAlignment="Center" Margin="0,0,4,0" Click="Corte_Changed" />
+                    <Slider x:Name="sldCorteZ" Width="130" Minimum="0" Maximum="100" Value="100" VerticalAlignment="Center" Margin="0,0,14,0" ValueChanged="SldCorte_ValueChanged" />
+
+                    <Button Style="{StaticResource BtnBarra}" Height="24" Content="Resetar Cortes" Click="BtnResetarCortes_Click" />
+                </WrapPanel>
+            </Border>
+        </StackPanel>
 
         <!-- Area Principal: Arvore | Viewport 3D | Propriedades -->
         <Grid Grid.Row="2">

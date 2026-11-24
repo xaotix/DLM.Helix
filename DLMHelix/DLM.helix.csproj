@@ -35,6 +35,9 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ACadSharp">
+      <HintPath>..\..\DLLS\ACadSharp.dll</HintPath>
+    </Reference>
     <Reference Include="DLM, Version=6.0.0.27, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\DLLS\DLM.dll</HintPath>
@@ -99,6 +102,7 @@
     <Compile Include="core\Utilidades.cs" />
     <Compile Include="Renders\Gera3D.cs" />
     <Compile Include="Renders\RenderIFC.cs" />
+    <Compile Include="Renders\RenderACadSharp.cs" />
     <Compile Include="Renders\DwgLoader.cs" />
     <Compile Include="Renders\Render2d.Layouts.cs" />
     <Compile Include="Renders\CAMDesenho2DCanvas.cs" />

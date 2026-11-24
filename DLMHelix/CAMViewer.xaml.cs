@@ -1030,12 +1030,16 @@ namespace DLM.helix
                         if (token.IsCancellationRequested || modeloTecno == null || (modeloTecno.Pecas.Count == 0 && modeloTecno.Parafusos.Count == 0))
                             return null;
 
+                        // Em modelos TecnoMetal muito grandes (>3000 peças), desativa furos (e parafusos >8000) no PREVIEW 3D
+                        // para manter carregamento rápido e navegação leve (a exportação IFC continua 100% completa).
+                        bool modeloGrande = modeloTecno.Pecas.Count > 3000;
                         var opcoes = new OpcoesExportacaoIfc
                         {
                             NomeProjeto = Path.GetFileNameWithoutExtension(caminho),
                             IncluirChapas = true,
                             IncluirPerfis = true,
-                            IncluirParafusos = true,
+                            IncluirParafusos = modeloTecno.Pecas.Count <= 8000,
+                            IncluirFuros = !modeloGrande,
                             ApenasModelSpace = true,
                             CentralizarNaOrigem = true
                         };
@@ -1081,6 +1085,37 @@ namespace DLM.helix
                         return;
                     }
                 }
+                // Para arquivos .DWG comuns (não TecnoMetal), renderiza diretamente via ACadSharp (sem converter para DXF!)
+                if (caminho.EndsWith(".dwg", StringComparison.OrdinalIgnoreCase))
+                {
+                    var resDwg = await Task.Run(() =>
+                    {
+                        return RenderACadSharp.CarregarDwgDireto(caminho, (atual, total, msg) =>
+                        {
+                            if (token.IsCancellationRequested) return;
+                            int pct = atual < 0 ? -1 : (total > 0 ? Math.Max(0, Math.Min(100, (atual * 100) / total)) : -1);
+                            Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+                            {
+                                if (!token.IsCancellationRequested) MostrarProgressoIFC(true, pct, msg);
+                            }));
+                        }, token);
+                    }, token);
+
+                    if (token.IsCancellationRequested)
+                    {
+                        MostrarProgressoIFC(false, 0, "");
+                        return;
+                    }
+
+                    if (resDwg != null)
+                    {
+                        MostrarProgressoIFC(true, 98, resDwg.ModoLeve ? "Renderizando DWG (modo leve)..." : "Renderizando DWG...");
+                        AbrirDwgDireto(resDwg, caminho, extend);
+                        AtualizarBotoesDXF(File.Exists(caminho));
+                        return;
+                    }
+                }
+
                 var dxf = await Task.Run(() =>
                 {
                     return DwgLoader.CarregarDwgOuDxf(caminho, (atual, total, msg) =>
@@ -1134,6 +1169,47 @@ namespace DLM.helix
         /// <summary>
         /// Renderiza um IfcModeloLido já carregado em background (evitando leitura duplicada).
         /// </summary>
+        private void AbrirDwgDireto(ResultadoDwgDireto res, string caminho, bool extend)
+        {
+            if (res == null) return;
+            ArquivoCarregado = caminho;
+            DxfCarregado = null;
+            this.MVC.CAM = null;
+            _modoPlanificado = false;
+            LimparViewports();
+
+            if (res.Eh3D)
+            {
+                AplicarAbaPreferida(true, false);
+                viewPort3D.Children.Add(Gera3d.Luz());
+                RenderACadSharp.AplicarNoViewport(viewPort3D, res);
+                this.viewPort3D.ShowCoordinateSystem = true;
+                this.viewPort3D.ShowFieldOfView = false;
+                this.viewPort3D.ShowViewCube = true;
+                this.viewPort3D.ShowCameraTarget = false;
+                this.viewPort3D.ShowCameraInfo = false;
+                AtualizarBounds();
+                if (extend)
+                {
+                    Isometric();
+                    ZoomExtend();
+                }
+            }
+            else
+            {
+                if (grid_cam_2d_visual != null) grid_cam_2d_visual.Visibility = Visibility.Collapsed;
+                if (grid_dxf_2d_helix != null) grid_dxf_2d_helix.Visibility = Visibility.Visible;
+                Set2D();
+                viewPort2D.Children.Add(Gera3d.Luz());
+                RenderACadSharp.AplicarNoViewport(viewPort2D, res);
+                AtualizarBounds();
+                if (extend)
+                {
+                    ZoomExtend();
+                }
+            }
+        }
+
         public void AbrirModeloIFC(IfcModeloLido modelo, string caminho = null, bool extend = true, VistaCad3D vistaCad = null)
         {
             CancelarCarregamentoIFC();

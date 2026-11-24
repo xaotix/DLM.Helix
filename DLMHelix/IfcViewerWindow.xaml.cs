@@ -73,10 +73,13 @@ namespace DLM.helix
         private IfcVetor _pontoMedir1;
         private bool _suprimirEventoCorte;
 
-        // Caixa de selecao (Marquee) e clique direito
+        // Caixa de selecao (Marquee), Snap em tempo real e clique direito
         private bool _arrastandoCaixa;
         private Point _pontoInicioCaixa;
         private Point _pontoBotaoDireitoDown;
+        private bool _temSnapAtivo;
+        private IfcVetor _pontoSnapAtivo;
+        private string _tipoSnapAtivo = "";
 
         private CancellationTokenSource _cts;
 
@@ -647,6 +650,12 @@ namespace DLM.helix
 
         private void Vp3D_PreviewMouseMove(object sender, MouseEventArgs e)
         {
+            if (_modoInterativo != ModoInterativo.Nenhum)
+            {
+                AtualizarPreviewSnap(e.GetPosition(vp3D.Viewport), e.GetPosition(gridViewport));
+                return;
+            }
+
             if (!_arrastandoCaixa) return;
 
             Point atual = e.GetPosition(gridViewport);
@@ -898,6 +907,12 @@ namespace DLM.helix
         {
             ptMm = IfcVetor.Zero;
 
+            // 0. Se houver Snap ativo (Endpoint / Midpoint / Nearest), usa a coordenada exata do snap
+            string tipoSnap;
+            Point pt2DSnap;
+            if (TentarCalcularSnap(mousePos, out ptMm, out tipoSnap, out pt2DSnap))
+                return true;
+
             var hit = vp3D.FindNearestPoint(mousePos);
             if (hit.HasValue)
             {
@@ -919,6 +934,149 @@ namespace DLM.helix
                 }
             }
             return false;
+        }
+
+        private void AtualizarPreviewSnap(Point mouseVp, Point mouseGrid)
+        {
+            IfcVetor ptMm;
+            string tipo;
+            Point pt2D;
+            if (TentarCalcularSnap(mouseVp, out ptMm, out tipo, out pt2D))
+            {
+                _temSnapAtivo = true;
+                _pontoSnapAtivo = ptMm;
+                _tipoSnapAtivo = tipo;
+
+                if (tipo == "END")
+                {
+                    marcadorSnap.BorderBrush = new SolidColorBrush(Color.FromRgb(22, 163, 74));
+                    marcadorSnap.Background = new SolidColorBrush(Color.FromArgb(70, 22, 163, 74));
+                    marcadorSnap.CornerRadius = new CornerRadius(0);
+                    marcadorSnap.RenderTransform = Transform.Identity;
+                }
+                else if (tipo == "MID")
+                {
+                    marcadorSnap.BorderBrush = new SolidColorBrush(Color.FromRgb(2, 132, 199));
+                    marcadorSnap.Background = new SolidColorBrush(Color.FromArgb(70, 2, 132, 199));
+                    marcadorSnap.CornerRadius = new CornerRadius(0);
+                    marcadorSnap.RenderTransform = new RotateTransform(45, 6, 6);
+                }
+                else
+                {
+                    marcadorSnap.BorderBrush = new SolidColorBrush(Color.FromRgb(234, 88, 12));
+                    marcadorSnap.Background = new SolidColorBrush(Color.FromArgb(70, 234, 88, 12));
+                    marcadorSnap.CornerRadius = new CornerRadius(6);
+                    marcadorSnap.RenderTransform = Transform.Identity;
+                }
+
+                Canvas.SetLeft(marcadorSnap, pt2D.X - 6);
+                Canvas.SetTop(marcadorSnap, pt2D.Y - 6);
+                marcadorSnap.Visibility = Visibility.Visible;
+
+                txtTagSnap.Text = string.Format("{0} ({1:0.#}, {2:0.#}, {3:0.#})", tipo, ptMm.X, ptMm.Y, ptMm.Z);
+                Canvas.SetLeft(tagSnap, pt2D.X + 10);
+                Canvas.SetTop(tagSnap, pt2D.Y - 18);
+                tagSnap.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                OcultarIndicadorSnap();
+            }
+        }
+
+        private void OcultarIndicadorSnap()
+        {
+            _temSnapAtivo = false;
+            _tipoSnapAtivo = "";
+            if (marcadorSnap != null) marcadorSnap.Visibility = Visibility.Collapsed;
+            if (tagSnap != null) tagSnap.Visibility = Visibility.Collapsed;
+        }
+
+        private bool TentarCalcularSnap(Point mouseVp, out IfcVetor melhorMm, out string melhorTipo, out Point melhor2D)
+        {
+            melhorMm = IfcVetor.Zero;
+            melhorTipo = "";
+            melhor2D = default(Point);
+
+            var cfg = IfcConfiguracao.Atual;
+            if (!cfg.SnapEndpoint && !cfg.SnapMidpoint && !cfg.SnapNearest) return false;
+
+            double raioPx = Math.Max(4.0, cfg.RaioSnapPixels);
+            double melhorDistPx = raioPx;
+            bool achou = false;
+
+            // Identifica o elemento sob o cursor para priorizar suas arestas (muito rapido mesmo em modelos gigantes!)
+            var elAlvo = HitTestElemento(mouseVp);
+            const double esc = RenderIFC.ESCALA_MM_PARA_M;
+
+            if (elAlvo != null && elAlvo.Arestas != null && elAlvo.Arestas.Count > 0)
+            {
+                for (int i = 0; i < elAlvo.Arestas.Count; i++)
+                {
+                    var ar = elAlvo.Arestas[i];
+                    var p1_3d = new Point3D(ar.P1.X * esc, ar.P1.Y * esc, ar.P1.Z * esc);
+                    var p2_3d = new Point3D(ar.P2.X * esc, ar.P2.Y * esc, ar.P2.Z * esc);
+                    var p1_2d = Viewport3DHelper.Point3DtoPoint2D(vp3D.Viewport, p1_3d);
+                    var p2_2d = Viewport3DHelper.Point3DtoPoint2D(vp3D.Viewport, p2_3d);
+
+                    if (cfg.SnapEndpoint)
+                    {
+                        double d1 = (p1_2d - mouseVp).Length;
+                        if (d1 < melhorDistPx) { melhorDistPx = d1; melhorMm = ar.P1; melhorTipo = "END"; melhor2D = p1_2d; achou = true; }
+                        double d2 = (p2_2d - mouseVp).Length;
+                        if (d2 < melhorDistPx) { melhorDistPx = d2; melhorMm = ar.P2; melhorTipo = "END"; melhor2D = p2_2d; achou = true; }
+                    }
+
+                    if (cfg.SnapMidpoint)
+                    {
+                        var midMm = new IfcVetor((ar.P1.X + ar.P2.X) * 0.5, (ar.P1.Y + ar.P2.Y) * 0.5, (ar.P1.Z + ar.P2.Z) * 0.5);
+                        var mid2d = new Point((p1_2d.X + p2_2d.X) * 0.5, (p1_2d.Y + p2_2d.Y) * 0.5);
+                        double dm = (mid2d - mouseVp).Length;
+                        if (dm < melhorDistPx) { melhorDistPx = dm; melhorMm = midMm; melhorTipo = "MID"; melhor2D = mid2d; achou = true; }
+                    }
+
+                    if (cfg.SnapNearest && !achou)
+                    {
+                        Vector vSeg = p2_2d - p1_2d;
+                        double len2 = vSeg.LengthSquared;
+                        if (len2 > 1e-6)
+                        {
+                            double t = ((mouseVp - p1_2d) * vSeg) / len2;
+                            if (t >= 0.0 && t <= 1.0)
+                            {
+                                Point proj2d = p1_2d + vSeg * t;
+                                double dn = (proj2d - mouseVp).Length;
+                                if (dn < melhorDistPx)
+                                {
+                                    melhorDistPx = dn;
+                                    melhorMm = new IfcVetor(
+                                        ar.P1.X + (ar.P2.X - ar.P1.X) * t,
+                                        ar.P1.Y + (ar.P2.Y - ar.P1.Y) * t,
+                                        ar.P1.Z + (ar.P2.Z - ar.P1.Z) * t);
+                                    melhorTipo = "NEAR";
+                                    melhor2D = proj2d;
+                                    achou = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!achou && cfg.SnapNearest)
+            {
+                var hit = vp3D.FindNearestPoint(mouseVp);
+                if (hit.HasValue)
+                {
+                    var p = hit.Value;
+                    melhorMm = new IfcVetor(p.X / esc, p.Y / esc, p.Z / esc);
+                    melhorTipo = "NEAR";
+                    melhor2D = Viewport3DHelper.Point3DtoPoint2D(vp3D.Viewport, p);
+                    achou = true;
+                }
+            }
+
+            return achou;
         }
 
         private void MenuEnquadrarSelecao_Click(object sender, RoutedEventArgs e)
@@ -1586,6 +1744,7 @@ namespace DLM.helix
             _alvoMoverInterativo = null;
             pnlModoInterativo.Visibility = Visibility.Collapsed;
             vp3D.Cursor = Cursors.Arrow;
+            OcultarIndicadorSnap();
         }
 
         private void ProcessarPontoInterativo(IfcVetor ptMm)
@@ -1959,6 +2118,31 @@ namespace DLM.helix
         }
 
         private void MenuFechar_Click(object sender, RoutedEventArgs e) => Close();
+
+        private void BtnConfigSnaps_Click(object sender, RoutedEventArgs e)
+        {
+            var dlg = new IfcSnapWindow { Owner = this };
+            if (dlg.ShowDialog() == true)
+            {
+                var c = IfcConfiguracao.Atual;
+                txtStatus.Text = string.Format("Snaps atualizados: Endpoint={0}, Midpoint={1}, Nearest={2}.",
+                    c.SnapEndpoint ? "ON" : "OFF", c.SnapMidpoint ? "ON" : "OFF", c.SnapNearest ? "ON" : "OFF");
+            }
+        }
+
+        private void MenuAplicarCoresPadrao_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null) return;
+            var cfg = IfcConfiguracao.Atual;
+            for (int i = 0; i < _modelo.Elementos.Count; i++)
+            {
+                var el = _modelo.Elementos[i];
+                if (el.EhAbertura) continue;
+                el.Cor = cfg.ObterCorElemento(el.Entidade, el.Nome, el.Tag, el.Descricao);
+            }
+            ReconstruirCena3D(false);
+            txtStatus.Text = "Cores padrao aplicadas (Vigas=Vermelho, Pilares=Vermelho claro, Purlins=Amarelo, Correntes=Verde, Parafusos=Cinza aco...).";
+        }
 
         private void MenuRemapearEixos_Click(object sender, RoutedEventArgs e)
         {

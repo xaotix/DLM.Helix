@@ -120,18 +120,29 @@
 					 Background="Transparent"
 					 Name="tab_3d">
                 <Grid>
+                    <Grid.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                            <GradientStop Color="#EFF4F9" Offset="0" />
+                            <GradientStop Color="#D7E1EC" Offset="1" />
+                        </LinearGradientBrush>
+                    </Grid.Background>
                     <h:HelixViewport3D SizeChanged="viewport_SizeChanged"
 									   Grid.Row="1"
 									   ZoomExtentsWhenLoaded="True"
 									   Name="viewPort3D"
 									   IsTouchZoomEnabled="True"
-									   Background="#FF1D1D1D"
+									   Background="Transparent"
 									   IsHeadLightEnabled="True"
 									   ZoomAroundMouseDownPoint="True"
 									   RotateAroundMouseDownPoint="True">
+                        <h:SunLight Brightness="0.9" />
                         <ModelVisual3D>
                             <ModelVisual3D.Content>
-                                <AmbientLight Color="Black" />
+                                <Model3DGroup>
+                                    <AmbientLight Color="#969696" />
+                                    <DirectionalLight Color="#B0B0B0" Direction="1,-1,-1.2" />
+                                    <DirectionalLight Color="#787878" Direction="-1,1,-0.6" />
+                                </Model3DGroup>
                             </ModelVisual3D.Content>
                         </ModelVisual3D>
                         <h:HelixViewport3D.Camera>

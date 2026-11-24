@@ -30,16 +30,21 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Row="0" Grid.Column="0" Text="Tolerancia minima entre eixos (mm):" VerticalAlignment="Center" Margin="0,3" />
                                 <TextBox x:Name="txtTolEixos" Grid.Row="0" Grid.Column="1" Height="24" VerticalContentAlignment="Center" Padding="4,0" Margin="0,3" />
                                 <TextBlock Grid.Row="0" Grid.Column="2" Text="Nao cria 2 eixos se a distancia for &lt;= tolerancia (padrao 500 mm)" Foreground="#64748B" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0" />
 
-                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Folga / extensao das linhas (mm):" VerticalAlignment="Center" Margin="0,3" />
-                                <TextBox x:Name="txtFolgaGrid" Grid.Row="1" Grid.Column="1" Height="24" VerticalContentAlignment="Center" Padding="4,0" Margin="0,3" />
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Tolerancia Z para eixos (mm):" VerticalAlignment="Center" Margin="0,3" />
+                                <TextBox x:Name="txtTolZEixos" Grid.Row="1" Grid.Column="1" Height="24" VerticalContentAlignment="Center" Padding="4,0" Margin="0,3" />
+                                <TextBlock Grid.Row="1" Grid.Column="2" Text="Range em torno de Z=0 (±valor/2; ex: 1000 = -500 a +500 mm)" Foreground="#64748B" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0" />
 
-                                <WrapPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="0,6,0,0">
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Folga / extensao das linhas (mm):" VerticalAlignment="Center" Margin="0,3" />
+                                <TextBox x:Name="txtFolgaGrid" Grid.Row="2" Grid.Column="1" Height="24" VerticalContentAlignment="Center" Padding="4,0" Margin="0,3" />
+
+                                <WrapPanel Grid.Row="3" Grid.ColumnSpan="3" Margin="0,6,0,0">
                                     <CheckBox x:Name="chkMostrarGridPadrao" Content="Mostrar Grid automaticamente ao abrir modelo" Margin="0,0,18,0" />
                                     <CheckBox x:Name="chkExportarGridPadrao" Content="Exportar Grid (IfcGrid) junto com o IFC por padrao" />
                                 </WrapPanel>

@@ -59,6 +59,7 @@ namespace DLM.helix
             _modelo = modelo;
             _gridDestino = grid ?? new IfcGrid();
             txtTolerancia.Text = IfcConfiguracao.Atual.ToleranciaEixosMm.ToString("0.#", CultureInfo.InvariantCulture);
+            txtToleranciaZ.Text = IfcConfiguracao.Atual.ToleranciaZEixosMm.ToString("0.#", CultureInfo.InvariantCulture);
             CarregarGrid(_gridDestino);
         }
 
@@ -146,7 +147,11 @@ namespace DLM.helix
             double.TryParse((txtTolerancia.Text ?? "500").Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out tol);
             if (tol < 0.0) tol = 0.0;
 
-            var novo = IfcGrid.RemapearEixos(_modelo, tol);
+            double tolZ = 1000.0;
+            double.TryParse((txtToleranciaZ.Text ?? "1000").Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out tolZ);
+            if (tolZ < 10.0) tolZ = 10.0;
+
+            var novo = IfcGrid.RemapearEixos(_modelo, tol, tolZ);
             if (!novo.TemEixos)
             {
                 MessageBox.Show("Nenhum alinhamento de pilares ou porticos foi detectado automaticamente neste modelo. Voce pode adicionar os eixos manualmente.", "Remapear Eixos", MessageBoxButton.OK, MessageBoxImage.Information);

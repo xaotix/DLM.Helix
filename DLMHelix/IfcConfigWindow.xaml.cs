@@ -90,6 +90,7 @@ namespace DLM.helix
         {
             // Aba Geral
             txtTolEixos.Text = cfg.ToleranciaEixosMm.ToString("0.#", CultureInfo.InvariantCulture);
+            txtTolZEixos.Text = cfg.ToleranciaZEixosMm.ToString("0.#", CultureInfo.InvariantCulture);
             txtFolgaGrid.Text = cfg.FolgaGridMm.ToString("0.#", CultureInfo.InvariantCulture);
             chkMostrarGridPadrao.IsChecked = cfg.MostrarGridPadrao;
             chkExportarGridPadrao.IsChecked = cfg.ExportarGridNoIfcPadrao;
@@ -227,6 +228,7 @@ namespace DLM.helix
                     ExportarPropriedadesNaoMapeadas = chkExportarNaoMapeadas.IsChecked == true,
 
                     ToleranciaEixosMm = Math.Max(0.0, ParseDouble(txtTolEixos.Text, 500.0)),
+                    ToleranciaZEixosMm = Math.Max(10.0, ParseDouble(txtTolZEixos.Text, 1000.0)),
                     FolgaGridMm = Math.Max(100.0, ParseDouble(txtFolgaGrid.Text, 1500.0)),
                     MostrarGridPadrao = chkMostrarGridPadrao.IsChecked == true,
                     ExportarGridNoIfcPadrao = chkExportarGridPadrao.IsChecked == true,

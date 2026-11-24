@@ -949,28 +949,26 @@ namespace DLM.helix
 
                 if (tipo == "END")
                 {
-                    marcadorSnap.BorderBrush = new SolidColorBrush(Color.FromRgb(22, 163, 74));
-                    marcadorSnap.Background = new SolidColorBrush(Color.FromArgb(70, 22, 163, 74));
-                    marcadorSnap.CornerRadius = new CornerRadius(0);
-                    marcadorSnap.RenderTransform = Transform.Identity;
+                    marcadorSnap.Stroke = new SolidColorBrush(Color.FromRgb(22, 163, 74));
+                    marcadorSnap.Fill = new SolidColorBrush(Color.FromArgb(65, 22, 163, 74));
+                    marcadorSnap.Data = Geometry.Parse("M1,1 L13,1 L13,13 L1,13 Z");
                 }
                 else if (tipo == "MID")
                 {
-                    marcadorSnap.BorderBrush = new SolidColorBrush(Color.FromRgb(2, 132, 199));
-                    marcadorSnap.Background = new SolidColorBrush(Color.FromArgb(70, 2, 132, 199));
-                    marcadorSnap.CornerRadius = new CornerRadius(0);
-                    marcadorSnap.RenderTransform = new RotateTransform(45, 6, 6);
+                    marcadorSnap.Stroke = new SolidColorBrush(Color.FromRgb(2, 132, 199));
+                    marcadorSnap.Fill = new SolidColorBrush(Color.FromArgb(65, 2, 132, 199));
+                    marcadorSnap.Data = Geometry.Parse("M7,1 L13,13 L1,13 Z");
                 }
                 else
                 {
-                    marcadorSnap.BorderBrush = new SolidColorBrush(Color.FromRgb(234, 88, 12));
-                    marcadorSnap.Background = new SolidColorBrush(Color.FromArgb(70, 234, 88, 12));
-                    marcadorSnap.CornerRadius = new CornerRadius(6);
-                    marcadorSnap.RenderTransform = Transform.Identity;
+                    // Nearest: 2 triangulos (ampulheta: o de cima de cabeca para baixo e o de baixo normal)
+                    marcadorSnap.Stroke = new SolidColorBrush(Color.FromRgb(234, 88, 12));
+                    marcadorSnap.Fill = new SolidColorBrush(Color.FromArgb(65, 234, 88, 12));
+                    marcadorSnap.Data = Geometry.Parse("M1,1 L13,1 L7,7 Z M7,7 L13,13 L1,13 Z");
                 }
 
-                Canvas.SetLeft(marcadorSnap, pt2D.X - 6);
-                Canvas.SetTop(marcadorSnap, pt2D.Y - 6);
+                Canvas.SetLeft(marcadorSnap, pt2D.X - 7);
+                Canvas.SetTop(marcadorSnap, pt2D.Y - 7);
                 marcadorSnap.Visibility = Visibility.Visible;
 
                 txtTagSnap.Text = string.Format("{0} ({1:0.#}, {2:0.#}, {3:0.#})", tipo, ptMm.X, ptMm.Y, ptMm.Z);

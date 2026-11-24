@@ -21,21 +21,17 @@
                        Margin="0,0,0,12" />
 
             <StackPanel Orientation="Horizontal" Margin="0,4">
-                <Border Width="14" Height="14" BorderBrush="#16A34A" BorderThickness="2" Background="#3316A34A" Margin="0,0,8,0" VerticalAlignment="Center" />
+                <Path Width="14" Height="14" Stretch="None" Stroke="#16A34A" StrokeThickness="2" Fill="#3316A34A" Data="M1,1 L13,1 L13,13 L1,13 Z" Margin="0,0,8,0" VerticalAlignment="Center" />
                 <CheckBox x:Name="chkEndpoint" Content="Endpoint (Extremidades e vertices de arestas)" VerticalAlignment="Center" />
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" Margin="0,4">
-                <Border Width="12" Height="12" BorderBrush="#0284C7" BorderThickness="2" Background="#330284C7" Margin="1,0,9,0" VerticalAlignment="Center">
-                    <Border.RenderTransform>
-                        <RotateTransform Angle="45" CenterX="6" CenterY="6" />
-                    </Border.RenderTransform>
-                </Border>
+                <Path Width="14" Height="14" Stretch="None" Stroke="#0284C7" StrokeThickness="2" Fill="#330284C7" Data="M7,1 L13,13 L1,13 Z" Margin="0,0,8,0" VerticalAlignment="Center" />
                 <CheckBox x:Name="chkMidpoint" Content="Midpoint (Ponto medio de arestas)" VerticalAlignment="Center" />
             </StackPanel>
 
             <StackPanel Orientation="Horizontal" Margin="0,4">
-                <Ellipse Width="13" Height="13" Stroke="#EA580C" StrokeThickness="2" Fill="#33EA580C" Margin="0,0,9,0" VerticalAlignment="Center" />
+                <Path Width="14" Height="14" Stretch="None" Stroke="#EA580C" StrokeThickness="2" Fill="#33EA580C" Data="M1,1 L13,1 L7,7 Z M7,7 L13,13 L1,13 Z" Margin="0,0,8,0" VerticalAlignment="Center" />
                 <CheckBox x:Name="chkNearest" Content="Nearest (Ponto mais proximo na aresta / face)" VerticalAlignment="Center" />
             </StackPanel>
 

@@ -131,6 +131,7 @@
 
             <MenuItem Header="_Editar">
                 <MenuItem Header="Mover Selecao / IFC Importado..." Click="BtnMover_Click" Tag="M7,1 L7,13 M1,7 L13,7|#1E293B" />
+                <MenuItem Header="Definir / Editar Etapa (aba DLM)..." Click="BtnDefinirEtapa_Click" Tag="M2,2 L12,2 L12,6 L2,6 Z M2,8 L12,8 L12,12 L2,12 Z|#7C3AED" />
                 <MenuItem Header="Adicionar Atributo nas Pecas..." Click="BtnAdicionarAtributo_Click" Tag="M2,2 L8,2 L13,7 L7,13 L2,8 Z|#0284C7" />
                 <MenuItem Header="Agrupar Pecas por Propriedade..." Click="BtnAgrupar_Click" Tag="M2,2 L6,2 L6,6 L2,6 Z M8,2 L12,2 L12,6 L8,6 Z M8,8 L12,8 L12,12 L8,12 Z|#7C3AED" />
                 <Separator />
@@ -547,66 +548,122 @@
 
             <GridSplitter Grid.Column="3" Width="4" HorizontalAlignment="Stretch" Background="#E2E8F0" />
 
-            <!-- Painel Direito: Propriedades -->
+            <!-- Painel Direito: Propriedades e Cores por Etapa / Status SAP -->
             <Border Grid.Column="4" Background="#FFFFFF" BorderBrush="#CBD5E1" BorderThickness="1,0,0,0">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
+                <TabControl x:Name="tabPainelDireito" Background="#FFFFFF" BorderThickness="0" Padding="0">
+                    <!-- Aba 1: Propriedades -->
+                    <TabItem Header="Propriedades">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0" Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="8,6">
-                        <DockPanel>
-                            <TextBlock Text="PROPRIEDADES" FontSize="11" FontWeight="Bold" Foreground="#475569" VerticalAlignment="Center" />
-                            <Button DockPanel.Dock="Right" Style="{StaticResource BtnBarra}" Height="22" Padding="7,0" FontSize="10.5" Content="+ Atributo" Click="BtnAdicionarAtributo_Click" />
-                        </DockPanel>
-                    </Border>
+                            <Border Grid.Row="0" Background="#F1F5F9" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="8,6">
+                                <DockPanel>
+                                    <TextBlock Text="PROPRIEDADES" FontSize="11" FontWeight="Bold" Foreground="#475569" VerticalAlignment="Center" />
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <Button Style="{StaticResource BtnBarra}" Height="22" Padding="7,0" FontSize="10.5" Content="Etapa" Click="BtnDefinirEtapa_Click" ToolTip="Definir ou editar a ETAPA (aba DLM) nas pecas selecionadas" />
+                                        <Button Style="{StaticResource BtnBarra}" Height="22" Padding="7,0" FontSize="10.5" Content="+ Atributo" Click="BtnAdicionarAtributo_Click" />
+                                    </StackPanel>
+                                </DockPanel>
+                            </Border>
 
-                    <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="8,6">
-                        <StackPanel>
-                            <TextBlock x:Name="txtResumoSelecao"
-                                       Text="Nenhum elemento selecionado."
-                                       Foreground="#334155"
-                                       FontSize="11.5"
-                                       TextWrapping="Wrap" />
-                            <DockPanel Margin="0,6,0,0">
-                                <TextBlock Text="Aba IFC:" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,6,0" />
-                                <ComboBox x:Name="cbFiltroAbaProps" Height="23" FontSize="11" SelectionChanged="CbFiltroAbaProps_SelectionChanged" />
+                            <Border Grid.Row="1" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="8,6">
+                                <StackPanel>
+                                    <TextBlock x:Name="txtResumoSelecao"
+                                               Text="Nenhum elemento selecionado."
+                                               Foreground="#334155"
+                                               FontSize="11.5"
+                                               TextWrapping="Wrap" />
+                                    <DockPanel Margin="0,6,0,0">
+                                        <TextBlock Text="Aba IFC:" VerticalAlignment="Center" FontSize="11" FontWeight="SemiBold" Foreground="#475569" Margin="0,0,6,0" />
+                                        <ComboBox x:Name="cbFiltroAbaProps" Height="23" FontSize="11" SelectionChanged="CbFiltroAbaProps_SelectionChanged" />
+                                    </DockPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <DataGrid x:Name="dgPropriedades"
+                                      Grid.Row="2"
+                                      AutoGenerateColumns="False"
+                                      IsReadOnly="True"
+                                      Background="#FFFFFF"
+                                      Foreground="#0F172A"
+                                      RowBackground="#FFFFFF"
+                                      AlternatingRowBackground="#F8FAFC"
+                                      GridLinesVisibility="Horizontal"
+                                      HorizontalGridLinesBrush="#E2E8F0"
+                                      HeadersVisibility="Column"
+                                      BorderThickness="0"
+                                      FontSize="11.5">
+                                <DataGrid.ColumnHeaderStyle>
+                                    <Style TargetType="DataGridColumnHeader">
+                                        <Setter Property="Background" Value="#F1F5F9" />
+                                        <Setter Property="Foreground" Value="#475569" />
+                                        <Setter Property="FontWeight" Value="SemiBold" />
+                                        <Setter Property="Padding" Value="6,4" />
+                                        <Setter Property="BorderBrush" Value="#CBD5E1" />
+                                        <Setter Property="BorderThickness" Value="0,0,1,1" />
+                                    </Style>
+                                </DataGrid.ColumnHeaderStyle>
+                                <DataGrid.Columns>
+                                    <DataGridTextColumn Header="Aba" Binding="{Binding Aba}" Width="70" />
+                                    <DataGridTextColumn Header="Propriedade" Binding="{Binding Nome}" Width="110" />
+                                    <DataGridTextColumn Header="Valor" Binding="{Binding Valor}" Width="*" />
+                                </DataGrid.Columns>
+                            </DataGrid>
+                        </Grid>
+                    </TabItem>
+
+                    <!-- Aba 2: Cores por Etapa & Status SAP -->
+                    <TabItem Header="Etapas &amp; SAP">
+                        <Grid Margin="8">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <Border Grid.Row="0" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,8">
+                                <StackPanel>
+                                    <TextBlock Text="MODO DE CORES NO 3D" FontSize="10.5" FontWeight="Bold" Foreground="#475569" Margin="0,0,0,6" />
+                                    <RadioButton x:Name="rbCorOriginal" Content="Cor Original / Padrao" GroupName="ModoCor3D" IsChecked="True" Margin="0,2" Checked="ModoCor3D_Checked" />
+                                    <RadioButton x:Name="rbCorEtapa" Content="Range de Cores por Etapa (DLM)" GroupName="ModoCor3D" Margin="0,2" FontWeight="SemiBold" Foreground="#7C3AED" Checked="ModoCor3D_Checked" />
+                                    <RadioButton x:Name="rbCorStatusSap" Content="Cores por Status SAP (DLM)" GroupName="ModoCor3D" Margin="0,2" FontWeight="SemiBold" Foreground="#059669" Checked="ModoCor3D_Checked" />
+                                </StackPanel>
+                            </Border>
+
+                            <DockPanel Grid.Row="1" Margin="0,0,0,6">
+                                <TextBlock x:Name="txtTituloLegendaCores" Text="Etapas no Modelo (clique para selecionar):" FontSize="11" FontWeight="Bold" Foreground="#334155" VerticalAlignment="Center" />
+                                <Button DockPanel.Dock="Right" Style="{StaticResource BtnBarra}" Height="22" Padding="7,0" FontSize="10.5" Content="Atualizar" Click="BtnAtualizarLegendaCores_Click" />
                             </DockPanel>
-                        </StackPanel>
-                    </Border>
 
-                    <DataGrid x:Name="dgPropriedades"
-                              Grid.Row="2"
-                              AutoGenerateColumns="False"
-                              IsReadOnly="True"
-                              Background="#FFFFFF"
-                              Foreground="#0F172A"
-                              RowBackground="#FFFFFF"
-                              AlternatingRowBackground="#F8FAFC"
-                              GridLinesVisibility="Horizontal"
-                              HorizontalGridLinesBrush="#E2E8F0"
-                              HeadersVisibility="Column"
-                              BorderThickness="0"
-                              FontSize="11.5">
-                        <DataGrid.ColumnHeaderStyle>
-                            <Style TargetType="DataGridColumnHeader">
-                                <Setter Property="Background" Value="#F1F5F9" />
-                                <Setter Property="Foreground" Value="#475569" />
-                                <Setter Property="FontWeight" Value="SemiBold" />
-                                <Setter Property="Padding" Value="6,4" />
-                                <Setter Property="BorderBrush" Value="#CBD5E1" />
-                                <Setter Property="BorderThickness" Value="0,0,1,1" />
-                            </Style>
-                        </DataGrid.ColumnHeaderStyle>
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Aba" Binding="{Binding Aba}" Width="70" />
-                            <DataGridTextColumn Header="Propriedade" Binding="{Binding Nome}" Width="110" />
-                            <DataGridTextColumn Header="Valor" Binding="{Binding Valor}" Width="*" />
-                        </DataGrid.Columns>
-                    </DataGrid>
-                </Grid>
+                            <ListBox x:Name="lstLegendaCores"
+                                     Grid.Row="2"
+                                     BorderBrush="#E2E8F0"
+                                     Background="#FFFFFF"
+                                     SelectionChanged="LstLegendaCores_SelectionChanged"
+                                     MouseDoubleClick="LstLegendaCores_MouseDoubleClick">
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <DockPanel Margin="2,3" LastChildFill="True">
+                                            <Border DockPanel.Dock="Left" Width="16" Height="16" CornerRadius="3" Background="{Binding CorHex}" BorderBrush="#64748B" BorderThickness="0.8" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                            <TextBlock DockPanel.Dock="Right" Text="{Binding QtdTexto}" Foreground="#64748B" FontSize="11" FontWeight="SemiBold" Margin="6,0,0,0" VerticalAlignment="Center" />
+                                            <TextBlock Text="{Binding Nome}" Foreground="#0F172A" FontSize="11.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                                        </DockPanel>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
+
+                            <StackPanel Grid.Row="3" Margin="0,8,0,0">
+                                <Button Style="{StaticResource BtnDestaque}" Content="Definir / Editar Etapa (aba DLM)..." Click="BtnDefinirEtapa_Click" Height="28" Margin="0,0,0,4" />
+                                <TextBlock Text="Duplo clique em um item da legenda isola as pecas no 3D." FontSize="10" Foreground="#64748B" TextWrapping="Wrap" HorizontalAlignment="Center" />
+                            </StackPanel>
+                        </Grid>
+                    </TabItem>
+                </TabControl>
             </Border>
         </Grid>
 

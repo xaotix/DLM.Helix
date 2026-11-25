@@ -53,6 +53,42 @@ namespace DLM.helix
             MedirPonto2
         }
 
+        private enum ModoCorVisual
+        {
+            Original,
+            Etapa,
+            StatusSap
+        }
+
+        private class ItemLegendaCor
+        {
+            public string Nome { get; set; }
+            public string CorHex { get; set; }
+            public Color Cor { get; set; }
+            public int Qtd { get; set; }
+            public string QtdTexto => Qtd + " pç";
+        }
+
+        private ModoCorVisual _modoCorVisual = ModoCorVisual.Original;
+        private readonly Dictionary<string, Color> _coresEtapas = new Dictionary<string, Color>(StringComparer.OrdinalIgnoreCase);
+        public List<string> EtapasSugeridas { get; set; } = new List<string>();
+
+        private static readonly Color[] PaletaEtapas = new Color[]
+        {
+            Color.FromRgb(37, 99, 235),   // Azul
+            Color.FromRgb(16, 185, 129),  // Esmeralda
+            Color.FromRgb(245, 158, 11),  // Ambar
+            Color.FromRgb(124, 58, 237),  // Violeta
+            Color.FromRgb(239, 68, 68),   // Vermelho
+            Color.FromRgb(6, 182, 212),   // Ciano
+            Color.FromRgb(236, 72, 153),  // Rosa
+            Color.FromRgb(132, 204, 22),  // Lima
+            Color.FromRgb(249, 115, 22),  // Laranja
+            Color.FromRgb(99, 102, 241),  // Indigo
+            Color.FromRgb(20, 184, 166),  // Teal
+            Color.FromRgb(168, 85, 247)   // Roxo
+        };
+
         private IfcModeloLido _modelo;
         private ResultadoDwgDireto _dwgDireto;
         private string _arquivoAtual;
@@ -288,6 +324,7 @@ namespace DLM.helix
             Title = "Visualizador e Editor IFC / DWG - " + (!string.IsNullOrWhiteSpace(_arquivoAtual) ? Path.GetFileName(_arquivoAtual) : "Modelo 3D");
 
             ReconstruirCena3D(true);
+            AtualizarPainelEtapasCores();
             ReconstruirArvore();
             AtualizarPainelPropriedades();
             AtualizarContadores();
@@ -379,10 +416,21 @@ namespace DLM.helix
                 }
                 else
                 {
-                    r = ClampByte(el.Cor.R * 255.0);
-                    g = ClampByte(el.Cor.G * 255.0);
-                    b = ClampByte(el.Cor.B * 255.0);
-                    a = ClampByte((1.0 - Math.Max(0.0, Math.Min(0.92, el.Transparencia))) * 255.0);
+                    Color corEfetiva;
+                    if (TentarObterCorModoVisual(el, out corEfetiva))
+                    {
+                        r = corEfetiva.R;
+                        g = corEfetiva.G;
+                        b = corEfetiva.B;
+                        a = ClampByte((1.0 - Math.Max(0.0, Math.Min(0.92, el.Transparencia))) * 255.0);
+                    }
+                    else
+                    {
+                        r = ClampByte(el.Cor.R * 255.0);
+                        g = ClampByte(el.Cor.G * 255.0);
+                        b = ClampByte(el.Cor.B * 255.0);
+                        a = ClampByte((1.0 - Math.Max(0.0, Math.Min(0.92, el.Transparencia))) * 255.0);
+                    }
                 }
 
                 string chave = a + "_" + r + "_" + g + "_" + b;
@@ -1918,6 +1966,7 @@ namespace DLM.helix
                 foreach (var el in adicionados) _selecionados.Add(el);
 
                 ReconstruirCena3D(true);
+            AtualizarPainelEtapasCores();
                 ReconstruirArvore();
                 AtualizarPainelPropriedades();
                 AtualizarContadores();
@@ -2704,6 +2753,252 @@ namespace DLM.helix
                 try { _cts.Cancel(); } catch { }
                 _cts = null;
             }
+        }
+
+        #endregion
+
+        #region Edicao de Etapa (aba DLM) e Range de Cores por Etapa / Status SAP
+
+        private static string ObterEtapaElemento(IfcMalhaElemento el)
+        {
+            if (el == null) return "";
+            string v = el.ObterPropriedade("DLM", "ETAPA");
+            if (string.IsNullOrWhiteSpace(v)) v = el.ObterPropriedade("ETAPA");
+            return string.IsNullOrWhiteSpace(v) ? "(Sem Etapa)" : v.Trim();
+        }
+
+        private static string ObterStatusSapElemento(IfcMalhaElemento el)
+        {
+            if (el == null) return "Sem SAP";
+            string v = el.ObterPropriedade("DLM", "SAP_STATUS");
+            if (string.IsNullOrWhiteSpace(v)) v = el.ObterPropriedade("SAP_STATUS");
+            return string.IsNullOrWhiteSpace(v) ? "Sem SAP" : v.Trim();
+        }
+
+        private static Color ObterCorStatusSap(string status)
+        {
+            string s = (status ?? "").ToUpperInvariant();
+            if (s.Contains("EMBARCADO")) return Color.FromRgb(22, 163, 74);       // Verde
+            if (s.Contains("FABRICADO")) return Color.FromRgb(37, 99, 235);       // Azul
+            if (s.Contains("PARCIAL") || s.Contains("PRODU")) return Color.FromRgb(245, 158, 11); // Ambar
+            if (s.Contains("LIBERADO")) return Color.FromRgb(6, 182, 212);        // Ciano
+            if (s.Contains("ATRASAD")) return Color.FromRgb(220, 38, 38);         // Vermelho
+            return Color.FromRgb(148, 163, 184);                                  // Cinza
+        }
+
+        private bool TentarObterCorModoVisual(IfcMalhaElemento el, out Color cor)
+        {
+            cor = Colors.Gray;
+            if (_modoCorVisual == ModoCorVisual.Original || el == null) return false;
+
+            if (_modoCorVisual == ModoCorVisual.Etapa)
+            {
+                string et = ObterEtapaElemento(el);
+                if (et == "(Sem Etapa)")
+                {
+                    cor = Color.FromRgb(148, 163, 184);
+                    return true;
+                }
+                Color c;
+                if (!_coresEtapas.TryGetValue(et, out c))
+                {
+                    c = PaletaEtapas[_coresEtapas.Count % PaletaEtapas.Length];
+                    _coresEtapas[et] = c;
+                }
+                cor = c;
+                return true;
+            }
+
+            if (_modoCorVisual == ModoCorVisual.StatusSap)
+            {
+                string st = ObterStatusSapElemento(el);
+                cor = ObterCorStatusSap(st);
+                return true;
+            }
+
+            return false;
+        }
+
+        public void AtualizarPainelEtapasCores()
+        {
+            if (lstLegendaCores == null) return;
+            var itens = new List<ItemLegendaCor>();
+            if (_modelo == null)
+            {
+                lstLegendaCores.ItemsSource = itens;
+                return;
+            }
+
+            var visiveis = _modelo.Elementos.Where(x => !x.EhAbertura).ToList();
+            if (_modoCorVisual == ModoCorVisual.StatusSap)
+            {
+                txtTituloLegendaCores.Text = "Status SAP no Modelo (clique para selecionar):";
+                foreach (var g in visiveis.GroupBy(ObterStatusSapElemento, StringComparer.OrdinalIgnoreCase).OrderByDescending(x => x.Count()))
+                {
+                    Color c = ObterCorStatusSap(g.Key);
+                    itens.Add(new ItemLegendaCor
+                    {
+                        Nome = g.Key,
+                        Cor = c,
+                        CorHex = string.Format("#{0:X2}{1:X2}{2:X2}", c.R, c.G, c.B),
+                        Qtd = g.Count()
+                    });
+                }
+            }
+            else
+            {
+                txtTituloLegendaCores.Text = "Etapas no Modelo — aba DLM (clique para selecionar):";
+                _coresEtapas.Clear();
+                int idx = 0;
+                foreach (var g in visiveis.GroupBy(ObterEtapaElemento, StringComparer.OrdinalIgnoreCase).OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+                {
+                    Color c = g.Key == "(Sem Etapa)"
+                        ? Color.FromRgb(148, 163, 184)
+                        : PaletaEtapas[(idx++) % PaletaEtapas.Length];
+                    if (g.Key != "(Sem Etapa)") _coresEtapas[g.Key] = c;
+
+                    itens.Add(new ItemLegendaCor
+                    {
+                        Nome = g.Key,
+                        Cor = c,
+                        CorHex = string.Format("#{0:X2}{1:X2}{2:X2}", c.R, c.G, c.B),
+                        Qtd = g.Count()
+                    });
+                }
+            }
+
+            lstLegendaCores.ItemsSource = itens;
+        }
+
+        private void ModoCor3D_Checked(object sender, RoutedEventArgs e)
+        {
+            if (rbCorEtapa == null || rbCorStatusSap == null) return;
+            if (rbCorEtapa.IsChecked == true) _modoCorVisual = ModoCorVisual.Etapa;
+            else if (rbCorStatusSap.IsChecked == true) _modoCorVisual = ModoCorVisual.StatusSap;
+            else _modoCorVisual = ModoCorVisual.Original;
+
+            AtualizarPainelEtapasCores();
+            if (_modelo != null) ReconstruirCena3D(false);
+        }
+
+        private void BtnAtualizarLegendaCores_Click(object sender, RoutedEventArgs e)
+        {
+            AtualizarPainelEtapasCores();
+        }
+
+        private void LstLegendaCores_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_modelo == null) return;
+            var item = lstLegendaCores.SelectedItem as ItemLegendaCor;
+            if (item == null) return;
+
+            _selecionados.Clear();
+            foreach (var el in _modelo.Elementos)
+            {
+                if (el.EhAbertura || !el.Visivel) continue;
+                string val = _modoCorVisual == ModoCorVisual.StatusSap
+                    ? ObterStatusSapElemento(el)
+                    : ObterEtapaElemento(el);
+                if (string.Equals(val, item.Nome, StringComparison.OrdinalIgnoreCase))
+                    _selecionados.Add(el);
+            }
+            AtualizarDestaqueSelecao();
+            AtualizarPainelPropriedades();
+            txtStatus.Text = string.Format("Selecionadas {0} pecas de \"{1}\".", _selecionados.Count, item.Nome);
+        }
+
+        private void LstLegendaCores_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (_selecionados.Count > 0)
+                BtnIsolar_Click(sender, e);
+        }
+
+        private void BtnDefinirEtapa_Click(object sender, RoutedEventArgs e)
+        {
+            if (_modelo == null || _modelo.Elementos.Count == 0)
+            {
+                MessageBox.Show("Carregue um modelo IFC/DWG primeiro.", "Etapa (DLM)", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            var alvos = _selecionados.Count > 0
+                ? _selecionados.ToList()
+                : _modelo.Elementos.Where(x => !x.EhAbertura && x.Visivel).ToList();
+
+            if (alvos.Count == 0) return;
+
+            // Monta lista de etapas existentes + sugeridas
+            var sugestoes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (EtapasSugeridas != null)
+            {
+                foreach (var s in EtapasSugeridas)
+                    if (!string.IsNullOrWhiteSpace(s)) sugestoes.Add(s.Trim());
+            }
+            foreach (var el in _modelo.Elementos)
+            {
+                string et = el.ObterPropriedade("DLM", "ETAPA");
+                if (!string.IsNullOrWhiteSpace(et)) sugestoes.Add(et.Trim());
+            }
+
+            var dlg = new Window
+            {
+                Title = "Definir / Editar Etapa (aba DLM)",
+                Width = 420,
+                Height = 195,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner,
+                Owner = this,
+                ResizeMode = ResizeMode.NoResize,
+                Background = new SolidColorBrush(Color.FromRgb(248, 250, 252))
+            };
+
+            var root = new StackPanel { Margin = new Thickness(16) };
+            root.Children.Add(new TextBlock
+            {
+                Text = string.Format("Atribuir ETAPA (aba DLM) em {0} elemento(s) ({1}):",
+                    alvos.Count, _selecionados.Count > 0 ? "selecionados" : "todos visiveis"),
+                FontWeight = FontWeights.SemiBold,
+                Foreground = new SolidColorBrush(Color.FromRgb(15, 23, 42)),
+                Margin = new Thickness(0, 0, 0, 10)
+            });
+
+            var cmb = new ComboBox
+            {
+                IsEditable = true,
+                Height = 28,
+                FontSize = 12,
+                ItemsSource = sugestoes.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList()
+            };
+            string atual = alvos[0].ObterPropriedade("DLM", "ETAPA");
+            if (!string.IsNullOrWhiteSpace(atual)) cmb.Text = atual;
+            root.Children.Add(cmb);
+
+            var botoes = new StackPanel
+            {
+                Orientation = Orientation.Horizontal,
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Margin = new Thickness(0, 16, 0, 0)
+            };
+            var btnCancel = new Button { Content = "Cancelar", Width = 86, Height = 28, Margin = new Thickness(0, 0, 8, 0), Style = (Style)FindResource("BtnBarra") };
+            var btnOk = new Button { Content = "Aplicar Etapa", Width = 110, Height = 28, Style = (Style)FindResource("BtnDestaque") };
+            btnCancel.Click += (s2, e2) => { dlg.DialogResult = false; dlg.Close(); };
+            btnOk.Click += (s2, e2) => { dlg.DialogResult = true; dlg.Close(); };
+            botoes.Children.Add(btnCancel);
+            botoes.Children.Add(btnOk);
+            root.Children.Add(botoes);
+            dlg.Content = root;
+
+            if (dlg.ShowDialog() != true) return;
+
+            string novaEtapa = (cmb.Text ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(novaEtapa)) return;
+
+            int qtd = IfcEditor.DefinirAtributo(alvos, "DLM", "ETAPA", novaEtapa);
+            AtualizarPainelPropriedades();
+            AtualizarPainelEtapasCores();
+            if (_modoCorVisual == ModoCorVisual.Etapa)
+                ReconstruirCena3D(false);
+
+            txtStatus.Text = string.Format("Etapa \"{0}\" gravada na aba DLM de {1} elemento(s).", novaEtapa, qtd);
         }
 
         #endregion

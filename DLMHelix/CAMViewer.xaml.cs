@@ -943,6 +943,7 @@ namespace DLM.helix
             if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho)) return;
 
             CancelarCarregamento();
+            int seq = Interlocked.Increment(ref _carregamentoSeq);
             _ctsIfc = new CancellationTokenSource();
             var token = _ctsIfc.Token;
 
@@ -988,6 +989,7 @@ namespace DLM.helix
             if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho)) return;
 
             CancelarCarregamento();
+            int seq = Interlocked.Increment(ref _carregamentoSeq);
             _ctsIfc = new CancellationTokenSource();
             var token = _ctsIfc.Token;
 
@@ -1092,11 +1094,11 @@ namespace DLM.helix
                     {
                         return RenderACadSharp.CarregarDwgDireto(caminho, (atual, total, msg) =>
                         {
-                            if (token.IsCancellationRequested) return;
+                            if (token.IsCancellationRequested || seq != _carregamentoSeq) return;
                             int pct = atual < 0 ? -1 : (total > 0 ? Math.Max(0, Math.Min(100, (atual * 100) / total)) : -1);
                             Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
                             {
-                                if (!token.IsCancellationRequested) MostrarProgressoIFC(true, pct, msg);
+                                if (seq == _carregamentoSeq && !token.IsCancellationRequested) MostrarProgressoIFC(true, pct, msg);
                             }));
                         }, token);
                     }, token);
@@ -1120,11 +1122,11 @@ namespace DLM.helix
                 {
                     return DwgLoader.CarregarDwgOuDxf(caminho, (atual, total, msg) =>
                     {
-                        if (token.IsCancellationRequested) return;
+                        if (token.IsCancellationRequested || seq != _carregamentoSeq) return;
                         int pct = atual < 0 ? -1 : (total > 0 ? Math.Max(0, Math.Min(100, (atual * 100) / total)) : -1);
                         Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
                         {
-                            if (!token.IsCancellationRequested) MostrarProgressoIFC(true, pct, msg);
+                            if (seq == _carregamentoSeq && !token.IsCancellationRequested) MostrarProgressoIFC(true, pct, msg);
                         }));
                     }, token);
                 }, token);
@@ -1149,13 +1151,12 @@ namespace DLM.helix
             }
             finally
             {
-                if (!token.IsCancellationRequested)
-                {
-                    MostrarProgressoIFC(false, 0, "");
-                }
+                Interlocked.Increment(ref _carregamentoSeq);
+                MostrarProgressoIFC(false, 0, "");
             }
         }
 
+        private int _carregamentoSeq = 0;
         private CancellationTokenSource _ctsIfc;
         private bool _modoPlanificado = false;
         private string _layoutDxfAtivo = "Model";
@@ -1202,6 +1203,7 @@ namespace DLM.helix
                 Set2D();
                 viewPort2D.Children.Add(Gera3d.Luz());
                 RenderACadSharp.AplicarNoViewport(viewPort2D, res);
+                SetView2D();
                 AtualizarBounds();
                 if (extend)
                 {
@@ -1296,6 +1298,7 @@ namespace DLM.helix
             if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho)) return;
 
             CancelarCarregamentoIFC();
+            int seq = Interlocked.Increment(ref _carregamentoSeq);
             _ctsIfc = new CancellationTokenSource();
             var token = _ctsIfc.Token;
 
@@ -1314,10 +1317,12 @@ namespace DLM.helix
                 {
                     return IfcLeitor.LerArquivo(caminho, (atual, total, msg) =>
                     {
+                        if (token.IsCancellationRequested || seq != _carregamentoSeq) return;
                         int pct = total > 0 ? Math.Max(0, Math.Min(100, (atual * 100) / total)) : 0;
                         Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
                         {
-                            MostrarProgressoIFC(true, pct, msg);
+                            if (seq == _carregamentoSeq && !token.IsCancellationRequested)
+                                MostrarProgressoIFC(true, pct, msg);
                         }));
                     }, token);
                 }, token);
@@ -1364,12 +1369,14 @@ namespace DLM.helix
             }
             finally
             {
+                Interlocked.Increment(ref _carregamentoSeq);
                 MostrarProgressoIFC(false, 0, "");
             }
         }
 
         public void CancelarCarregamento()
         {
+            Interlocked.Increment(ref _carregamentoSeq);
             if (_ctsIfc != null)
             {
                 try { _ctsIfc.Cancel(); } catch { }
@@ -1514,6 +1521,8 @@ namespace DLM.helix
             this.viewPort2D.IsRotationEnabled = false;
             this.viewPort2D.RotateGesture = null;
             this.viewPort2D.RotateGesture2 = null;
+            GarantirCameraOrtografica(this.viewPort2D);
+            SetView2D();
         }
 
         public Rect3D? Bounds { get; private set; }
@@ -1532,6 +1541,7 @@ namespace DLM.helix
             }
 
             CancelarCarregamento();
+            int seq = Interlocked.Increment(ref _carregamentoSeq);
             _ctsIfc = new CancellationTokenSource();
             var token = _ctsIfc.Token;
             bool planificado = _modoPlanificado;
@@ -1725,6 +1735,7 @@ namespace DLM.helix
 
             GarantirCameraOrtografica(this.viewPort3D);
             GarantirCameraOrtografica(this.viewPort2D);
+            SetView2D();
 
             // Cancela qualquer anima��o de zoom em andamento
             _est2D.Resetar();

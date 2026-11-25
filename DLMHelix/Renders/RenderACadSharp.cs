@@ -107,6 +107,31 @@ namespace DLM.helix
                 return null;
 
             bool eh3D = ctx.TotalFaces3D > 0 || (ctx.MaxZ - ctx.MinZ) > 1.0;
+
+            // Desenhos 2D (ou desenhos sem faces 3D que possuem abas de Layout/PaperSpace)
+            // devem usar o pipeline completo DwgLoader -> Render2dLayouts para exibir
+            // abas de layout, textos (Text/MText), cotas (Dimension) e hachuras.
+            bool temLayoutsPaper = false;
+            try
+            {
+                if (doc.Layouts != null)
+                {
+                    foreach (var lay in doc.Layouts)
+                    {
+                        if (lay != null && !string.Equals(lay.Name, "Model", StringComparison.OrdinalIgnoreCase))
+                        {
+                            temLayoutsPaper = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            catch { }
+
+            if (!eh3D || (ctx.TotalFaces3D == 0 && temLayoutsPaper))
+            {
+                return null;
+            }
             bool modoLeve = ctx.TotalTriangulos > LIMITE_TRIS_MODO_LEVE || ctx.TotalSegmentos > LIMITE_SEGMENTOS_LINHAS_3D;
 
             // Centraliza coordenadas muito distantes da origem (evita jitter de float32 no GPU WPF)

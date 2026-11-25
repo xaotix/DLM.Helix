@@ -2759,6 +2759,33 @@ namespace DLM.helix
 
         #region Edicao de Etapa (aba DLM) e Range de Cores por Etapa / Status SAP
 
+        /// <summary>
+        /// Carrega um arquivo IFC ou converte um DWG TecnoMetal para IfcModeloLido em memoria.
+        /// </summary>
+        public static IfcModeloLido CarregarOuConverterArquivo(string caminho)
+        {
+            if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho)) return null;
+            string ext = Path.GetExtension(caminho).ToUpperInvariant();
+            if (ext == ".IFC")
+            {
+                return IfcLeitor.LerArquivo(caminho);
+            }
+            var modTecno = TecnoMetalDwgLeitor.LerArquivo(caminho, true);
+            if (modTecno == null || (modTecno.Pecas.Count == 0 && modTecno.Parafusos.Count == 0))
+                return null;
+            string txtIfc = TecnoMetalIfcExportador.GerarIfcTexto(modTecno, new OpcoesExportacaoIfc
+            {
+                IncluirChapas = true,
+                IncluirPerfis = true,
+                IncluirParafusos = true,
+                IncluirFuros = true,
+                CentralizarNaOrigem = false
+            });
+            var mod = IfcLeitor.LerTexto(txtIfc);
+            if (mod != null) mod.Arquivo = caminho;
+            return mod;
+        }
+
         private static string ObterEtapaElemento(IfcMalhaElemento el)
         {
             if (el == null) return "";

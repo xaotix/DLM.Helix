@@ -1988,6 +1988,10 @@ namespace DLM.helix
         private HelixViewport3D _medirViewport;
         private Point3D _pontoMedir1;
         private readonly List<Visual3D> _visuaisMedicao = new List<Visual3D>();
+        private bool _snapEnd = true;
+        private bool _snapMid = true;
+        private bool _snapNear = false;
+        private bool _medirOrtho = false;
 
         private void medir_click(object sender, RoutedEventArgs e)
         {
@@ -1997,14 +2001,49 @@ namespace DLM.helix
                 return;
             }
 
-            LimparVisuaisMedicao();
             bool aba2D = this.tab_2d != null && this.tab_2d.IsSelected;
             _medirViewport = aba2D ? this.viewPort2D : this.viewPort3D;
             _modoMedir = 1;
             if (bt_medir_3d != null) bt_medir_3d.IsChecked = true;
             if (bt_medir_2d != null) bt_medir_2d.IsChecked = true;
-            if (txt_medir_status != null) txt_medir_status.Text = "MEDIR (1/2): Clique no primeiro ponto (ESC limpa/cancela).";
+            if (sp_medir_opcoes_3d != null) sp_medir_opcoes_3d.Visibility = Visibility.Visible;
+            if (sp_medir_opcoes_2d != null) sp_medir_opcoes_2d.Visibility = Visibility.Visible;
+            if (txt_medir_status != null) txt_medir_status.Text = "MEDIR (1/2): Clique no primeiro ponto (ESC ou X limpa/fecha).";
             if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Visible;
+        }
+
+        private void snap_toggle_click(object sender, RoutedEventArgs e)
+        {
+            var tb = sender as System.Windows.Controls.Primitives.ToggleButton;
+            if (tb == null) return;
+            bool val = tb.IsChecked == true;
+            if (ReferenceEquals(tb, ck_snap_end_3d) || ReferenceEquals(tb, ck_snap_end_2d))
+            {
+                _snapEnd = val;
+                if (ck_snap_end_3d != null) ck_snap_end_3d.IsChecked = val;
+                if (ck_snap_end_2d != null) ck_snap_end_2d.IsChecked = val;
+            }
+            else if (ReferenceEquals(tb, ck_snap_mid_3d) || ReferenceEquals(tb, ck_snap_mid_2d))
+            {
+                _snapMid = val;
+                if (ck_snap_mid_3d != null) ck_snap_mid_3d.IsChecked = val;
+                if (ck_snap_mid_2d != null) ck_snap_mid_2d.IsChecked = val;
+            }
+            else if (ReferenceEquals(tb, ck_snap_near_3d) || ReferenceEquals(tb, ck_snap_near_2d))
+            {
+                _snapNear = val;
+                if (ck_snap_near_3d != null) ck_snap_near_3d.IsChecked = val;
+                if (ck_snap_near_2d != null) ck_snap_near_2d.IsChecked = val;
+            }
+        }
+
+        private void ortho_toggle_click(object sender, RoutedEventArgs e)
+        {
+            var tb = sender as System.Windows.Controls.Primitives.ToggleButton;
+            if (tb == null) return;
+            _medirOrtho = tb.IsChecked == true;
+            if (ck_ortho_3d != null) ck_ortho_3d.IsChecked = _medirOrtho;
+            if (ck_ortho_2d != null) ck_ortho_2d.IsChecked = _medirOrtho;
         }
 
         private void limpar_medir_click(object sender, RoutedEventArgs e)
@@ -2038,7 +2077,22 @@ namespace DLM.helix
             _medirViewport = null;
             if (bt_medir_3d != null) bt_medir_3d.IsChecked = false;
             if (bt_medir_2d != null) bt_medir_2d.IsChecked = false;
+            if (sp_medir_opcoes_3d != null) sp_medir_opcoes_3d.Visibility = Visibility.Collapsed;
+            if (sp_medir_opcoes_2d != null) sp_medir_opcoes_2d.Visibility = Visibility.Collapsed;
             if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Collapsed;
+        }
+
+        private static Point3D AplicarOrtho(Point3D p1, Point3D p2, bool apenasXY)
+        {
+            double dx = Math.Abs(p2.X - p1.X);
+            double dy = Math.Abs(p2.Y - p1.Y);
+            double dz = apenasXY ? 0.0 : Math.Abs(p2.Z - p1.Z);
+
+            if (dx >= dy && dx >= dz)
+                return new Point3D(p2.X, p1.Y, apenasXY ? p2.Z : p1.Z);
+            if (dy >= dx && dy >= dz)
+                return new Point3D(p1.X, p2.Y, apenasXY ? p2.Z : p1.Z);
+            return new Point3D(p1.X, p1.Y, p2.Z);
         }
 
         private void ViewPort_PreviewMouseLeftButtonDown_Medir(object sender, MouseButtonEventArgs e)
@@ -2052,7 +2106,8 @@ namespace DLM.helix
             if (!TentarObterPontoMedicao(vp, ptMouse, out pt3d)) return;
 
             e.Handled = true;
-            double fatorMm = (!ReferenceEquals(vp, this.viewPort2D) && (_modeloIfcAtual != null || _modeloTecnoAtual != null))
+            bool eh2D = ReferenceEquals(vp, this.viewPort2D);
+            double fatorMm = (!eh2D && (_modeloIfcAtual != null || _modeloTecnoAtual != null))
                 ? 1000.0
                 : 1.0;
 
@@ -2063,17 +2118,17 @@ namespace DLM.helix
                 _modoMedir = 2;
                 if (txt_medir_status != null)
                 {
-                    txt_medir_status.Text = string.Format("MEDIR (2/2): P1 ({0:0.#}, {1:0.#}, {2:0.#}) mm definido. Clique no segundo ponto.",
+                    txt_medir_status.Text = string.Format("MEDIR (2/2): P1 ({0:0.#}, {1:0.#}, {2:0.#}) mm. Clique no 2º ponto.",
                         pt3d.X * fatorMm, pt3d.Y * fatorMm, pt3d.Z * fatorMm);
                 }
                 return;
             }
 
             var p1 = _pontoMedir1;
-            var p2 = pt3d;
-            _modoMedir = 0;
-            if (bt_medir_3d != null) bt_medir_3d.IsChecked = false;
-            if (bt_medir_2d != null) bt_medir_2d.IsChecked = false;
+            var p2 = _medirOrtho ? AplicarOrtho(p1, pt3d, eh2D) : pt3d;
+
+            // Mantém ativo para adicionar múltiplas cotas continuamente
+            _modoMedir = 1;
 
             double dx = (p2.X - p1.X) * fatorMm;
             double dy = (p2.Y - p1.Y) * fatorMm;
@@ -2106,9 +2161,10 @@ namespace DLM.helix
 
             if (txt_medir_status != null)
             {
-                txt_medir_status.Text = Math.Abs(dz) > 0.1
-                    ? string.Format("Medição: L = {0:0.#} mm | dX = {1:0.#} | dY = {2:0.#} | dZ = {3:0.#}", dist, dx, dy, dz)
-                    : string.Format("Medição: L = {0:0.#} mm | dX = {1:0.#} | dY = {2:0.#}", dist, dx, dy);
+                string resumo = Math.Abs(dz) > 0.1
+                    ? string.Format("Última: L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}, dZ={3:0.#}) — Clique para nova cota ou X/ESC para limpar.", dist, dx, dy, dz)
+                    : string.Format("Última: L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}) — Clique para nova cota ou X/ESC para limpar.", dist, dx, dy);
+                txt_medir_status.Text = resumo;
             }
             if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Visible;
         }
@@ -2117,37 +2173,79 @@ namespace DLM.helix
         {
             ponto = new Point3D();
 
-            // 1) Snap em vértices próximos de linhas 2D/3D (até 12 px)
-            Point3D melhorSnap = new Point3D();
-            double melhorDistPx = 12.0;
-            bool achouSnap = false;
-
-            foreach (var child in vp.Children)
+            // 1) Snaps (End / Mid / Near) em segmentos de linhas 2D/3D (até 12 px)
+            if (_snapEnd || _snapMid || _snapNear)
             {
-                if (_visuaisMedicao.Contains(child)) continue;
-                Point3DCollection pts = null;
-                if (child is LinhaVisual3D lv) pts = lv.Points;
-                else if (child is LinesVisual3D lvs) pts = lvs.Points;
-                if (pts == null || pts.Count == 0) continue;
+                Point3D melhorSnap = new Point3D();
+                double melhorDistPx = 12.0;
+                bool achouSnap = false;
 
-                int step = pts.Count > 20000 ? 4 : 1;
-                for (int i = 0; i < pts.Count; i += step)
+                foreach (var child in vp.Children)
                 {
-                    var p3 = pts[i];
-                    var p2 = Viewport3DHelper.Point3DtoPoint2D(vp.Viewport, p3);
-                    double d = (p2 - ptMouse).Length;
-                    if (d < melhorDistPx)
+                    if (_visuaisMedicao.Contains(child)) continue;
+                    Point3DCollection pts = null;
+                    if (child is LinhaVisual3D lv) pts = lv.Points;
+                    else if (child is LinesVisual3D lvs) pts = lvs.Points;
+                    if (pts == null || pts.Count < 2) continue;
+
+                    int step = pts.Count > 20000 ? 4 : 2;
+                    for (int i = 0; i + 1 < pts.Count; i += step)
                     {
-                        melhorDistPx = d;
-                        melhorSnap = p3;
-                        achouSnap = true;
+                        var a3 = pts[i];
+                        var b3 = pts[i + 1];
+                        var a2 = Viewport3DHelper.Point3DtoPoint2D(vp.Viewport, a3);
+                        var b2 = Viewport3DHelper.Point3DtoPoint2D(vp.Viewport, b3);
+
+                        if (_snapEnd)
+                        {
+                            double da = (a2 - ptMouse).Length;
+                            if (da < melhorDistPx) { melhorDistPx = da; melhorSnap = a3; achouSnap = true; }
+                            double db = (b2 - ptMouse).Length;
+                            if (db < melhorDistPx) { melhorDistPx = db; melhorSnap = b3; achouSnap = true; }
+                        }
+
+                        if (_snapMid)
+                        {
+                            var m2 = new Point((a2.X + b2.X) * 0.5, (a2.Y + b2.Y) * 0.5);
+                            double dm = (m2 - ptMouse).Length;
+                            if (dm < melhorDistPx)
+                            {
+                                melhorDistPx = dm;
+                                melhorSnap = new Point3D((a3.X + b3.X) * 0.5, (a3.Y + b3.Y) * 0.5, (a3.Z + b3.Z) * 0.5);
+                                achouSnap = true;
+                            }
+                        }
+
+                        if (_snapNear && !achouSnap)
+                        {
+                            Vector seg = b2 - a2;
+                            double len2 = seg.LengthSquared;
+                            if (len2 > 1e-6)
+                            {
+                                double t = ((ptMouse - a2) * seg) / len2;
+                                if (t >= 0.0 && t <= 1.0)
+                                {
+                                    var proj2 = a2 + seg * t;
+                                    double dn = (proj2 - ptMouse).Length;
+                                    if (dn < melhorDistPx)
+                                    {
+                                        melhorDistPx = dn;
+                                        melhorSnap = new Point3D(
+                                            a3.X + (b3.X - a3.X) * t,
+                                            a3.Y + (b3.Y - a3.Y) * t,
+                                            a3.Z + (b3.Z - a3.Z) * t);
+                                        achouSnap = true;
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
-            }
-            if (achouSnap)
-            {
-                ponto = melhorSnap;
-                return true;
+                if (achouSnap)
+                {
+                    ponto = melhorSnap;
+                    return true;
+                }
             }
 
             // 2) Hit-test em malhas 3D

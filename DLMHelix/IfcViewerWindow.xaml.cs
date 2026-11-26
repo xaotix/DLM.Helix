@@ -1711,11 +1711,45 @@ namespace DLM.helix
 
         private void BtnMedir_Click(object sender, RoutedEventArgs e)
         {
+            if (_modoInterativo == ModoInterativo.MedirPonto1 || _modoInterativo == ModoInterativo.MedirPonto2)
+            {
+                FecharMedirELimpar();
+                return;
+            }
+
+            var cfg = IfcConfiguracao.Atual;
+            if (tglSnapEnd != null) tglSnapEnd.IsChecked = cfg.SnapEndpoint;
+            if (tglSnapMid != null) tglSnapMid.IsChecked = cfg.SnapMidpoint;
+            if (tglSnapNear != null) tglSnapNear.IsChecked = cfg.SnapNearest;
+            if (tglMedir != null) tglMedir.IsChecked = true;
+            if (spMedirOpcoes != null) spMedirOpcoes.Visibility = Visibility.Visible;
+
+            AtivarModoInterativo(ModoInterativo.MedirPonto1, "MEDIR (1/2): Clique no primeiro ponto no 3D (ESC ou X limpa/fecha).");
+        }
+
+        private void BtnSnapOpcao_Click(object sender, RoutedEventArgs e)
+        {
+            var cfg = IfcConfiguracao.Atual;
+            if (tglSnapEnd != null) cfg.SnapEndpoint = tglSnapEnd.IsChecked == true;
+            if (tglSnapMid != null) cfg.SnapMidpoint = tglSnapMid.IsChecked == true;
+            if (tglSnapNear != null) cfg.SnapNearest = tglSnapNear.IsChecked == true;
+        }
+
+        private void BtnFecharMedir_Click(object sender, RoutedEventArgs e)
+        {
+            FecharMedirELimpar();
+            txtStatus.Text = "Medicao limpa e encerrada.";
+        }
+
+        private void FecharMedirELimpar()
+        {
             for (int i = 0; i < _visuaisMedicao.Count; i++)
                 vp3D.Children.Remove(_visuaisMedicao[i]);
             _visuaisMedicao.Clear();
 
-            AtivarModoInterativo(ModoInterativo.MedirPonto1, "MEDIR (1/2): Clique no primeiro ponto no 3D (ESC limpa/cancela).");
+            if (tglMedir != null) tglMedir.IsChecked = false;
+            if (spMedirOpcoes != null) spMedirOpcoes.Visibility = Visibility.Collapsed;
+            CancelarModoInterativo();
         }
 
         private void TglGrid_Click(object sender, RoutedEventArgs e)
@@ -2007,9 +2041,17 @@ namespace DLM.helix
             {
                 var p1 = _pontoMedir1;
                 var p2 = ptMm;
+                if (tglMedirOrtho != null && tglMedirOrtho.IsChecked == true)
+                {
+                    double adx = Math.Abs(p2.X - p1.X);
+                    double ady = Math.Abs(p2.Y - p1.Y);
+                    double adz = Math.Abs(p2.Z - p1.Z);
+                    if (adx >= ady && adx >= adz) p2 = new IfcVetor(p2.X, p1.Y, p1.Z);
+                    else if (ady >= adx && ady >= adz) p2 = new IfcVetor(p1.X, p2.Y, p1.Z);
+                    else p2 = new IfcVetor(p1.X, p1.Y, p2.Z);
+                }
                 var d = p2 - p1;
                 double dist = Math.Sqrt(d.X * d.X + d.Y * d.Y + d.Z * d.Z);
-                CancelarModoInterativo();
 
                 const double esc = RenderIFC.ESCALA_MM_PARA_M;
                 var pts = new Point3DCollection { new Point3D(p1.X * esc, p1.Y * esc, p1.Z * esc), new Point3D(p2.X * esc, p2.Y * esc, p2.Z * esc) };
@@ -2033,7 +2075,9 @@ namespace DLM.helix
                 vp3D.Children.Add(rotulo);
                 _visuaisMedicao.Add(rotulo);
 
-                txtStatus.Text = string.Format("Medicao: L = {0:0.#} mm | dX = {1:0.#} mm | dY = {2:0.#} mm | dZ = {3:0.#} mm", dist, d.X, d.Y, d.Z);
+                AtivarModoInterativo(
+                    ModoInterativo.MedirPonto1,
+                    string.Format("Medicao: L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}, dZ={3:0.#}) — Clique para nova cota ou X/ESC para limpar.", dist, d.X, d.Y, d.Z));
             }
         }
 
@@ -2054,7 +2098,12 @@ namespace DLM.helix
         {
             if (e.Key == Key.Escape)
             {
-                if (_modoInterativo != ModoInterativo.Nenhum)
+                if (_modoInterativo == ModoInterativo.MedirPonto1 || _modoInterativo == ModoInterativo.MedirPonto2 || _visuaisMedicao.Count > 0)
+                {
+                    FecharMedirELimpar();
+                    txtStatus.Text = "Medicao limpa e encerrada.";
+                }
+                else if (_modoInterativo != ModoInterativo.Nenhum)
                 {
                     CancelarModoInterativo();
                     txtStatus.Text = "Operacao cancelada.";

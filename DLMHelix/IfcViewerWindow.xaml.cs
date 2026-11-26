@@ -277,6 +277,13 @@ namespace DLM.helix
                             txtStatus.Text = "DWG direto carregado via ACadSharp.";
                             txtContadores.Text = string.Format("Entidades: {0:N0} | Triangulos: {1:N0}", dwgRes.TotalEntidades, dwgRes.TotalTriangulos);
                         }
+                        else
+                        {
+                            txtStatus.Text = "DWG 2D detectado: abrindo no visualizador 2D.";
+                            DLM.Helix.Visualizador_DXF.AbrirArquivo(caminho);
+                            this.Close();
+                            return;
+                        }
                         tvArvore.Items.Clear();
                         dgPropriedades.ItemsSource = null;
                         txtResumoSelecao.Text = "DWG generico (sem estrutura IFC).";

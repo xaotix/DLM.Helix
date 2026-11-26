@@ -1806,9 +1806,10 @@ namespace DLM.helix
         {
             try
             {
-                // Se houver modelo IFC carregado ou arquivo .IFC/.DWG, abre o novo Visualizador IFC completo
+                // Se houver modelo IFC carregado ou arquivo .IFC/.DWG 3D (sem DxfCarregado 2D), abre o Visualizador IFC completo
                 string extArq = !string.IsNullOrWhiteSpace(ArquivoCarregado) ? Path.GetExtension(ArquivoCarregado).ToUpperInvariant() : "";
-                if (_modeloIfcAtual != null || extArq == ".IFC" || extArq == ".DWG")
+                bool ehCad2D = DxfCarregado != null || (tab_2d != null && tab_2d.IsSelected && _modeloIfcAtual == null);
+                if (!ehCad2D && (_modeloIfcAtual != null || extArq == ".IFC" || extArq == ".DWG"))
                 {
                     var winIfc = new IfcViewerWindow();
                     winIfc.Show();
@@ -1904,26 +1905,44 @@ namespace DLM.helix
             if (bd_layouts_dxf == null || painel_layouts_dxf == null) return;
             painel_layouts_dxf.Children.Clear();
 
-            if (layouts == null || layouts.Count <= 1)
+            if (layouts == null || layouts.Count == 0)
             {
                 bd_layouts_dxf.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            var estiloBtn = TryFindResource("BotaoViewer3D") as Style;
             foreach (var lay in layouts)
             {
                 bool ativo = string.Equals(lay.Nome, layoutAtivo, StringComparison.OrdinalIgnoreCase);
+
+                var tpl = new ControlTemplate(typeof(Button));
+                var bdFactory = new FrameworkElementFactory(typeof(Border));
+                bdFactory.SetValue(Border.BackgroundProperty, ativo
+                    ? new SolidColorBrush(Color.FromRgb(45, 55, 72))
+                    : new SolidColorBrush(Color.FromRgb(26, 32, 44)));
+                bdFactory.SetValue(Border.BorderBrushProperty, ativo
+                    ? new SolidColorBrush(Color.FromRgb(56, 189, 248))
+                    : new SolidColorBrush(Color.FromRgb(51, 65, 85)));
+                bdFactory.SetValue(Border.BorderThicknessProperty, ativo ? new Thickness(1, 2, 1, 0) : new Thickness(1, 0, 1, 1));
+                bdFactory.SetValue(Border.CornerRadiusProperty, new CornerRadius(0, 0, 3, 3));
+                bdFactory.SetValue(Border.PaddingProperty, new Thickness(12, 4, 12, 4));
+                var cpFactory = new FrameworkElementFactory(typeof(ContentPresenter));
+                cpFactory.SetValue(ContentPresenter.HorizontalAlignmentProperty, HorizontalAlignment.Center);
+                cpFactory.SetValue(ContentPresenter.VerticalAlignmentProperty, VerticalAlignment.Center);
+                bdFactory.AppendChild(cpFactory);
+                tpl.VisualTree = bdFactory;
+
                 var bt = new Button
                 {
                     Content = lay.Rotulo,
                     Tag = lay.Nome,
-                    Style = estiloBtn,
-                    Margin = new Thickness(0, 0, 3, 0),
-                    Padding = new Thickness(8, 0, 8, 0),
-                    Background = ativo
-                        ? new SolidColorBrush(Color.FromRgb(37, 99, 235))
-                        : new SolidColorBrush(Color.FromArgb(217, 35, 47, 62))
+                    ToolTip = lay.Dica,
+                    Template = tpl,
+                    Cursor = System.Windows.Input.Cursors.Hand,
+                    Margin = new Thickness(0, 0, 2, 0),
+                    Foreground = ativo ? Brushes.White : new SolidColorBrush(Color.FromRgb(148, 163, 184)),
+                    FontWeight = ativo ? FontWeights.SemiBold : FontWeights.Normal,
+                    FontSize = 11.5
                 };
                 bt.Click += (s, e) =>
                 {

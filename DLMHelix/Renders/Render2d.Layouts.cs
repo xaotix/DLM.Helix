@@ -20,7 +20,10 @@ namespace DLM.helix
         public int QtdEntidades { get; set; }
         public short TabOrder { get; set; }
 
-        public string Rotulo => QtdMViews > 0 ? $"{Nome} ({QtdMViews} MV)" : Nome;
+        public string Rotulo => Nome;
+        public string Dica => EhPaperSpace
+            ? (QtdMViews > 0 ? $"{Nome} (PaperSpace - {QtdMViews} viewport(s))" : $"{Nome} (PaperSpace)")
+            : "Model Space";
     }
 
     public static class Render2dLayouts
@@ -64,8 +67,10 @@ namespace DLM.helix
                 });
             }
 
+            bool temOutroPaper = lista.Any(x => x.EhPaperSpace && (x.QtdEntidades > 0 || x.QtdMViews > 0));
             return lista
-                .OrderBy(x => x.EhPaperSpace ? 0 : 1)
+                .Where(x => !temOutroPaper || !x.EhPaperSpace || x.QtdEntidades > 0 || x.QtdMViews > 0)
+                .OrderBy(x => x.EhPaperSpace ? 1 : 0)
                 .ThenBy(x => x.TabOrder)
                 .ToList();
         }

@@ -14,10 +14,12 @@
 
         <!-- Barra de ferramentas -->
         <DockPanel Grid.Row="0" Margin="4">
-            <Button DockPanel.Dock="Left" Content="Abrir arquivo..." Click="bt_abrir_arquivo" Padding="10,3" Margin="0,0,4,0"/>
-            <Button DockPanel.Dock="Left" Content="Abrir pasta..." Click="bt_abrir_pasta" Padding="10,3" Margin="0,0,4,0"/>
-            <Button DockPanel.Dock="Left" Content="Atualizar pasta" Click="bt_atualizar" Padding="10,3" Margin="0,0,4,0"/>
+            <Button DockPanel.Dock="Left" x:Name="btn_abrir_arquivo" Content="Abrir arquivo..." Click="bt_abrir_arquivo" Padding="10,3" Margin="0,0,4,0"/>
+            <Button DockPanel.Dock="Left" x:Name="btn_abrir_pasta" Content="Abrir pasta..." Click="bt_abrir_pasta" Padding="10,3" Margin="0,0,4,0"/>
+            <Button DockPanel.Dock="Left" x:Name="btn_atualizar" Content="Atualizar pasta" Click="bt_atualizar" Padding="10,3" Margin="0,0,4,0"/>
             <CheckBox DockPanel.Dock="Left" x:Name="ck_subpastas" Content="Incluir subpastas" VerticalAlignment="Center" Margin="8,0" Click="ck_subpastas_Click"/>
+            <Button DockPanel.Dock="Right" x:Name="bt_exportar_selecionados" Content="Exportar..." Click="bt_exportar_selecionados_Click"
+                    Visibility="Collapsed" Background="#2563EB" Foreground="White" FontWeight="SemiBold" Padding="14,4" Margin="6,0,0,0"/>
             <Button DockPanel.Dock="Right" Content="Zoom" Click="bt_zoom" Padding="10,3" Margin="4,0,0,0"/>
             <TextBlock x:Name="txt_pasta" VerticalAlignment="Center" Margin="8,0" TextTrimming="CharacterEllipsis"/>
         </DockPanel>
@@ -33,10 +35,24 @@
             <Grid Grid.Column="0" x:Name="gr_lista">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <TextBox x:Name="txt_filtro" Grid.Row="0" Margin="4,0,4,4" TextChanged="txt_filtro_TextChanged" ToolTip="Filtrar arquivos"/>
-                <ListBox x:Name="lst_arquivos" Grid.Row="1" Margin="4,0,0,4" SelectionChanged="lst_arquivos_SelectionChanged" DisplayMemberPath="Nome"/>
+                <CheckBox x:Name="ck_marcar_todas" Grid.Row="1" Content="Selecionar todas as pranchas" IsChecked="True" Margin="6,2,4,4"
+                          Visibility="Collapsed" Click="ck_marcar_todas_Click" FontWeight="SemiBold"/>
+                <ListBox x:Name="lst_arquivos" Grid.Row="2" Margin="4,0,0,4" SelectionChanged="lst_arquivos_SelectionChanged">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Margin="1,2">
+                                <CheckBox IsChecked="{Binding Selecionado, Mode=TwoWay}"
+                                          Visibility="{Binding VisibilidadeCheckbox}"
+                                          VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                <TextBlock Text="{Binding Nome}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
             </Grid>
 
             <GridSplitter x:Name="split" Grid.Column="1" Width="5" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" ShowsPreview="False"/>

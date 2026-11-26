@@ -10,10 +10,28 @@ using System.Windows.Data;
 namespace DLM.Helix
 {
     /// <summary>Item da lista de arquivos do visualizador.</summary>
-    public class ArquivoDXFItem
+    public class ArquivoDXFItem : INotifyPropertyChanged
     {
+        private bool _selecionado = true;
         public string Nome { get; set; }
         public string Caminho { get; set; }
+        public bool ModoExportacao { get; set; }
+        public Visibility VisibilidadeCheckbox => ModoExportacao ? Visibility.Visible : Visibility.Collapsed;
+
+        public bool Selecionado
+        {
+            get => _selecionado;
+            set
+            {
+                if (_selecionado != value)
+                {
+                    _selecionado = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Selecionado)));
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
         public override string ToString() { return Nome; }
     }
 
@@ -26,6 +44,8 @@ namespace DLM.Helix
         private readonly List<ArquivoDXFItem> _itens = new List<ArquivoDXFItem>();
         private ICollectionView _view;
         private string _pasta;
+        private bool _modoExportacao;
+        private bool _apagarPastaAoFechar;
 
         public DLM.helix.CAMViewer CAMViewer => this.Viewer;
 
@@ -34,6 +54,43 @@ namespace DLM.Helix
             InitializeComponent();
             _view = CollectionViewSource.GetDefaultView(_itens);
             this.lst_arquivos.ItemsSource = _view;
+            this.Closed += Visualizador_DXF_Closed;
+        }
+
+        private void Visualizador_DXF_Closed(object sender, EventArgs e)
+        {
+            if (_apagarPastaAoFechar && !string.IsNullOrWhiteSpace(_pasta) && Directory.Exists(_pasta))
+            {
+                try { Directory.Delete(_pasta, true); } catch { }
+            }
+        }
+
+        /// <summary>Abre a janela em modo navegador de exportação, com checkboxes e botão "Exportar...".</summary>
+        public static Visualizador_DXF AbrirParaExportacao(string pastaPreview, string tituloPlanta = null, bool apagarPastaAoFechar = true)
+        {
+            var w = new Visualizador_DXF
+            {
+                _modoExportacao = true,
+                _apagarPastaAoFechar = apagarPastaAoFechar
+            };
+            w.ConfigurarModoExportacao(tituloPlanta);
+            w.Show();
+            w.CarregarPasta(pastaPreview, true);
+            return w;
+        }
+
+        private void ConfigurarModoExportacao(string tituloPlanta)
+        {
+            if (bt_exportar_selecionados != null) bt_exportar_selecionados.Visibility = Visibility.Visible;
+            if (ck_marcar_todas != null) ck_marcar_todas.Visibility = Visibility.Visible;
+            if (btn_abrir_arquivo != null) btn_abrir_arquivo.Visibility = Visibility.Collapsed;
+            if (btn_abrir_pasta != null) btn_abrir_pasta.Visibility = Visibility.Collapsed;
+            if (btn_atualizar != null) btn_atualizar.Visibility = Visibility.Collapsed;
+            if (ck_subpastas != null) ck_subpastas.Visibility = Visibility.Collapsed;
+            if (!string.IsNullOrWhiteSpace(tituloPlanta))
+            {
+                this.Title = "Visualizar e Exportar DXFs - " + tituloPlanta;
+            }
         }
 
         /// <summary>Abre a janela com um unico arquivo (sem a lista).</summary>
@@ -86,10 +143,10 @@ namespace DLM.Helix
             foreach (var arq in arquivos)
             {
                 string nome = arq.Length > pasta.Length ? arq.Substring(pasta.Length).TrimStart('\\', '/') : Path.GetFileName(arq);
-                _itens.Add(new ArquivoDXFItem { Nome = nome, Caminho = arq });
+                _itens.Add(new ArquivoDXFItem { Nome = nome, Caminho = arq, ModoExportacao = _modoExportacao, Selecionado = true });
             }
 
-            this.txt_pasta.Text = pasta;
+            this.txt_pasta.Text = _modoExportacao ? "Marque as pranchas desejadas e clique em Exportar..." : pasta;
             MostrarLista(true);
             _view.Refresh();
             this.txt_status.Text = $"{_itens.Count} arquivo(s) DXF";
@@ -189,6 +246,45 @@ namespace DLM.Helix
         {
             var item = this.lst_arquivos.SelectedItem as ArquivoDXFItem;
             if (item != null) Mostrar(item.Caminho);
+        }
+
+        private void ck_marcar_todas_Click(object sender, RoutedEventArgs e)
+        {
+            bool marcar = this.ck_marcar_todas.IsChecked == true;
+            foreach (var item in _itens)
+            {
+                item.Selecionado = marcar;
+            }
+        }
+
+        private void bt_exportar_selecionados_Click(object sender, RoutedEventArgs e)
+        {
+            var marcados = _itens.Where(x => x.Selecionado && File.Exists(x.Caminho)).ToList();
+            if (marcados.Count == 0)
+            {
+                MessageBox.Show(this, "Marque ao menos uma prancha para exportar.", "Exportar DXFs", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string pastaDestino = null;
+            using (var fb = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                fb.Description = "Selecione a pasta de destino dos DXFs";
+                fb.ShowNewFolderButton = true;
+                if (fb.ShowDialog() != System.Windows.Forms.DialogResult.OK) return;
+                pastaDestino = fb.SelectedPath;
+            }
+
+            int copiados = 0;
+            foreach (var item in marcados)
+            {
+                string dest = Path.Combine(pastaDestino, Path.GetFileName(item.Caminho));
+                File.Copy(item.Caminho, dest, true);
+                copiados++;
+            }
+
+            this.txt_status.Text = $"{copiados} prancha(s) exportada(s) para {pastaDestino}";
+            MessageBox.Show(this, $"{copiados} prancha(s) exportada(s) com sucesso para:\n{pastaDestino}", "Exportar DXFs", MessageBoxButton.OK, MessageBoxImage.Information);
         }
     }
 }

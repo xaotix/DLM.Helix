@@ -428,14 +428,14 @@
                         </Border>
                     </Grid>
 
-                    <!-- Barra de abas de Layouts (DXF / DWG com múltiplos layouts/MViews) -->
+                    <!-- Barra de abas de Layouts estilo AutoCAD (Model / A2 / PaperSpace) -->
                     <Border x:Name="bd_layouts_dxf"
                             Grid.Row="1"
                             Visibility="Collapsed"
-                            Background="#1E293B"
+                            Background="#1A202C"
                             BorderBrush="#334155"
                             BorderThickness="0,1,0,0"
-                            Padding="4,3">
+                            Padding="6,0,6,2">
                         <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                             <StackPanel x:Name="painel_layouts_dxf" Orientation="Horizontal" />
                         </ScrollViewer>

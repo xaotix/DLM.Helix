@@ -117,9 +117,9 @@
         <Menu x:Name="menuPrincipal" Grid.Row="0" Background="#F8FAFC" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="4,2" Foreground="#1E293B" FontSize="12">
             <MenuItem Header="_Arquivo">
                 <MenuItem Header="Abrir IFC / DWG..." Click="BtnAbrir_Click" Tag="M1,3 L5,3 L6.5,5 L13,5 L13,12 L1,12 Z|#0284C7" />
-                <MenuItem Header="Juntar outro IFC / DWG (ponto interativo)..." Click="BtnJuntarIfc_Click" Tag="M7,2 L7,12 M2,7 L12,7|#0284C7" />
+                <MenuItem x:Name="miJuntarIfc" Header="Juntar outro IFC / DWG (ponto interativo)..." Click="BtnJuntarIfc_Click" Tag="M7,2 L7,12 M2,7 L12,7|#0284C7" />
                 <Separator />
-                <MenuItem Header="Salvar IFC Completo..." Click="BtnSalvarIfc_Click" Tag="M2,1 L10,1 L13,4 L13,13 L2,13 Z M4,1 L4,5 L9,5 L9,1|#1E293B" />
+                <MenuItem x:Name="miSalvarIfc" Header="Salvar IFC Completo..." Click="BtnSalvarIfc_Click" Tag="M2,1 L10,1 L13,4 L13,13 L2,13 Z M4,1 L4,5 L9,5 L9,1|#1E293B" />
                 <MenuItem Header="Exportar Selecao para IFC..." Click="BtnExportarIfcSelecao_Click" Tag="M7,2 L7,10 M4,7 L7,10 L10,7 M2,12 L12,12|#0284C7" />
                 <Separator />
                 <MenuItem Header="Exportar DXF 3D (Tudo)..." Click="BtnExportarDxfTudo_Click" Tag="M7,1.5 L12.5,4.5 L12.5,10.5 L7,13.5 L1.5,10.5 L1.5,4.5 Z|#16A34A" />
@@ -130,10 +130,10 @@
             </MenuItem>
 
             <MenuItem Header="_Editar">
-                <MenuItem Header="Mover Selecao / IFC Importado..." Click="BtnMover_Click" Tag="M7,1 L7,13 M1,7 L13,7|#1E293B" />
-                <MenuItem Header="Definir / Editar Etapa (aba DLM)..." Click="BtnDefinirEtapa_Click" Tag="M2,2 L12,2 L12,6 L2,6 Z M2,8 L12,8 L12,12 L2,12 Z|#7C3AED" />
-                <MenuItem Header="Adicionar Atributo nas Pecas..." Click="BtnAdicionarAtributo_Click" Tag="M2,2 L8,2 L13,7 L7,13 L2,8 Z|#0284C7" />
-                <MenuItem Header="Agrupar Pecas por Propriedade..." Click="BtnAgrupar_Click" Tag="M2,2 L6,2 L6,6 L2,6 Z M8,2 L12,2 L12,6 L8,6 Z M8,8 L12,8 L12,12 L8,12 Z|#7C3AED" />
+                <MenuItem x:Name="miMover" Header="Mover Selecao / IFC Importado..." Click="BtnMover_Click" Tag="M7,1 L7,13 M1,7 L13,7|#1E293B" />
+                <MenuItem x:Name="miDefinirEtapa" Header="Definir / Editar Etapa (aba DLM)..." Click="BtnDefinirEtapa_Click" Tag="M2,2 L12,2 L12,6 L2,6 Z M2,8 L12,8 L12,12 L2,12 Z|#7C3AED" />
+                <MenuItem x:Name="miAdicionarAtributo" Header="Adicionar Atributo nas Pecas..." Click="BtnAdicionarAtributo_Click" Tag="M2,2 L8,2 L13,7 L7,13 L2,8 Z|#0284C7" />
+                <MenuItem x:Name="miAgrupar" Header="Agrupar Pecas por Propriedade..." Click="BtnAgrupar_Click" Tag="M2,2 L6,2 L6,6 L2,6 Z M8,2 L12,2 L12,6 L8,6 Z M8,8 L12,8 L12,12 L8,12 Z|#7C3AED" />
                 <Separator />
                 <MenuItem Header="Selecionar Mesmo Perfil" Click="MenuSelecionarMesmoPerfil_Click" Tag="M2,2 L12,2 L12,12 L2,12 Z|#0284C7" />
                 <MenuItem Header="Selecionar Mesmo Nivel/Grupo" Click="MenuSelecionarMesmoNivel_Click" Tag="M2,3 L12,3 M2,7 L12,7 M2,11 L12,11|#0284C7" />
@@ -189,13 +189,13 @@
                         <TextBlock Text="Abrir" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                <Button Style="{StaticResource BtnBarra}" Click="BtnSalvarIfc_Click" ToolTip="Salvar modelo completo em IFC">
+                <Button x:Name="btnSalvarIfc" Style="{StaticResource BtnBarra}" Click="BtnSalvarIfc_Click" ToolTip="Salvar modelo completo em IFC">
                     <StackPanel Orientation="Horizontal">
                         <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" Stroke="#1E293B" StrokeThickness="1.5" Data="M2,1 L10,1 L13,4 L13,13 L2,13 Z M4,1 L4,5 L9,5 L9,1 M4,13 L4,8 L11,8 L11,13" />
                         <TextBlock Text="Salvar" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                <Button Style="{StaticResource BtnBarra}" Click="BtnJuntarIfc_Click" ToolTip="Juntar outro IFC/DWG escolhendo ponto interativo no 3D">
+                <Button x:Name="btnJuntarIfc" Style="{StaticResource BtnBarra}" Click="BtnJuntarIfc_Click" ToolTip="Juntar outro IFC/DWG escolhendo ponto interativo no 3D">
                     <StackPanel Orientation="Horizontal">
                         <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,5,0" Stroke="#0284C7" StrokeThickness="1.7" Data="M7,2 L7,12 M2,7 L12,7" />
                         <TextBlock Text="Juntar IFC" VerticalAlignment="Center" />
@@ -252,19 +252,19 @@
                 <Border Style="{StaticResource SepBarra}" />
 
                 <!-- Edicao & Medicao -->
-                <Button Style="{StaticResource BtnBarra}" Click="BtnMover_Click" ToolTip="Mover selecao, IFC importado ou modelo todo">
+                <Button x:Name="btnMover" Style="{StaticResource BtnBarra}" Click="BtnMover_Click" ToolTip="Mover selecao, IFC importado ou modelo todo">
                     <StackPanel Orientation="Horizontal">
                         <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#1E293B" StrokeThickness="1.5" Data="M7,1 L7,13 M1,7 L13,7 M5,3 L7,1 L9,3 M5,11 L7,13 L9,11 M3,5 L1,7 L3,9 M11,5 L13,7 L11,9" />
                         <TextBlock Text="Mover" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                <Button Style="{StaticResource BtnBarra}" Click="BtnAdicionarAtributo_Click" ToolTip="Inserir atributo na selecao, no IFC importado ou em tudo">
+                <Button x:Name="btnAdicionarAtributo" Style="{StaticResource BtnBarra}" Click="BtnAdicionarAtributo_Click" ToolTip="Inserir atributo na selecao, no IFC importado ou em tudo">
                     <StackPanel Orientation="Horizontal">
                         <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#1E293B" StrokeThickness="1.5" Data="M2,2 L8,2 L13,7 L7,13 L2,8 Z M5,5 L5.5,5.5" />
                         <TextBlock Text="+Atributo" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                <Button Style="{StaticResource BtnBarra}" Click="BtnAgrupar_Click" ToolTip="Agrupar pecas por propriedade em comum criando novo nivel na arvore">
+                <Button x:Name="btnAgrupar" Style="{StaticResource BtnBarra}" Click="BtnAgrupar_Click" ToolTip="Agrupar pecas por propriedade em comum criando novo nivel na arvore">
                     <StackPanel Orientation="Horizontal">
                         <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#1E293B" StrokeThickness="1.5" Data="M2,2 L6,2 L6,6 L2,6 Z M8,2 L12,2 L12,6 L8,6 Z M8,8 L12,8 L12,12 L8,12 Z M4,6 L4,10 L8,10" />
                         <TextBlock Text="Agrupar" VerticalAlignment="Center" />
@@ -537,6 +537,18 @@
                                StrokeThickness="1.5"
                                Stroke="#2563EB"
                                Fill="#333B82F6" />
+                    <Line x:Name="linhaPreviewCota"
+                          Visibility="Collapsed"
+                          Stroke="#EF4444"
+                          StrokeThickness="1.8"
+                          StrokeDashArray="4 3" />
+                    <Border x:Name="tagPreviewCota"
+                            Visibility="Collapsed"
+                            Background="#E6DC2626"
+                            CornerRadius="3"
+                            Padding="5,1">
+                        <TextBlock x:Name="txtPreviewCota" FontSize="11" FontWeight="Bold" Foreground="White" />
+                    </Border>
                     <Path x:Name="marcadorSnap"
                           Visibility="Collapsed"
                           Width="14"

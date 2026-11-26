@@ -1818,6 +1818,7 @@ namespace DLM.helix
                 if (!ehCad2D && (_modeloIfcAtual != null || extArq == ".IFC" || extArq == ".DWG"))
                 {
                     var winIfc = new IfcViewerWindow();
+                    winIfc.DefinirSomenteLeitura(true);
                     winIfc.Show();
                     if (_modeloIfcAtual != null)
                         winIfc.AbrirModelo(_modeloIfcAtual, ArquivoCarregado);
@@ -2091,11 +2092,18 @@ namespace DLM.helix
             if (tag_snap != null) tag_snap.Visibility = Visibility.Collapsed;
         }
 
+        private void OcultarPreviewCota()
+        {
+            if (linha_preview_cota != null) linha_preview_cota.Visibility = Visibility.Collapsed;
+            if (tag_preview_cota != null) tag_preview_cota.Visibility = Visibility.Collapsed;
+        }
+
         private void ViewPort_PreviewMouseMove_Medir(object sender, MouseEventArgs e)
         {
             if (_modoMedir <= 0)
             {
                 OcultarIndicadorSnap();
+                OcultarPreviewCota();
                 return;
             }
             var vp = sender as HelixViewport3D;
@@ -2105,7 +2113,8 @@ namespace DLM.helix
             Point3D ptSnap;
             string tipo;
             Point pt2D;
-            if (TentarCalcularSnap(vp, ptMouse, out ptSnap, out tipo, out pt2D))
+            bool temSnap = TentarCalcularSnap(vp, ptMouse, out ptSnap, out tipo, out pt2D);
+            if (temSnap)
             {
                 var ptCanvas = vp.Viewport.TranslatePoint(pt2D, canvas_snap_overlay);
                 if (tipo == "END")
@@ -2139,6 +2148,48 @@ namespace DLM.helix
             else
             {
                 OcultarIndicadorSnap();
+            }
+
+            if (_modoMedir == 2 && linha_preview_cota != null && tag_preview_cota != null)
+            {
+                Point3D p2Raw;
+                if (temSnap)
+                {
+                    p2Raw = ptSnap;
+                }
+                else if (!TentarObterPontoLivre(vp, ptMouse, out p2Raw))
+                {
+                    OcultarPreviewCota();
+                    return;
+                }
+
+                bool eh2D = ReferenceEquals(vp, this.viewPort2D);
+                Point3D p2 = _medirOrtho ? AplicarOrtho(_pontoMedir1, p2Raw, eh2D) : p2Raw;
+                var a2 = vp.Viewport.TranslatePoint(Viewport3DHelper.Point3DtoPoint2D(vp.Viewport, _pontoMedir1), canvas_snap_overlay);
+                var b2 = vp.Viewport.TranslatePoint(Viewport3DHelper.Point3DtoPoint2D(vp.Viewport, p2), canvas_snap_overlay);
+                if (!double.IsNaN(a2.X) && !double.IsNaN(b2.X))
+                {
+                    linha_preview_cota.X1 = a2.X;
+                    linha_preview_cota.Y1 = a2.Y;
+                    linha_preview_cota.X2 = b2.X;
+                    linha_preview_cota.Y2 = b2.Y;
+                    linha_preview_cota.Visibility = Visibility.Visible;
+
+                    double fatorMm = (!eh2D && (_modeloIfcAtual != null || _modeloTecnoAtual != null)) ? 1000.0 : 1.0;
+                    double distMm = (p2 - _pontoMedir1).Length * fatorMm;
+                    txt_preview_cota.Text = string.Format("L = {0:0.#} mm", distMm);
+                    Canvas.SetLeft(tag_preview_cota, (a2.X + b2.X) * 0.5 + 6);
+                    Canvas.SetTop(tag_preview_cota, (a2.Y + b2.Y) * 0.5 - 22);
+                    tag_preview_cota.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    OcultarPreviewCota();
+                }
+            }
+            else
+            {
+                OcultarPreviewCota();
             }
         }
 
@@ -2189,17 +2240,63 @@ namespace DLM.helix
 
             // Mantém ativo para adicionar múltiplas cotas continuamente
             _modoMedir = 1;
+            OcultarPreviewCota();
 
             double dx = (p2.X - p1.X) * fatorMm;
             double dy = (p2.Y - p1.Y) * fatorMm;
             double dz = (p2.Z - p1.Z) * fatorMm;
             double dist = Math.Sqrt(dx * dx + dy * dy + dz * dz);
 
+            DesenharCotaVisual(vp, p1, p2, fatorMm, _visuaisMedicao);
+
+            if (txt_medir_status != null)
+            {
+                string resumo = Math.Abs(dz) > 0.1
+                    ? string.Format("Última: L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}, dZ={3:0.#}) — Clique para nova cota ou X/ESC para limpar.", dist, dx, dy, dz)
+                    : string.Format("Última: L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}) — Clique para nova cota ou X/ESC para limpar.", dist, dx, dy);
+                txt_medir_status.Text = resumo;
+            }
+            if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Visible;
+        }
+
+        public static void DesenharCotaVisual(HelixViewport3D vp, Point3D p1, Point3D p2, double fatorMm, List<Visual3D> destino)
+        {
+            if (vp == null) return;
+            var v = p2 - p1;
+            double len = v.Length;
+            double dx = v.X * fatorMm;
+            double dy = v.Y * fatorMm;
+            double dz = v.Z * fatorMm;
+            double dist = Math.Sqrt(dx * dx + dy * dy + dz * dz);
+
             var pts = new Point3DCollection { p1, p2 };
+            if (len > 1e-6)
+            {
+                var u = v / len;
+                var up = Math.Abs(u.Z) < 0.9 ? new Vector3D(0, 0, 1) : new Vector3D(0, 1, 0);
+                var n = Vector3D.CrossProduct(u, up);
+                if (n.LengthSquared > 1e-9) n.Normalize();
+                else n = new Vector3D(0, 1, 0);
+
+                double setaLen = Math.Min(len * 0.08, Math.Max(len * 0.02, 120.0 / Math.Max(fatorMm, 1.0)));
+                double tickHalf = setaLen * 0.85;
+                double setaHalf = setaLen * 0.35;
+
+                // Traços perpendiculares nas extremidades (estilo cota)
+                pts.Add(p1 - n * tickHalf); pts.Add(p1 + n * tickHalf);
+                pts.Add(p2 - n * tickHalf); pts.Add(p2 + n * tickHalf);
+
+                // Setas nas extremidades
+                pts.Add(p1); pts.Add(p1 + u * setaLen + n * setaHalf);
+                pts.Add(p1); pts.Add(p1 + u * setaLen - n * setaHalf);
+                pts.Add(p2); pts.Add(p2 - u * setaLen + n * setaHalf);
+                pts.Add(p2); pts.Add(p2 - u * setaLen - n * setaHalf);
+            }
             pts.Freeze();
-            var linha = new LinesVisual3D { Points = pts, Color = Color.FromRgb(220, 38, 38), Thickness = 2.6 };
+
+            var linha = new LinesVisual3D { Points = pts, Color = Color.FromRgb(220, 38, 38), Thickness = 2.4 };
             vp.Children.Add(linha);
-            _visuaisMedicao.Add(linha);
+            destino?.Add(linha);
 
             var meio = new Point3D((p1.X + p2.X) * 0.5, (p1.Y + p2.Y) * 0.5, (p1.Z + p2.Z) * 0.5);
             string texto = Math.Abs(dz) > 0.1
@@ -2217,16 +2314,25 @@ namespace DLM.helix
                 DepthOffset = 0.02
             };
             vp.Children.Add(rotulo);
-            _visuaisMedicao.Add(rotulo);
+            destino?.Add(rotulo);
+        }
 
-            if (txt_medir_status != null)
+        private bool TentarObterPontoLivre(HelixViewport3D vp, Point ptMouse, out Point3D ponto)
+        {
+            ponto = new Point3D();
+            var hits = Viewport3DHelper.FindHits(vp.Viewport, ptMouse);
+            if (hits != null && hits.Count > 0)
             {
-                string resumo = Math.Abs(dz) > 0.1
-                    ? string.Format("Última: L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}, dZ={3:0.#}) — Clique para nova cota ou X/ESC para limpar.", dist, dx, dy, dz)
-                    : string.Format("Última: L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}) — Clique para nova cota ou X/ESC para limpar.", dist, dx, dy);
-                txt_medir_status.Text = resumo;
+                ponto = hits[0].Position;
+                return true;
             }
-            if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Visible;
+            var pt3 = Viewport3DHelper.UnProject(vp.Viewport, ptMouse);
+            if (pt3.HasValue)
+            {
+                ponto = new Point3D(pt3.Value.X, pt3.Value.Y, 0);
+                return true;
+            }
+            return false;
         }
 
         private bool TentarObterPontoMedicao(HelixViewport3D vp, Point ptMouse, out Point3D ponto)
@@ -2236,22 +2342,7 @@ namespace DLM.helix
             if (TentarCalcularSnap(vp, ptMouse, out ponto, out tipo, out pt2D))
                 return true;
 
-            // Hit-test em malhas 3D
-            var hits = Viewport3DHelper.FindHits(vp.Viewport, ptMouse);
-            if (hits != null && hits.Count > 0)
-            {
-                ponto = hits[0].Position;
-                return true;
-            }
-
-            // Projeção no plano Z = 0 para cliques em área livre 2D
-            var pt3 = Viewport3DHelper.UnProject(vp.Viewport, ptMouse);
-            if (pt3.HasValue)
-            {
-                ponto = new Point3D(pt3.Value.X, pt3.Value.Y, 0);
-                return true;
-            }
-            return false;
+            return TentarObterPontoLivre(vp, ptMouse, out ponto);
         }
 
         private bool TentarCalcularSnap(HelixViewport3D vp, Point ptMouse, out Point3D ponto, out string tipoSnap, out Point ponto2D)

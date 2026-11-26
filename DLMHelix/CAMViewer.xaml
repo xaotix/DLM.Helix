@@ -524,8 +524,20 @@
                 </Grid>
             </TabItem>
         </TabControl>
-        <!-- Canvas Overlay para marcador visual de Snap -->
+        <!-- Canvas Overlay para marcador visual de Snap e preview pontilhado da cota -->
         <Canvas x:Name="canvas_snap_overlay" IsHitTestVisible="False" ClipToBounds="True">
+            <Line x:Name="linha_preview_cota"
+                  Visibility="Collapsed"
+                  Stroke="#EF4444"
+                  StrokeThickness="1.8"
+                  StrokeDashArray="4 3" />
+            <Border x:Name="tag_preview_cota"
+                    Visibility="Collapsed"
+                    Background="#E6DC2626"
+                    CornerRadius="3"
+                    Padding="5,1">
+                <TextBlock x:Name="txt_preview_cota" FontSize="11" FontWeight="Bold" Foreground="White" />
+            </Border>
             <Path x:Name="marcador_snap"
                   Visibility="Collapsed"
                   StrokeThickness="2"

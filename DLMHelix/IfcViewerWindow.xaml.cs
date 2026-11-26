@@ -125,6 +125,25 @@ namespace DLM.helix
 
         private CancellationTokenSource _cts;
 
+        public bool ModoSomenteLeitura { get; private set; }
+
+        public void DefinirSomenteLeitura(bool somenteLeitura)
+        {
+            ModoSomenteLeitura = somenteLeitura;
+            var vis = somenteLeitura ? Visibility.Collapsed : Visibility.Visible;
+            if (miJuntarIfc != null) miJuntarIfc.Visibility = vis;
+            if (miSalvarIfc != null) miSalvarIfc.Visibility = vis;
+            if (miMover != null) miMover.Visibility = vis;
+            if (miDefinirEtapa != null) miDefinirEtapa.Visibility = vis;
+            if (miAdicionarAtributo != null) miAdicionarAtributo.Visibility = vis;
+            if (miAgrupar != null) miAgrupar.Visibility = vis;
+            if (btnSalvarIfc != null) btnSalvarIfc.Visibility = vis;
+            if (btnJuntarIfc != null) btnJuntarIfc.Visibility = vis;
+            if (btnMover != null) btnMover.Visibility = vis;
+            if (btnAdicionarAtributo != null) btnAdicionarAtributo.Visibility = vis;
+            if (btnAgrupar != null) btnAgrupar.Visibility = vis;
+        }
+
         public IfcViewerWindow()
         {
             InitializeComponent();
@@ -771,7 +790,67 @@ namespace DLM.helix
         {
             if (_modoInterativo != ModoInterativo.Nenhum)
             {
-                AtualizarPreviewSnap(e.GetPosition(vp3D.Viewport), e.GetPosition(gridViewport));
+                var ptVp = e.GetPosition(vp3D.Viewport);
+                var ptGrid = e.GetPosition(gridViewport);
+                AtualizarPreviewSnap(ptVp, ptGrid);
+
+                if (_modoInterativo == ModoInterativo.MedirPonto2 && linhaPreviewCota != null && tagPreviewCota != null)
+                {
+                    IfcVetor p2Mm;
+                    if (_temSnapAtivo)
+                    {
+                        p2Mm = _pontoSnapAtivo;
+                    }
+                    else
+                    {
+                        var near = vp3D.FindNearestPoint(ptVp);
+                        if (near.HasValue)
+                        {
+                            const double esc = RenderIFC.ESCALA_MM_PARA_M;
+                            p2Mm = new IfcVetor(near.Value.X / esc, near.Value.Y / esc, near.Value.Z / esc);
+                        }
+                        else
+                        {
+                            linhaPreviewCota.Visibility = Visibility.Collapsed;
+                            tagPreviewCota.Visibility = Visibility.Collapsed;
+                            return;
+                        }
+                    }
+
+                    if (tglMedirOrtho != null && tglMedirOrtho.IsChecked == true)
+                    {
+                        double adx = Math.Abs(p2Mm.X - _pontoMedir1.X);
+                        double ady = Math.Abs(p2Mm.Y - _pontoMedir1.Y);
+                        double adz = Math.Abs(p2Mm.Z - _pontoMedir1.Z);
+                        if (adx >= ady && adx >= adz) p2Mm = new IfcVetor(p2Mm.X, _pontoMedir1.Y, _pontoMedir1.Z);
+                        else if (ady >= adx && ady >= adz) p2Mm = new IfcVetor(_pontoMedir1.X, p2Mm.Y, _pontoMedir1.Z);
+                        else p2Mm = new IfcVetor(_pontoMedir1.X, _pontoMedir1.Y, p2Mm.Z);
+                    }
+
+                    const double escM = RenderIFC.ESCALA_MM_PARA_M;
+                    var a2 = Viewport3DHelper.Point3DtoPoint2D(vp3D.Viewport, new Point3D(_pontoMedir1.X * escM, _pontoMedir1.Y * escM, _pontoMedir1.Z * escM));
+                    var b2 = Viewport3DHelper.Point3DtoPoint2D(vp3D.Viewport, new Point3D(p2Mm.X * escM, p2Mm.Y * escM, p2Mm.Z * escM));
+                    if (!double.IsNaN(a2.X) && !double.IsNaN(b2.X))
+                    {
+                        linhaPreviewCota.X1 = a2.X;
+                        linhaPreviewCota.Y1 = a2.Y;
+                        linhaPreviewCota.X2 = b2.X;
+                        linhaPreviewCota.Y2 = b2.Y;
+                        linhaPreviewCota.Visibility = Visibility.Visible;
+
+                        var d = p2Mm - _pontoMedir1;
+                        double dist = Math.Sqrt(d.X * d.X + d.Y * d.Y + d.Z * d.Z);
+                        txtPreviewCota.Text = string.Format("L = {0:0.#} mm", dist);
+                        Canvas.SetLeft(tagPreviewCota, (a2.X + b2.X) * 0.5 + 6);
+                        Canvas.SetTop(tagPreviewCota, (a2.Y + b2.Y) * 0.5 - 22);
+                        tagPreviewCota.Visibility = Visibility.Visible;
+                    }
+                }
+                else
+                {
+                    if (linhaPreviewCota != null) linhaPreviewCota.Visibility = Visibility.Collapsed;
+                    if (tagPreviewCota != null) tagPreviewCota.Visibility = Visibility.Collapsed;
+                }
                 return;
             }
 
@@ -1757,6 +1836,8 @@ namespace DLM.helix
 
             if (tglMedir != null) tglMedir.IsChecked = false;
             if (spMedirOpcoes != null) spMedirOpcoes.Visibility = Visibility.Collapsed;
+            if (linhaPreviewCota != null) linhaPreviewCota.Visibility = Visibility.Collapsed;
+            if (tagPreviewCota != null) tagPreviewCota.Visibility = Visibility.Collapsed;
             CancelarModoInterativo();
         }
 
@@ -2062,26 +2143,11 @@ namespace DLM.helix
                 double dist = Math.Sqrt(d.X * d.X + d.Y * d.Y + d.Z * d.Z);
 
                 const double esc = RenderIFC.ESCALA_MM_PARA_M;
-                var pts = new Point3DCollection { new Point3D(p1.X * esc, p1.Y * esc, p1.Z * esc), new Point3D(p2.X * esc, p2.Y * esc, p2.Z * esc) };
-                pts.Freeze();
-                var linha = new LinesVisual3D { Points = pts, Color = Color.FromRgb(220, 38, 38), Thickness = 2.6 };
-                vp3D.Children.Add(linha);
-                _visuaisMedicao.Add(linha);
-
-                var meio = new Point3D(((p1.X + p2.X) * 0.5) * esc, ((p1.Y + p2.Y) * 0.5) * esc, ((p1.Z + p2.Z) * 0.5) * esc);
-                var rotulo = new BillboardTextVisual3D
-                {
-                    Text = string.Format(" L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}, dZ={3:0.#}) ", dist, d.X, d.Y, d.Z),
-                    Position = meio,
-                    FontSize = 12,
-                    FontWeight = FontWeights.Bold,
-                    Foreground = Brushes.White,
-                    Background = new SolidColorBrush(Color.FromRgb(220, 38, 38)),
-                    Padding = new Thickness(5, 2, 5, 2),
-                    DepthOffset = 0.02
-                };
-                vp3D.Children.Add(rotulo);
-                _visuaisMedicao.Add(rotulo);
+                var p1_3d = new Point3D(p1.X * esc, p1.Y * esc, p1.Z * esc);
+                var p2_3d = new Point3D(p2.X * esc, p2.Y * esc, p2.Z * esc);
+                CAMViewer.DesenharCotaVisual(vp3D, p1_3d, p2_3d, 1000.0, _visuaisMedicao);
+                if (linhaPreviewCota != null) linhaPreviewCota.Visibility = Visibility.Collapsed;
+                if (tagPreviewCota != null) tagPreviewCota.Visibility = Visibility.Collapsed;
 
                 AtivarModoInterativo(
                     ModoInterativo.MedirPonto1,

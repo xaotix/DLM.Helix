@@ -674,7 +674,7 @@ namespace DLM.helix
             if (ptsGrid.Count > 0)
             {
                 ptsGrid.Freeze();
-                var linhas = new LinesVisual3D { Points = ptsGrid, Color = Color.FromRgb(2, 132, 199), Thickness = 1.4 };
+                var linhas = new LinesVisual3D { Points = ptsGrid, Color = Color.FromRgb(217, 70, 239), Thickness = 1.4 };
                 vp3D.Children.Add(linhas);
                 _visuaisGrid.Add(linhas);
             }

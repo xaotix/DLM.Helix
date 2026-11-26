@@ -1246,6 +1246,7 @@ namespace DLM.helix
 
             _modeloIfcAtual = modelo;
             RenderIFC.Renderizar(viewPort3D, modelo, true);
+            RenderizarGrid3D(viewPort3D, modelo);
 
             this.viewPort3D.ShowCoordinateSystem = true;
             this.viewPort3D.ShowFieldOfView = false;
@@ -1265,6 +1266,66 @@ namespace DLM.helix
                     Isometric();
                 }
                 ZoomExtend();
+            }
+        }
+
+        public static void RenderizarGrid3D(HelixViewport3D vp, IfcModeloLido modelo)
+        {
+            if (vp == null || modelo == null || modelo.Grid == null || !modelo.Grid.TemEixos || !modelo.Grid.Visivel) return;
+
+            var grid = modelo.Grid;
+            var eixosX = grid.EixosX.Where(e => e.Visivel).OrderBy(e => e.CoordenadaMm).ToList();
+            var eixosY = grid.EixosY.Where(e => e.Visivel).OrderBy(e => e.CoordenadaMm).ToList();
+            if (eixosX.Count == 0 && eixosY.Count == 0) return;
+
+            const double esc = RenderIFC.ESCALA_MM_PARA_M;
+            double folga = Math.Max(1000.0, grid.FolgaMm);
+            double minX = (eixosX.Count > 0 ? Math.Min(modelo.Min.X, eixosX[0].CoordenadaMm) : modelo.Min.X) - folga;
+            double maxX = (eixosX.Count > 0 ? Math.Max(modelo.Max.X, eixosX[eixosX.Count - 1].CoordenadaMm) : modelo.Max.X) + folga;
+            double minY = (eixosY.Count > 0 ? Math.Min(modelo.Min.Y, eixosY[0].CoordenadaMm) : modelo.Min.Y) - folga;
+            double maxY = (eixosY.Count > 0 ? Math.Max(modelo.Max.Y, eixosY[eixosY.Count - 1].CoordenadaMm) : modelo.Max.Y) + folga;
+            double z = grid.CotaZMm * esc;
+
+            var ptsGrid = new Point3DCollection();
+            var corEixo = Color.FromRgb(217, 70, 239); // Roxo/Magenta padrão global de eixos
+            var bgRotulo = new SolidColorBrush(Color.FromRgb(134, 25, 143));
+
+            Action<string, Point3D> addRotulo = (texto, pos) =>
+            {
+                if (string.IsNullOrWhiteSpace(texto)) return;
+                vp.Children.Add(new BillboardTextVisual3D
+                {
+                    Text = " " + texto + " ",
+                    Position = pos,
+                    FontSize = 12,
+                    FontWeight = FontWeights.Bold,
+                    Foreground = Brushes.White,
+                    Background = bgRotulo,
+                    Padding = new Thickness(4, 1, 4, 1)
+                });
+            };
+
+            foreach (var ex in eixosX)
+            {
+                double x = ex.CoordenadaMm * esc;
+                ptsGrid.Add(new Point3D(x, minY * esc, z));
+                ptsGrid.Add(new Point3D(x, maxY * esc, z));
+                addRotulo(ex.Nome, new Point3D(x, (minY - 350.0) * esc, z));
+                addRotulo(ex.Nome, new Point3D(x, (maxY + 350.0) * esc, z));
+            }
+            foreach (var ey in eixosY)
+            {
+                double y = ey.CoordenadaMm * esc;
+                ptsGrid.Add(new Point3D(minX * esc, y, z));
+                ptsGrid.Add(new Point3D(maxX * esc, y, z));
+                addRotulo(ey.Nome, new Point3D((minX - 350.0) * esc, y, z));
+                addRotulo(ey.Nome, new Point3D((maxX + 350.0) * esc, y, z));
+            }
+
+            if (ptsGrid.Count > 0)
+            {
+                ptsGrid.Freeze();
+                vp.Children.Add(new LinesVisual3D { Points = ptsGrid, Color = corEixo, Thickness = 1.4 });
             }
         }
 
@@ -1351,6 +1412,7 @@ namespace DLM.helix
 
                 _modeloIfcAtual = modelo;
             RenderIFC.Renderizar(viewPort3D, modelo, true);
+            RenderizarGrid3D(viewPort3D, modelo);
 
                 this.viewPort3D.ShowCoordinateSystem = true;
                 this.viewPort3D.ShowFieldOfView = false;

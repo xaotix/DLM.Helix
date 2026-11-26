@@ -1360,6 +1360,40 @@ namespace DLM.helix
             cam.UpDirection = up;
         }
 
+        public async void AbrirIFCGerado(Func<CancellationToken, string> gerarArquivoIfc, bool extend = true)
+        {
+            if (gerarArquivoIfc == null) return;
+
+            CancelarCarregamentoIFC();
+            int seq = Interlocked.Increment(ref _carregamentoSeq);
+            _ctsIfc = new CancellationTokenSource();
+            var token = _ctsIfc.Token;
+
+            DxfCarregado = null;
+            this.MVC.CAM = null;
+            LimparViewports();
+            AplicarAbaPreferida(true, false);
+            MostrarProgressoIFC(true, -1, "Gerando modelo IFC 3D...");
+
+            string caminho = null;
+            try
+            {
+                caminho = await Task.Run(() => gerarArquivoIfc(token));
+            }
+            catch (Exception ex)
+            {
+                if (!token.IsCancellationRequested) ex.Log(descricao: "CAMViewer.AbrirIFCGerado");
+            }
+
+            if (token.IsCancellationRequested || seq != _carregamentoSeq || string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho))
+            {
+                MostrarProgressoIFC(false, 0, "");
+                return;
+            }
+
+            AbrirIFC(caminho, extend);
+        }
+
         public async void AbrirIFC(string caminho, bool extend = true)
         {
             if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho)) return;

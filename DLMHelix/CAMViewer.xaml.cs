@@ -593,6 +593,9 @@ namespace DLM.helix
 
             this.viewPort2D.PreviewMouseWheel += ViewPort_PreviewMouseWheel;
             this.viewPort3D.PreviewMouseWheel += ViewPort_PreviewMouseWheel;
+            this.viewPort2D.PreviewMouseLeftButtonDown += ViewPort_PreviewMouseLeftButtonDown_Medir;
+            this.viewPort3D.PreviewMouseLeftButtonDown += ViewPort_PreviewMouseLeftButtonDown_Medir;
+            this.PreviewKeyDown += CAMViewer_PreviewKeyDown_Medir;
 
             this.viewPort2D.LostMouseCapture += ViewPort_LimparCursor;
             this.viewPort2D.PreviewMouseUp += ViewPort_LimparCursor;
@@ -687,6 +690,7 @@ namespace DLM.helix
 
         private void LimparViewports()
         {
+            LimparMedicoes();
             Render2d.LimparViewport(this.viewPort3D);
             Render2d.LimparViewport(this.viewPort2D);
             _boundsSujos = true;
@@ -1977,6 +1981,194 @@ namespace DLM.helix
 
         private void viewport2D_SizeChanged(object sender, SizeChangedEventArgs e) { }
         private void viewport_SizeChanged(object sender, SizeChangedEventArgs e) { }
+
+        #region Medir / Cotar (Padrão IfcViewerWindow)
+
+        private int _modoMedir = 0; // 0 = inativo, 1 = aguardando P1, 2 = aguardando P2
+        private HelixViewport3D _medirViewport;
+        private Point3D _pontoMedir1;
+        private readonly List<Visual3D> _visuaisMedicao = new List<Visual3D>();
+
+        private void medir_click(object sender, RoutedEventArgs e)
+        {
+            if (_modoMedir > 0)
+            {
+                LimparMedicoes();
+                return;
+            }
+
+            LimparVisuaisMedicao();
+            bool aba2D = this.tab_2d != null && this.tab_2d.IsSelected;
+            _medirViewport = aba2D ? this.viewPort2D : this.viewPort3D;
+            _modoMedir = 1;
+            if (bt_medir_3d != null) bt_medir_3d.IsChecked = true;
+            if (bt_medir_2d != null) bt_medir_2d.IsChecked = true;
+            if (txt_medir_status != null) txt_medir_status.Text = "MEDIR (1/2): Clique no primeiro ponto (ESC limpa/cancela).";
+            if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Visible;
+        }
+
+        private void limpar_medir_click(object sender, RoutedEventArgs e)
+        {
+            LimparMedicoes();
+        }
+
+        private void CAMViewer_PreviewKeyDown_Medir(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Escape && (_modoMedir > 0 || _visuaisMedicao.Count > 0))
+            {
+                LimparMedicoes();
+                e.Handled = true;
+            }
+        }
+
+        private void LimparVisuaisMedicao()
+        {
+            foreach (var v in _visuaisMedicao)
+            {
+                try { this.viewPort2D?.Children.Remove(v); } catch { }
+                try { this.viewPort3D?.Children.Remove(v); } catch { }
+            }
+            _visuaisMedicao.Clear();
+        }
+
+        private void LimparMedicoes()
+        {
+            LimparVisuaisMedicao();
+            _modoMedir = 0;
+            _medirViewport = null;
+            if (bt_medir_3d != null) bt_medir_3d.IsChecked = false;
+            if (bt_medir_2d != null) bt_medir_2d.IsChecked = false;
+            if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Collapsed;
+        }
+
+        private void ViewPort_PreviewMouseLeftButtonDown_Medir(object sender, MouseButtonEventArgs e)
+        {
+            if (_modoMedir <= 0) return;
+            var vp = sender as HelixViewport3D;
+            if (vp == null) return;
+
+            var ptMouse = e.GetPosition(vp);
+            Point3D pt3d;
+            if (!TentarObterPontoMedicao(vp, ptMouse, out pt3d)) return;
+
+            e.Handled = true;
+            double fatorMm = (!ReferenceEquals(vp, this.viewPort2D) && (_modeloIfcAtual != null || _modeloTecnoAtual != null))
+                ? 1000.0
+                : 1.0;
+
+            if (_modoMedir == 1)
+            {
+                _medirViewport = vp;
+                _pontoMedir1 = pt3d;
+                _modoMedir = 2;
+                if (txt_medir_status != null)
+                {
+                    txt_medir_status.Text = string.Format("MEDIR (2/2): P1 ({0:0.#}, {1:0.#}, {2:0.#}) mm definido. Clique no segundo ponto.",
+                        pt3d.X * fatorMm, pt3d.Y * fatorMm, pt3d.Z * fatorMm);
+                }
+                return;
+            }
+
+            var p1 = _pontoMedir1;
+            var p2 = pt3d;
+            _modoMedir = 0;
+            if (bt_medir_3d != null) bt_medir_3d.IsChecked = false;
+            if (bt_medir_2d != null) bt_medir_2d.IsChecked = false;
+
+            double dx = (p2.X - p1.X) * fatorMm;
+            double dy = (p2.Y - p1.Y) * fatorMm;
+            double dz = (p2.Z - p1.Z) * fatorMm;
+            double dist = Math.Sqrt(dx * dx + dy * dy + dz * dz);
+
+            var pts = new Point3DCollection { p1, p2 };
+            pts.Freeze();
+            var linha = new LinesVisual3D { Points = pts, Color = Color.FromRgb(220, 38, 38), Thickness = 2.6 };
+            vp.Children.Add(linha);
+            _visuaisMedicao.Add(linha);
+
+            var meio = new Point3D((p1.X + p2.X) * 0.5, (p1.Y + p2.Y) * 0.5, (p1.Z + p2.Z) * 0.5);
+            string texto = Math.Abs(dz) > 0.1
+                ? string.Format(" L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}, dZ={3:0.#}) ", dist, dx, dy, dz)
+                : string.Format(" L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}) ", dist, dx, dy);
+            var rotulo = new BillboardTextVisual3D
+            {
+                Text = texto,
+                Position = meio,
+                FontSize = 12,
+                FontWeight = FontWeights.Bold,
+                Foreground = Brushes.White,
+                Background = new SolidColorBrush(Color.FromRgb(220, 38, 38)),
+                Padding = new Thickness(5, 2, 5, 2),
+                DepthOffset = 0.02
+            };
+            vp.Children.Add(rotulo);
+            _visuaisMedicao.Add(rotulo);
+
+            if (txt_medir_status != null)
+            {
+                txt_medir_status.Text = Math.Abs(dz) > 0.1
+                    ? string.Format("Medição: L = {0:0.#} mm | dX = {1:0.#} | dY = {2:0.#} | dZ = {3:0.#}", dist, dx, dy, dz)
+                    : string.Format("Medição: L = {0:0.#} mm | dX = {1:0.#} | dY = {2:0.#}", dist, dx, dy);
+            }
+            if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Visible;
+        }
+
+        private bool TentarObterPontoMedicao(HelixViewport3D vp, Point ptMouse, out Point3D ponto)
+        {
+            ponto = new Point3D();
+
+            // 1) Snap em vértices próximos de linhas 2D/3D (até 12 px)
+            Point3D melhorSnap = new Point3D();
+            double melhorDistPx = 12.0;
+            bool achouSnap = false;
+
+            foreach (var child in vp.Children)
+            {
+                if (_visuaisMedicao.Contains(child)) continue;
+                Point3DCollection pts = null;
+                if (child is LinhaVisual3D lv) pts = lv.Points;
+                else if (child is LinesVisual3D lvs) pts = lvs.Points;
+                if (pts == null || pts.Count == 0) continue;
+
+                int step = pts.Count > 20000 ? 4 : 1;
+                for (int i = 0; i < pts.Count; i += step)
+                {
+                    var p3 = pts[i];
+                    var p2 = Viewport3DHelper.Point3DtoPoint2D(vp.Viewport, p3);
+                    double d = (p2 - ptMouse).Length;
+                    if (d < melhorDistPx)
+                    {
+                        melhorDistPx = d;
+                        melhorSnap = p3;
+                        achouSnap = true;
+                    }
+                }
+            }
+            if (achouSnap)
+            {
+                ponto = melhorSnap;
+                return true;
+            }
+
+            // 2) Hit-test em malhas 3D
+            var hits = Viewport3DHelper.FindHits(vp.Viewport, ptMouse);
+            if (hits != null && hits.Count > 0)
+            {
+                ponto = hits[0].Position;
+                return true;
+            }
+
+            // 3) Projeção no plano Z = 0 para cliques em área livre 2D
+            var pt3 = Viewport3DHelper.UnProject(vp.Viewport, ptMouse);
+            if (pt3.HasValue)
+            {
+                ponto = new Point3D(pt3.Value.X, pt3.Value.Y, 0);
+                return true;
+            }
+            return false;
+        }
+
+        #endregion
 
         private void exp_dxf(object sender, RoutedEventArgs e)
         {

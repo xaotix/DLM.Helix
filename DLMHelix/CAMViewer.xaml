@@ -232,6 +232,17 @@
                                     <TextBlock Text="Exportar DXF 3D" VerticalAlignment="Center" />
                                 </StackPanel>
                             </Button>
+
+                            <Border Width="1" Background="#334155" Margin="3,3" />
+
+                            <ToggleButton x:Name="bt_medir_3d" Style="{StaticResource ToggleViewer3D}" Click="medir_click" ToolTip="Medir / Cotar distância entre 2 pontos (ESC limpa/cancela)">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0"
+                                          Stroke="#DC2626" StrokeThickness="1.6"
+                                          Data="M2,11 L11,2 M2,11 L5,11 M2,11 L2,8 M11,2 L8,2 M11,2 L11,5" />
+                                    <TextBlock Text="Medir" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </ToggleButton>
                         </StackPanel>
                     </Border>
 
@@ -424,6 +435,18 @@
                                         <TextBlock Text="Exportar" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </Button>
+                                <Border Width="1" Background="#334155" Margin="3,3" />
+                                <ToggleButton x:Name="bt_medir_2d"
+                                              Style="{StaticResource ToggleViewer3D}"
+                                              Click="medir_click"
+                                              ToolTip="Medir / Cotar distância entre 2 pontos (ESC limpa/cancela)">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0"
+                                              Stroke="#DC2626" StrokeThickness="1.6"
+                                              Data="M2,11 L11,2 M2,11 L5,11 M2,11 L2,8 M11,2 L8,2 M11,2 L11,5" />
+                                        <TextBlock Text="Medir" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
                             </StackPanel>
                         </Border>
                     </Grid>
@@ -443,6 +466,33 @@
                 </Grid>
             </TabItem>
         </TabControl>
+        <!-- Banner flutuante da ferramenta Medir / Cotar -->
+        <Border x:Name="bd_medir_status"
+                Visibility="Collapsed"
+                Background="#E6111827"
+                BorderBrush="#DC2626"
+                BorderThickness="1"
+                CornerRadius="4"
+                Padding="10,4"
+                Margin="0,48,0,0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Top">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock x:Name="txt_medir_status"
+                           Text=""
+                           Foreground="#F8FAFC"
+                           FontSize="11.5"
+                           FontWeight="SemiBold"
+                           VerticalAlignment="Center"
+                           Margin="0,0,8,0"/>
+                <Button Content="Limpar (ESC)"
+                        Style="{StaticResource BotaoViewer3D}"
+                        Click="limpar_medir_click"
+                        Padding="6,0"
+                        Height="20"/>
+            </StackPanel>
+        </Border>
+
         <!-- Overlay unificado de carregamento (IFC, DWG, DXF, CAM) com progresso e cancelar -->
         <Border x:Name="bd_progresso_ifc"
                 Visibility="Collapsed"

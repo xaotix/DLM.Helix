@@ -1863,6 +1863,11 @@ namespace DLM.helix
             ControleCamera.Setar(this.viewPort3D, ControleCamera.eCameraViews.Isometric_PPP, 0);
         }
 
+        public void Top()
+        {
+            ControleCamera.Setar(this.viewPort3D, ControleCamera.eCameraViews.Top, 0);
+        }
+
         public void OcultarBotaoTelaCheia()
         {
             if (bt_tela_cheia_3d != null) bt_tela_cheia_3d.Visibility = Visibility.Collapsed;

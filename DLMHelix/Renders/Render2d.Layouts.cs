@@ -1,4 +1,4 @@
-using Conexoes;
+ï»¿using Conexoes;
 using DLM.desenho;
 using HelixToolkit.Wpf;
 using netDxf;
@@ -78,7 +78,7 @@ namespace DLM.helix
             var comMView = layouts.FirstOrDefault(x => x.EhPaperSpace && x.QtdMViews > 0);
             if (comMView != null) return comMView.Nome;
 
-            // Senão, prefere Model se existir
+            // Senï¿½o, prefere Model se existir
             var model = layouts.FirstOrDefault(x => !x.EhPaperSpace);
             if (model != null) return model.Nome;
 
@@ -140,7 +140,7 @@ namespace DLM.helix
 
             // 1) Renderiza todas as entidades do PaperSpace (margem, carimbo, notas, etc.)
             // IMPORTANTE: Viewports (MViews) quase sempre ficam em layers desligadas (ex.: MV / Defpoints)
-            // para não plotar a moldura, mas seu conteúdo do ModelSpace DEVE ser renderizado!
+            // para nï¿½o plotar a moldura, mas seu conteï¿½do do ModelSpace DEVE ser renderizado!
             foreach (var ent in lay.AssociatedBlock.Entities)
             {
                 if (ent == null) continue;
@@ -160,7 +160,7 @@ namespace DLM.helix
                 RenderizarEntidade(ent, origem, espessura, linhas, textos);
             }
 
-            // 2) Renderiza o conteúdo do ModelSpace projetado e recortado dentro de cada MView
+            // 2) Renderiza o conteï¿½do do ModelSpace projetado e recortado dentro de cada MView
             if (mviews.Count > 0)
             {
                 var modelPorLayer = ColetarEntidadesModelSpacePorLayer(dxf);
@@ -197,7 +197,7 @@ namespace DLM.helix
                         }
                     }
 
-                    // Base ortonormal DCS (WCS -> DCS -> PaperSpace) conforme especificação DXF/AutoCAD
+                    // Base ortonormal DCS (WCS -> DCS -> PaperSpace) conforme especificaï¿½ï¿½o DXF/AutoCAD
                     double escala = mv.ViewHeight > 1e-6 ? (mv.Height / mv.ViewHeight) : 1.0;
                     Vector3D dcsX, dcsY;
                     CalcularBaseDCS(mv.ViewDirection, mv.TwistAngle, out dcsX, out dcsY);
@@ -248,15 +248,20 @@ namespace DLM.helix
                             if (tx >= minX && tx <= maxX && ty >= minY && ty <= maxY)
                             {
                                 double h = mt.Height * escala;
-                                if (h >= 0.35)
+                                if (h >= 0.15)
                                 {
-                                    textos.Add(new TextVisual3D
+                                    textos.Add(new TextoVisual3D
                                     {
                                         Text = mt.Text,
                                         Position = new Point3D(tx, ty, 0),
                                         Height = h,
+                                        FontSize = Math.Max(24.0, Math.Min(h * 8.0, 48.0)),
                                         Foreground = mt.Foreground,
+                                        Background = Brushes.Transparent,
                                         FontFamily = mt.FontFamily,
+                                        HorizontalAlignment = mt.HorizontalAlignment,
+                                        VerticalAlignment = mt.VerticalAlignment,
+                                        Angle = mt.Angle,
                                         UpDirection = mt.UpDirection,
                                         TextDirection = mt.TextDirection
                                     });
@@ -291,7 +296,7 @@ namespace DLM.helix
             if (ReferenceEquals(vp, lay.Viewport)) return false;
             if (vp.Width <= 1e-3 || vp.Height <= 1e-3 || vp.ViewHeight <= 1e-3) return false;
 
-            // Exclui o viewport raiz do próprio PaperSpace (que tem Center == ViewCenter e Height == ViewHeight)
+            // Exclui o viewport raiz do prï¿½prio PaperSpace (que tem Center == ViewCenter e Height == ViewHeight)
             bool ehRaizPaperSpace =
                 Math.Abs(vp.Center.X - vp.ViewCenter.X) < 1e-2 &&
                 Math.Abs(vp.Center.Y - vp.ViewCenter.Y) < 1e-2 &&
@@ -452,32 +457,38 @@ namespace DLM.helix
                 {
                     ins.GetHelix(origem, ref linhas, ref textos, espessura);
                 }
-                else if (ent is Dimension dim && dim.Block != null && dim.Block.Entities != null)
+                else if (ent is Dimension dim)
                 {
-                    foreach (var de in dim.Block.Entities)
+                    var blk = dim.Block;
+                    if (blk == null)
                     {
-                        if (de != null) RenderizarEntidade(de, origem, espessura, linhas, textos);
+                        try { blk = netDxf.Entities.DimensionBlock.Build(dim); } catch { blk = null; }
+                    }
+                    if (blk != null && blk.Entities != null)
+                    {
+                        foreach (var de in blk.Entities)
+                        {
+                            if (de == null) continue;
+                            if (de.Color != null && de.Color.IsByBlock && dim.Color != null) de.Color = dim.Color;
+                            if ((de.Layer == null || de.Layer.Name == "0") && dim.Layer != null) de.Layer = dim.Layer;
+                            RenderizarEntidade(de, origem, espessura, linhas, textos);
+                        }
                     }
                 }
-                else if (ent is Text tx && tx.Height >= 0.35)
+                else if (ent is Text tx && tx.Height >= 0.1)
                 {
                     var tv = Render2d.GetText(tx, origem);
                     if (tv != null) textos.Add(tv);
                 }
-                else if (ent is MText mtx && mtx.Height >= 0.35)
+                else if (ent is MText mtx && mtx.Height >= 0.1)
                 {
                     var tv = Render2d.GetText(mtx, origem);
                     if (tv != null) textos.Add(tv);
                 }
-                else if (ent is Leader ldr && ldr.Vertexes != null && ldr.Vertexes.Count >= 2)
+                else if (ent is Leader ldr)
                 {
-                    var ptsL = new Point3DCollection();
-                    for (int i = 0; i + 1 < ldr.Vertexes.Count; i++)
-                    {
-                        ptsL.Add(new Point3D(ldr.Vertexes[i].X, ldr.Vertexes[i].Y, 0));
-                        ptsL.Add(new Point3D(ldr.Vertexes[i + 1].X, ldr.Vertexes[i + 1].Y, 0));
-                    }
-                    linhas.Add(new LinhaVisual3D { Points = ptsL, Color = ldr.GetCor().Color, Thickness = espessura });
+                    var ll = Render2d.GetHelix(ldr, origem, espessura);
+                    if (ll != null && ll.Count > 0) linhas.AddRange(ll);
                 }
                 else if (ent is Solid sol)
                 {
@@ -488,7 +499,7 @@ namespace DLM.helix
             catch { }
         }
 
-        // Clipping Cohen-Sutherland 2D para recortar linhas no retângulo do MView
+        // Clipping Cohen-Sutherland 2D para recortar linhas no retï¿½ngulo do MView
         private static int OutCode(double x, double y, double minX, double minY, double maxX, double maxY)
         {
             int c = 0;

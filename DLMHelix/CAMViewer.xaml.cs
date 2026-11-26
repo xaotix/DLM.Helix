@@ -2110,9 +2110,7 @@ namespace DLM.helix
             _modoMedir = 1;
             if (bt_medir_3d != null) bt_medir_3d.IsChecked = true;
             if (bt_medir_2d != null) bt_medir_2d.IsChecked = true;
-            if (sp_medir_opcoes_3d != null) sp_medir_opcoes_3d.Visibility = Visibility.Visible;
-            if (sp_medir_opcoes_2d != null) sp_medir_opcoes_2d.Visibility = Visibility.Visible;
-            if (txt_medir_status != null) txt_medir_status.Text = "MEDIR (1/2): Clique no primeiro ponto (ESC ou X limpa/fecha).";
+            if (txt_medir_status != null) txt_medir_status.Text = "Medir 1/2 · 1º ponto";
             if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Visible;
         }
 
@@ -2121,24 +2119,9 @@ namespace DLM.helix
             var tb = sender as System.Windows.Controls.Primitives.ToggleButton;
             if (tb == null) return;
             bool val = tb.IsChecked == true;
-            if (ReferenceEquals(tb, ck_snap_end_3d) || ReferenceEquals(tb, ck_snap_end_2d))
-            {
-                _snapEnd = val;
-                if (ck_snap_end_3d != null) ck_snap_end_3d.IsChecked = val;
-                if (ck_snap_end_2d != null) ck_snap_end_2d.IsChecked = val;
-            }
-            else if (ReferenceEquals(tb, ck_snap_mid_3d) || ReferenceEquals(tb, ck_snap_mid_2d))
-            {
-                _snapMid = val;
-                if (ck_snap_mid_3d != null) ck_snap_mid_3d.IsChecked = val;
-                if (ck_snap_mid_2d != null) ck_snap_mid_2d.IsChecked = val;
-            }
-            else if (ReferenceEquals(tb, ck_snap_near_3d) || ReferenceEquals(tb, ck_snap_near_2d))
-            {
-                _snapNear = val;
-                if (ck_snap_near_3d != null) ck_snap_near_3d.IsChecked = val;
-                if (ck_snap_near_2d != null) ck_snap_near_2d.IsChecked = val;
-            }
+            if (ReferenceEquals(tb, ck_snap_end)) _snapEnd = val;
+            else if (ReferenceEquals(tb, ck_snap_mid)) _snapMid = val;
+            else if (ReferenceEquals(tb, ck_snap_near)) _snapNear = val;
         }
 
         private void ortho_toggle_click(object sender, RoutedEventArgs e)
@@ -2146,8 +2129,6 @@ namespace DLM.helix
             var tb = sender as System.Windows.Controls.Primitives.ToggleButton;
             if (tb == null) return;
             _medirOrtho = tb.IsChecked == true;
-            if (ck_ortho_3d != null) ck_ortho_3d.IsChecked = _medirOrtho;
-            if (ck_ortho_2d != null) ck_ortho_2d.IsChecked = _medirOrtho;
         }
 
         private void limpar_medir_click(object sender, RoutedEventArgs e)
@@ -2182,8 +2163,6 @@ namespace DLM.helix
             _medirViewport = null;
             if (bt_medir_3d != null) bt_medir_3d.IsChecked = false;
             if (bt_medir_2d != null) bt_medir_2d.IsChecked = false;
-            if (sp_medir_opcoes_3d != null) sp_medir_opcoes_3d.Visibility = Visibility.Collapsed;
-            if (sp_medir_opcoes_2d != null) sp_medir_opcoes_2d.Visibility = Visibility.Collapsed;
             if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Collapsed;
         }
 
@@ -2330,8 +2309,7 @@ namespace DLM.helix
                 _modoMedir = 2;
                 if (txt_medir_status != null)
                 {
-                    txt_medir_status.Text = string.Format("MEDIR (2/2): P1 ({0:0.#}, {1:0.#}, {2:0.#}) mm. Clique no 2º ponto.",
-                        pt3d.X * fatorMm, pt3d.Y * fatorMm, pt3d.Z * fatorMm);
+                    txt_medir_status.Text = "Medir 2/2 · 2º ponto";
                 }
                 return;
             }
@@ -2353,8 +2331,8 @@ namespace DLM.helix
             if (txt_medir_status != null)
             {
                 string resumo = Math.Abs(dz) > 0.1
-                    ? string.Format("Última: L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}, dZ={3:0.#}) — Clique para nova cota ou X/ESC para limpar.", dist, dx, dy, dz)
-                    : string.Format("Última: L = {0:0.#} mm (dX={1:0.#}, dY={2:0.#}) — Clique para nova cota ou X/ESC para limpar.", dist, dx, dy);
+                    ? string.Format("L = {0:0.#} mm (dX={1:0.#} dY={2:0.#} dZ={3:0.#})", dist, dx, dy, dz)
+                    : string.Format("L = {0:0.#} mm (dX={1:0.#} dY={2:0.#})", dist, dx, dy);
                 txt_medir_status.Text = resumo;
             }
             if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Visible;

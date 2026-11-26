@@ -505,7 +505,7 @@
                 <h:HelixViewport3D x:Name="vp3D"
                                    Background="Transparent"
                                    IsHeadLightEnabled="True"
-                                   ShowCoordinateSystem="True"
+                                   ShowCoordinateSystem="False"
                                    ShowViewCube="True"
                                    ZoomExtentsWhenLoaded="True"
                                    ZoomAroundMouseDownPoint="True"

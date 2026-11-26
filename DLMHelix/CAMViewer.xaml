@@ -20,7 +20,7 @@
             <Setter Property="Background" Value="#D9232F3E" />
             <Setter Property="BorderBrush" Value="#475569" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Foreground" Value="#F1F5F9" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
             <Setter Property="FontSize" Value="10.5" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
@@ -65,7 +65,7 @@
             <Setter Property="Background" Value="#D9232F3E" />
             <Setter Property="BorderBrush" Value="#475569" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Foreground" Value="#F1F5F9" />
+            <Setter Property="Foreground" Value="#FFFFFF" />
             <Setter Property="FontSize" Value="10.5" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="Cursor" Value="Hand" />
@@ -104,21 +104,8 @@
     </UserControl.Resources>
 
     <Grid>
-        <TabControl Grid.Row="1"
-					Background="Transparent"
-					BorderThickness="0"
-					Padding="0"
-					TabStripPlacement="Bottom"
-					SelectionChanged="tab_SelectionChanged"
-					Name="tab">
-            <TabControl.ItemContainerStyle>
-                <Style TargetType="TabItem">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                </Style>
-            </TabControl.ItemContainerStyle>
-            <TabItem Header="3D"
-					 Background="Transparent"
-					 Name="tab_3d">
+        <Grid>
+            <Grid x:Name="grid_vista_3d" Background="Transparent">
                 <Grid>
                     <Grid.Background>
                         <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -127,9 +114,9 @@
                         </LinearGradientBrush>
                     </Grid.Background>
                     <h:HelixViewport3D SizeChanged="viewport_SizeChanged"
-									   Grid.Row="1"
 									   ZoomExtentsWhenLoaded="True"
 									   Name="viewPort3D"
+									   ShowCoordinateSystem="False"
 									   IsTouchZoomEnabled="True"
 									   Background="Transparent"
 									   IsHeadLightEnabled="True"
@@ -150,103 +137,136 @@
                         </h:HelixViewport3D.Camera>
                     </h:HelixViewport3D>
 
-                    <!-- Barra compacta de ferramentas 3D com ícones vetoriais nítidos -->
+                    <!-- Menu expansível no canto inferior esquerdo com ferramentas 3D -->
                     <Border VerticalAlignment="Bottom"
                             HorizontalAlignment="Left"
-                            Margin="6,0,0,6"
-                            Padding="3"
+                            Margin="8,0,0,8"
+                            Padding="4,2"
                             CornerRadius="4"
-                            Background="#B8111827"
+                            Background="#D9111827"
                             BorderBrush="#334155"
                             BorderThickness="1">
-                        <StackPanel Orientation="Horizontal">
-                                                        <Button x:Name="bt_tela_cheia_3d" Style="{StaticResource BotaoViewer3D}" Click="abrir_tela_cheia_click" ToolTip="Abrir em janela maximizada">
-                                <Path Width="12" Height="12" Stretch="Uniform"
-                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                      StrokeThickness="1.5" StrokeLineJoin="Round"
-                                      Data="M2,2 L12,2 L12,12 L2,12 Z M2,4.5 L12,4.5" />
-                            </Button>
-                            <Button Style="{StaticResource BotaoViewer3D}" Click="zom_ex" ToolTip="Enquadrar (Zoom Extents)">
-                                <Path Width="12" Height="12" Stretch="Uniform"
-                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                      StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                      Data="M2,5 L2,2 L5,2 M9,2 L12,2 L12,5 M12,9 L12,12 L9,12 M5,12 L2,12 L2,9" />
-                            </Button>
-                            <Button Style="{StaticResource BotaoViewer3D}" Click="iso" ToolTip="Vista Isométrica">
-                                <Path Width="12" Height="12" Stretch="Uniform"
-                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                      StrokeThickness="1.5" StrokeLineJoin="Round"
-                                      Data="M7,1.5 L12.5,4.5 L12.5,10.5 L7,13.5 L1.5,10.5 L1.5,4.5 Z M1.5,4.5 L7,7.5 L12.5,4.5 M7,7.5 L7,13.5" />
-                            </Button>
-                            <Button Style="{StaticResource BotaoViewer3D}" Click="front" ToolTip="Vista Frontal">
-                                <Path Width="12" Height="12" Stretch="Uniform"
-                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                      StrokeThickness="1.6" StrokeLineJoin="Round"
-                                      Data="M2,3 L12,3 L12,11 L2,11 Z M5,7 L9,7" />
-                            </Button>
-                            <Button Style="{StaticResource BotaoViewer3D}" Click="top" ToolTip="Vista Superior">
-                                <Path Width="12" Height="12" Stretch="Uniform"
-                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                      StrokeThickness="1.6" StrokeLineJoin="Round"
-                                      Data="M2,3 L12,3 L12,11 L2,11 Z M2,6 L12,6" />
-                            </Button>
-                            <Button Style="{StaticResource BotaoViewer3D}" Click="recarregar" ToolTip="Recarregar">
-                                <Path Width="12" Height="12" Stretch="Uniform"
-                                      Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                      StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                      Data="M12,7 A5,5 0 1 1 10.5,3.5 M11.5,1.5 L11.5,4.2 L8.8,4.2" />
-                            </Button>
-
-                            <Border Width="1" Background="#334155" Margin="3,3" />
-
-                            <ToggleButton x:Name="bt_planificado"
-                                          Style="{StaticResource ToggleViewer3D}"
-                                          Visibility="Collapsed"
-                                          Click="alternar_planificado_click"
-                                          ToolTip="Alternar entre peça dobrada 3D e chapa planificada">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0"
-                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}"
+                        <Expander x:Name="exp_ferramentas_3d"
+                                  IsExpanded="True"
+                                  Foreground="#FFFFFF"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  Padding="0">
+                            <Expander.Header>
+                                <TextBlock Text="Ferramentas" Foreground="#FFFFFF" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                            </Expander.Header>
+                            <WrapPanel Orientation="Horizontal" Margin="0,4,0,2">
+                                <Button x:Name="bt_tela_cheia_3d" Style="{StaticResource BotaoViewer3D}" Click="abrir_tela_cheia_click" ToolTip="Abrir em janela maximizada">
+                                    <Path Width="12" Height="12" Stretch="Uniform"
+                                          Stroke="#FFFFFF"
                                           StrokeThickness="1.5" StrokeLineJoin="Round"
-                                          Data="M1.5,4 L12.5,4 L12.5,10 L1.5,10 Z M5.5,4 L5.5,10 M8.5,4 L8.5,10" />
-                                    <TextBlock x:Name="txt_planificado" Text="Planificado" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </ToggleButton>
+                                          Data="M2,2 L12,2 L12,12 L2,12 Z M2,4.5 L12,4.5" />
+                                </Button>
+                                <Button Style="{StaticResource BotaoViewer3D}" Click="zom_ex" ToolTip="Enquadrar (Zoom Extents)">
+                                    <Path Width="12" Height="12" Stretch="Uniform"
+                                          Stroke="#FFFFFF"
+                                          StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          Data="M2,5 L2,2 L5,2 M9,2 L12,2 L12,5 M12,9 L12,12 L9,12 M5,12 L2,12 L2,9" />
+                                </Button>
 
-                            <Button x:Name="bt_exportar_ifc" Style="{StaticResource BotaoViewer3D}" Click="exportar_ifc_click" ToolTip="Exportar modelo 3D para IFC">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0"
-                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                          StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                          Data="M7,2 L7,9.5 M4,7 L7,10 L10,7 M2,12 L12,12" />
-                                    <TextBlock Text="Exportar IFC" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                                <Border Width="1" Background="#334155" Margin="4,3" />
+                                <TextBlock Text="View:" Foreground="#FFFFFF" FontSize="10.5" FontWeight="SemiBold" VerticalAlignment="Center" Margin="2,0,4,0" />
+                                <Button Style="{StaticResource BotaoViewer3D}" Click="iso" ToolTip="Isométrica">
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#FFFFFF" StrokeThickness="1.5" StrokeLineJoin="Round"
+                                          Data="M7,1.5 L12.5,4.5 L12.5,10.5 L7,13.5 L1.5,10.5 L1.5,4.5 Z M1.5,4.5 L7,7.5 L12.5,4.5 M7,7.5 L7,13.5" />
+                                </Button>
+                                <Button Style="{StaticResource BotaoViewer3D}" Click="top_click" ToolTip="Top (Superior)">
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#FFFFFF" StrokeThickness="1.6" StrokeLineJoin="Round"
+                                          Data="M2,3 L12,3 L12,11 L2,11 Z M2,6 L12,6" />
+                                </Button>
+                                <Button Style="{StaticResource BotaoViewer3D}" Click="bottom_click" ToolTip="Bottom (Inferior)">
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#FFFFFF" StrokeThickness="1.6" StrokeLineJoin="Round"
+                                          Data="M2,3 L12,3 L12,11 L2,11 Z M2,8 L12,8" />
+                                </Button>
+                                <Button Style="{StaticResource BotaoViewer3D}" Click="left_click" ToolTip="Left (Esquerda)">
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#FFFFFF" StrokeThickness="1.6" StrokeLineJoin="Round"
+                                          Data="M2,2 L12,2 L12,12 L2,12 Z M5,2 L5,12" />
+                                </Button>
+                                <Button Style="{StaticResource BotaoViewer3D}" Click="right_click" ToolTip="Right (Direita)">
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#FFFFFF" StrokeThickness="1.6" StrokeLineJoin="Round"
+                                          Data="M2,2 L12,2 L12,12 L2,12 Z M9,2 L9,12" />
+                                </Button>
 
-                            <Button x:Name="bt_exportar_dxf3d" Style="{StaticResource BotaoViewer3D}" Click="exportar_dxf3d_click" ToolTip="Exportar modelo 3D para DXF 3D (3DFACE)">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0"
-                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                          StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                          Data="M7,2 L7,9.5 M4,7 L7,10 L10,7 M2,12 L12,12" />
-                                    <TextBlock Text="Exportar DXF 3D" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </Button>
+                                <Border Width="1" Background="#334155" Margin="4,3" />
 
-                            <Border Width="1" Background="#334155" Margin="3,3" />
+                                <Button Style="{StaticResource BotaoViewer3D}" Click="recarregar" ToolTip="Recarregar">
+                                    <Path Width="12" Height="12" Stretch="Uniform"
+                                          Stroke="#FFFFFF"
+                                          StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                          Data="M12,7 A5,5 0 1 1 10.5,3.5 M11.5,1.5 L11.5,4.2 L8.8,4.2" />
+                                </Button>
 
-                            <ToggleButton x:Name="bt_medir_3d" Style="{StaticResource ToggleViewer3D}" Click="medir_click" ToolTip="Medir / Cotar distância entre 2 pontos (ESC limpa/cancela)">
-                                <StackPanel Orientation="Horizontal">
-                                    <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0"
-                                          Stroke="#DC2626" StrokeThickness="1.6"
-                                          Data="M2,11 L11,2 M2,11 L5,11 M2,11 L2,8 M11,2 L8,2 M11,2 L11,5" />
-                                    <TextBlock Text="Medir" Foreground="White" VerticalAlignment="Center" />
-                                </StackPanel>
-                            </ToggleButton>
-                        </StackPanel>
+                                <ToggleButton x:Name="bt_planificado"
+                                              Style="{StaticResource ToggleViewer3D}"
+                                              Visibility="Collapsed"
+                                              Click="alternar_planificado_click"
+                                              ToolTip="Alternar entre peça dobrada 3D e chapa planificada">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0"
+                                              Stroke="#FFFFFF"
+                                              StrokeThickness="1.5" StrokeLineJoin="Round"
+                                              Data="M1.5,4 L12.5,4 L12.5,10 L1.5,10 Z M5.5,4 L5.5,10 M8.5,4 L8.5,10" />
+                                        <TextBlock x:Name="txt_planificado" Text="Planificado" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+
+                                <Button x:Name="bt_exportar_ifc" Style="{StaticResource BotaoViewer3D}" Click="exportar_ifc_click" ToolTip="Exportar modelo 3D para IFC">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0"
+                                              Stroke="#FFFFFF"
+                                              StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Data="M7,2 L7,9.5 M4,7 L7,10 L10,7 M2,12 L12,12" />
+                                        <TextBlock Text="Exportar IFC" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <Button x:Name="bt_exportar_dxf3d" Style="{StaticResource BotaoViewer3D}" Click="exportar_dxf3d_click" ToolTip="Exportar modelo 3D para DXF 3D (3DFACE)">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0"
+                                              Stroke="#FFFFFF"
+                                              StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Data="M7,2 L7,9.5 M4,7 L7,10 L10,7 M2,12 L12,12" />
+                                        <TextBlock Text="Exportar DXF 3D" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <ToggleButton x:Name="bt_medir_3d" Style="{StaticResource ToggleViewer3D}" Click="medir_click" ToolTip="Medir / Cotar distância entre 2 pontos (ESC limpa/cancela)">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0"
+                                              Stroke="#EF4444" StrokeThickness="1.6"
+                                              Data="M2,11 L11,2 M2,11 L5,11 M2,11 L2,8 M11,2 L8,2 M11,2 L11,5" />
+                                        <TextBlock Text="Medir" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+
+                                <Button x:Name="bt_layers_3d" Style="{StaticResource BotaoViewer3D}" Click="layers_click" ToolTip="Mostrar / ocultar elementos agrupados por tipo">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0"
+                                              Stroke="#FFFFFF" StrokeThickness="1.5" StrokeLineJoin="Round"
+                                              Data="M7,1.5 L12.5,4.5 L7,7.5 L1.5,4.5 Z M1.5,7.5 L7,10.5 L12.5,7.5 M1.5,10.5 L7,13.5 L12.5,10.5" />
+                                        <TextBlock Text="Layers" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+
+                                <CheckBox x:Name="chk_ucs_3d"
+                                          Content="UCS"
+                                          IsChecked="True"
+                                          Checked="chk_ucs_3d_Changed"
+                                          Unchecked="chk_ucs_3d_Changed"
+                                          Foreground="#FFFFFF"
+                                          FontSize="10.5"
+                                          FontWeight="SemiBold"
+                                          VerticalAlignment="Center"
+                                          Margin="6,0,4,0"
+                                          ToolTip="Mostrar / ocultar UCS Icon 3D" />
+                            </WrapPanel>
+                        </Expander>
                     </Border>
-
-
 
                     <Image Grid.Row="10"
 						   Source="{Binding CAM.Imagem}"
@@ -256,10 +276,8 @@
 						   Width="64"
 						   Margin="5,30,0,0" />
                 </Grid>
-            </TabItem>
-            <TabItem Header="2D"
-					 Background="Transparent"
-					 Name="tab_2d">
+            </Grid>
+            <Grid x:Name="grid_vista_2d" Background="Transparent" Visibility="Collapsed">
                 <Grid Margin="0">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*" />
@@ -273,7 +291,7 @@
                                 ClipToBounds="True"
                                 SizeChanged="canvas_cam_2d_SizeChanged" />
                         <Button x:Name="bt_tela_cheia_cam2d" Style="{StaticResource BotaoViewer3D}" Click="abrir_tela_cheia_click" ToolTip="Abrir em janela maximizada" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,10,0">
-                            <Path Width="12" Height="12" Stretch="Uniform" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M2,2 L12,2 L12,12 L2,12 Z M2,4.5 L12,4.5" />
+                            <Path Width="12" Height="12" Stretch="Uniform" Stroke="#FFFFFF" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M2,2 L12,2 L12,12 L2,12 Z M2,4.5 L12,4.5" />
                         </Button>
                     </Grid>
 
@@ -283,6 +301,7 @@
 										   Background="Black"
 										   ZoomExtentsWhenLoaded="True"
 										   Name="viewPort2D"
+										   ShowCoordinateSystem="False"
 										   IsHeadLightEnabled="True"
 										   ZoomAroundMouseDownPoint="True"
 										   RotateAroundMouseDownPoint="True"
@@ -294,63 +313,80 @@
                             </ModelVisual3D>
                         </h:HelixViewport3D>
                         <Border HorizontalAlignment="Left"
-                                VerticalAlignment="Top"
-                                Margin="6,6,0,0"
-                                Padding="3"
+                                VerticalAlignment="Bottom"
+                                Margin="8,0,0,8"
+                                Padding="4,2"
                                 CornerRadius="4"
-                                Background="#B8111827"
+                                Background="#D9111827"
                                 BorderBrush="#334155"
                                 BorderThickness="1">
-                            <StackPanel Orientation="Horizontal">
-                                                                <Button x:Name="bt_tela_cheia_2d"
-                                        Style="{StaticResource BotaoViewer3D}"
-                                        Click="abrir_tela_cheia_click"
-                                        ToolTip="Abrir em janela maximizada">
-                                    <Path Width="12" Height="12" Stretch="Uniform"
-                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                          StrokeThickness="1.5" StrokeLineJoin="Round"
-                                          Data="M2,2 L12,2 L12,12 L2,12 Z M2,4.5 L12,4.5" />
-                                </Button>
-                                <Button Style="{StaticResource BotaoViewer3D}" Click="zom_ex" ToolTip="Enquadrar (Zoom Extents)">
-                                    <Path Width="12" Height="12" Stretch="Uniform"
-                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                          StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                          Data="M2,5 L2,2 L5,2 M9,2 L12,2 L12,5 M12,9 L12,12 L9,12 M5,12 L2,12 L2,9" />
-                                </Button>
-                                <Button x:Name="bt_abrir_externamente"
-                                        Style="{StaticResource BotaoViewer3D}"
-                                        Click="abrir_externamente_click"
-                                        ToolTip="Abrir externamente">
-                                    <Path Width="12" Height="12" Stretch="Uniform"
-                                          Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
-                                          StrokeThickness="1.6" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                          Data="M9,2 L13,2 L13,6 M13,2 L7,8 M6,3 L3,3 C2.4,3 2,3.4 2,4 L2,12 C2,12.6 2.4,13 3,13 L11,13 C11.6,13 12,12.6 12,12 L12,9" />
-                                </Button>
-                                <Button x:Name="bt_exportar_dxf"
-                                        Style="{StaticResource BotaoViewer3D}"
-                                        Click="exportar_dxf_click"
-                                        ToolTip="Exportar arquivo DXF">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Path Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0"
-                                              Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
+                            <Expander x:Name="exp_ferramentas_2d"
+                                      IsExpanded="True"
+                                      Foreground="#FFFFFF"
+                                      Background="Transparent"
+                                      BorderThickness="0"
+                                      Padding="0">
+                                <Expander.Header>
+                                    <TextBlock Text="Ferramentas" Foreground="#FFFFFF" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" />
+                                </Expander.Header>
+                                <WrapPanel Orientation="Horizontal" Margin="0,4,0,2">
+                                    <Button x:Name="bt_tela_cheia_2d"
+                                            Style="{StaticResource BotaoViewer3D}"
+                                            Click="abrir_tela_cheia_click"
+                                            ToolTip="Abrir em janela maximizada">
+                                        <Path Width="12" Height="12" Stretch="Uniform"
+                                              Stroke="#FFFFFF"
                                               StrokeThickness="1.5" StrokeLineJoin="Round"
-                                              Data="M3,1.5 L9,1.5 L12,4.5 L12,12.5 L3,12.5 Z M9,1.5 L9,4.5 L12,4.5" />
-                                        <TextBlock Text="Exportar" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Button>
-                                <Border Width="1" Background="#334155" Margin="3,3" />
-                                <ToggleButton x:Name="bt_medir_2d"
-                                              Style="{StaticResource ToggleViewer3D}"
-                                              Click="medir_click"
-                                              ToolTip="Medir / Cotar distância entre 2 pontos (ESC limpa/cancela)">
-                                    <StackPanel Orientation="Horizontal">
-                                        <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0"
-                                              Stroke="#DC2626" StrokeThickness="1.6"
-                                              Data="M2,11 L11,2 M2,11 L5,11 M2,11 L2,8 M11,2 L8,2 M11,2 L11,5" />
-                                        <TextBlock Text="Medir" Foreground="White" VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </ToggleButton>
-                            </StackPanel>
+                                              Data="M2,2 L12,2 L12,12 L2,12 Z M2,4.5 L12,4.5" />
+                                    </Button>
+                                    <Button Style="{StaticResource BotaoViewer3D}" Click="zom_ex" ToolTip="Enquadrar (Zoom Extents)">
+                                        <Path Width="12" Height="12" Stretch="Uniform"
+                                              Stroke="#FFFFFF"
+                                              StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Data="M2,5 L2,2 L5,2 M9,2 L12,2 L12,5 M12,9 L12,12 L9,12 M5,12 L2,12 L2,9" />
+                                    </Button>
+                                    <Button x:Name="bt_abrir_externamente"
+                                            Style="{StaticResource BotaoViewer3D}"
+                                            Click="abrir_externamente_click"
+                                            ToolTip="Abrir externamente">
+                                        <Path Width="12" Height="12" Stretch="Uniform"
+                                              Stroke="#FFFFFF"
+                                              StrokeThickness="1.6" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                              Data="M9,2 L13,2 L13,6 M13,2 L7,8 M6,3 L3,3 C2.4,3 2,3.4 2,4 L2,12 C2,12.6 2.4,13 3,13 L11,13 C11.6,13 12,12.6 12,12 L12,9" />
+                                    </Button>
+                                    <Button x:Name="bt_exportar_dxf"
+                                            Style="{StaticResource BotaoViewer3D}"
+                                            Click="exportar_dxf_click"
+                                            ToolTip="Exportar arquivo DXF">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Width="11" Height="11" Stretch="Uniform" Margin="0,0,4,0"
+                                                  Stroke="#FFFFFF"
+                                                  StrokeThickness="1.5" StrokeLineJoin="Round"
+                                                  Data="M3,1.5 L9,1.5 L12,4.5 L12,12.5 L3,12.5 Z M9,1.5 L9,4.5 L12,4.5" />
+                                            <TextBlock Text="Exportar" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <Button x:Name="bt_layers_2d" Style="{StaticResource BotaoViewer3D}" Click="layers_click" ToolTip="Mostrar / ocultar layers">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0"
+                                                  Stroke="#FFFFFF" StrokeThickness="1.5" StrokeLineJoin="Round"
+                                                  Data="M7,1.5 L12.5,4.5 L7,7.5 L1.5,4.5 Z M1.5,7.5 L7,10.5 L12.5,7.5 M1.5,10.5 L7,13.5 L12.5,10.5" />
+                                            <TextBlock Text="Layers" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <ToggleButton x:Name="bt_medir_2d"
+                                                  Style="{StaticResource ToggleViewer3D}"
+                                                  Click="medir_click"
+                                                  ToolTip="Medir / Cotar distância entre 2 pontos (ESC limpa/cancela)">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0"
+                                                  Stroke="#EF4444" StrokeThickness="1.6"
+                                                  Data="M2,11 L11,2 M2,11 L5,11 M2,11 L2,8 M11,2 L8,2 M11,2 L11,5" />
+                                            <TextBlock Text="Medir" Foreground="#FFFFFF" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </ToggleButton>
+                                </WrapPanel>
+                            </Expander>
                         </Border>
                     </Grid>
 
@@ -367,8 +403,8 @@
                         </ScrollViewer>
                     </Border>
                 </Grid>
-            </TabItem>
-        </TabControl>
+            </Grid>
+        </Grid>
         <!-- Canvas Overlay para marcador visual de Snap e preview pontilhado da cota -->
         <Canvas x:Name="canvas_snap_overlay" IsHitTestVisible="False" ClipToBounds="True">
             <Line x:Name="linha_preview_cota"

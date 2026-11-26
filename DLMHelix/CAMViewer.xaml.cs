@@ -25,61 +25,48 @@ namespace DLM.helix
     public partial class CAMViewer : UserControl
     {
         private bool _preferirAba2D;
-        private bool _trocandoAbaProgramaticamente;
-
-        public bool Aba2DSelecionada => this.tab_2d != null && this.tab_2d.IsSelected;
+        public bool Aba2DSelecionada => this.grid_vista_2d != null && this.grid_vista_2d.Visibility == Visibility.Visible;
 
         public void SelecionarAba2D(bool selecionar2D)
         {
             _preferirAba2D = selecionar2D;
-            if (this.tab_2d == null || this.tab_3d == null) return;
-            _trocandoAbaProgramaticamente = true;
-            try
+            if (this.grid_vista_2d == null || this.grid_vista_3d == null) return;
+            if (selecionar2D && _suporta2DAtual)
             {
-                if (selecionar2D && this.tab_2d.Visibility == Visibility.Visible)
-                    this.tab_2d.IsSelected = true;
-                else if (!selecionar2D && this.tab_3d.Visibility == Visibility.Visible)
-                    this.tab_3d.IsSelected = true;
+                this.grid_vista_3d.Visibility = Visibility.Collapsed;
+                this.grid_vista_2d.Visibility = Visibility.Visible;
+                if (this.MVC != null && this.MVC.CAM != null &&
+                    grid_cam_2d_visual != null && grid_cam_2d_visual.Visibility == Visibility.Visible)
+                {
+                    var camAtual = this.MVC.CAM;
+                    Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
+                    {
+                        if (this.grid_vista_2d != null && this.grid_vista_2d.Visibility == Visibility.Visible &&
+                            ReferenceEquals(this.MVC?.CAM, camAtual) && canvas_cam_2d != null)
+                        {
+                            CAMDesenho2DCanvas.Desenhar(canvas_cam_2d, camAtual);
+                        }
+                    }));
+                }
             }
-            finally
+            else if (!selecionar2D && _suporta3DAtual)
             {
-                _trocandoAbaProgramaticamente = false;
-                AtualizarBotoesModo();
+                this.grid_vista_2d.Visibility = Visibility.Collapsed;
+                this.grid_vista_3d.Visibility = Visibility.Visible;
             }
+            AtualizarBotoesModo();
         }
 
         private void AplicarAbaPreferida(bool suporta3D, bool suporta2D)
         {
             _suporta3DAtual = suporta3D;
             _suporta2DAtual = suporta2D;
-            if (this.tab_3d == null || this.tab_2d == null) return;
-            _trocandoAbaProgramaticamente = true;
-            try
-            {
-                this.tab_3d.Visibility = suporta3D ? Visibility.Visible : Visibility.Collapsed;
-                this.tab_2d.Visibility = suporta2D ? Visibility.Visible : Visibility.Collapsed;
+            if (this.grid_vista_3d == null || this.grid_vista_2d == null) return;
 
-                if (suporta3D && suporta2D)
-                {
-                    if (_preferirAba2D)
-                        this.tab_2d.IsSelected = true;
-                    else
-                        this.tab_3d.IsSelected = true;
-                }
-                else if (suporta2D)
-                {
-                    this.tab_2d.IsSelected = true;
-                }
-                else if (suporta3D)
-                {
-                    this.tab_3d.IsSelected = true;
-                }
-            }
-            finally
-            {
-                _trocandoAbaProgramaticamente = false;
-                AtualizarBotoesModo();
-            }
+            bool mostrar2D = (suporta3D && suporta2D) ? _preferirAba2D : suporta2D;
+            this.grid_vista_3d.Visibility = !mostrar2D && suporta3D ? Visibility.Visible : Visibility.Collapsed;
+            this.grid_vista_2d.Visibility = mostrar2D && suporta2D ? Visibility.Visible : Visibility.Collapsed;
+            AtualizarBotoesModo();
         }
 
         private bool _suporta3DAtual = true;
@@ -90,8 +77,8 @@ namespace DLM.helix
             if (bt_modo_3d == null || bt_modo_2d == null) return;
             bt_modo_3d.Visibility = _suporta3DAtual ? Visibility.Visible : Visibility.Collapsed;
             bt_modo_2d.Visibility = _suporta2DAtual ? Visibility.Visible : Visibility.Collapsed;
-            bt_modo_3d.IsChecked = this.tab_3d != null && this.tab_3d.IsSelected;
-            bt_modo_2d.IsChecked = this.tab_2d != null && this.tab_2d.IsSelected;
+            bt_modo_3d.IsChecked = this.grid_vista_3d != null && this.grid_vista_3d.Visibility == Visibility.Visible;
+            bt_modo_2d.IsChecked = this.grid_vista_2d != null && this.grid_vista_2d.Visibility == Visibility.Visible;
             if (bd_seletor_modo != null)
             {
                 bd_seletor_modo.Visibility = (_suporta3DAtual && _suporta2DAtual) ? Visibility.Visible : Visibility.Collapsed;
@@ -108,38 +95,6 @@ namespace DLM.helix
         {
             if (!_suporta2DAtual) return;
             SelecionarAba2D(true);
-        }
-        private void tab_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (!ReferenceEquals(e.OriginalSource, this.tab)) return;
-            if (!_trocandoAbaProgramaticamente &&
-                this.tab_3d != null && this.tab_2d != null &&
-                this.tab_3d.Visibility == Visibility.Visible &&
-                this.tab_2d.Visibility == Visibility.Visible)
-            {
-                _preferirAba2D = this.tab_2d.IsSelected;
-            }
-
-            AtualizarBotoesModo();
-            if (this.tab_2d != null && this.tab_2d.IsSelected &&
-                this.MVC != null && this.MVC.CAM != null &&
-                grid_cam_2d_visual != null && grid_cam_2d_visual.Visibility == Visibility.Visible)
-            {
-                var camAtual = this.MVC.CAM;
-                Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
-                {
-                    if (ReferenceEquals(this.MVC?.CAM, camAtual) && canvas_cam_2d != null)
-                        CAMDesenho2DCanvas.Desenhar(canvas_cam_2d, camAtual);
-                if (this.tab_2d != null && this.tab_2d.IsSelected)
-                {
-                    Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
-                    {
-                        if (ReferenceEquals(this.MVC?.CAM, camAtual) && canvas_cam_2d != null)
-                            CAMDesenho2DCanvas.Desenhar(canvas_cam_2d, camAtual);
-                    }));
-                }
-                }));
-            }
         }
         public HelixViewport3D View2D => this.viewPort2D;
         public HelixViewport3D View3D => this.viewPort3D;
@@ -1190,7 +1145,8 @@ namespace DLM.helix
                 AplicarAbaPreferida(true, false);
                 viewPort3D.Children.Add(Gera3d.Luz());
                 RenderACadSharp.AplicarNoViewport(viewPort3D, res);
-                this.viewPort3D.ShowCoordinateSystem = true;
+                this.viewPort3D.ShowCoordinateSystem = false;
+                AtualizarUcsIcon3D();
                 this.viewPort3D.ShowFieldOfView = false;
                 this.viewPort3D.ShowViewCube = true;
                 this.viewPort3D.ShowCameraTarget = false;
@@ -1448,7 +1404,8 @@ namespace DLM.helix
             RenderIFC.Renderizar(viewPort3D, modelo, true);
             RenderizarGrid3D(viewPort3D, modelo);
 
-                this.viewPort3D.ShowCoordinateSystem = true;
+                this.viewPort3D.ShowCoordinateSystem = false;
+                AtualizarUcsIcon3D();
                 this.viewPort3D.ShowFieldOfView = false;
                 this.viewPort3D.ShowViewCube = true;
                 this.viewPort3D.ShowCameraTarget = false;
@@ -1594,9 +1551,6 @@ namespace DLM.helix
             AtualizarBarraLayoutsDXF(layouts, _layoutDxfAtivo);
             Render2dLayouts.RenderizarLayout(dxfDocument, this.viewPort2D, _layoutDxfAtivo);
             Set2D();
-            var st = new Style();
-            st.Setters.Add(new Setter(UIElement.VisibilityProperty, Visibility.Collapsed));
-            tab.ItemContainerStyle = st;
 
             bool arqExiste = !string.IsNullOrEmpty(ArquivoCarregado) && System.IO.File.Exists(ArquivoCarregado);
             AtualizarBotoesDXF(arqExiste);
@@ -1699,7 +1653,7 @@ namespace DLM.helix
                 if (grid_dxf_2d_helix != null) grid_dxf_2d_helix.Visibility = Visibility.Collapsed;
                 if (grid_cam_2d_visual != null) grid_cam_2d_visual.Visibility = Visibility.Visible;
                 CAMDesenho2DCanvas.Desenhar(canvas_cam_2d, camAtual);
-                if (this.tab_2d != null && this.tab_2d.IsSelected)
+                if (this.grid_vista_2d != null && this.grid_vista_2d.Visibility == Visibility.Visible)
                 {
                     Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() =>
                     {
@@ -1708,7 +1662,8 @@ namespace DLM.helix
                     }));
                 }
 
-                this.viewPort3D.ShowCoordinateSystem = true;
+                this.viewPort3D.ShowCoordinateSystem = false;
+                AtualizarUcsIcon3D();
                 this.viewPort3D.ShowFieldOfView = false;
                 this.viewPort3D.ShowViewCube = true;
                 this.viewPort3D.ShowCameraTarget = false;
@@ -1902,6 +1857,100 @@ namespace DLM.helix
             ControleCamera.Setar(this.viewPort3D, ControleCamera.eCameraViews.Top, 0);
         }
 
+        public void Bottom()
+        {
+            ControleCamera.Setar(this.viewPort3D, ControleCamera.eCameraViews.Bottom, 0);
+        }
+
+        public void Left()
+        {
+            ControleCamera.Setar(this.viewPort3D, ControleCamera.eCameraViews.Left, 0);
+        }
+
+        public void Right()
+        {
+            ControleCamera.Setar(this.viewPort3D, ControleCamera.eCameraViews.Right, 0);
+        }
+
+        private void top_click(object sender, RoutedEventArgs e) { Top(); ZoomExtend(); }
+        private void bottom_click(object sender, RoutedEventArgs e) { Bottom(); ZoomExtend(); }
+        private void left_click(object sender, RoutedEventArgs e) { Left(); ZoomExtend(); }
+        private void right_click(object sender, RoutedEventArgs e) { Right(); ZoomExtend(); }
+
+        private System.Windows.Media.Media3D.ModelVisual3D _ucsIconVisual3D;
+
+        private void AtualizarUcsIcon3D()
+        {
+            if (this.viewPort3D == null) return;
+            if (_ucsIconVisual3D != null)
+            {
+                try { this.viewPort3D.Children.Remove(_ucsIconVisual3D); } catch { }
+                _ucsIconVisual3D = null;
+            }
+            if (chk_ucs_3d != null && chk_ucs_3d.IsChecked == false) return;
+
+            double tam = 0.6;
+            if (_est3D != null && !_est3D.Bounds.IsEmpty)
+            {
+                var bnd = _est3D.Bounds;
+                double diag = Math.Sqrt(bnd.SizeX * bnd.SizeX + bnd.SizeY * bnd.SizeY + bnd.SizeZ * bnd.SizeZ);
+                if (diag > 0.1) tam = Math.Max(0.25, Math.Min(2.0, diag * 0.045));
+            }
+            _ucsIconVisual3D = UcsIcon3D.Criar(tam);
+            this.viewPort3D.Children.Add(_ucsIconVisual3D);
+        }
+
+        private void chk_ucs_3d_Changed(object sender, RoutedEventArgs e)
+        {
+            AtualizarUcsIcon3D();
+        }
+
+        private void layers_click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (_modeloIfcAtual != null)
+                {
+                    var itens = LayersWindow.CriarItensIFC(_modeloIfcAtual);
+                    if (itens.Count == 0) return;
+                    var win = new LayersWindow("Layers (Por Tipo)", itens, lista =>
+                    {
+                        var mapa = lista.ToDictionary(x => x.Chave, x => x.Visivel, StringComparer.OrdinalIgnoreCase);
+                        foreach (var el in _modeloIfcAtual.Elementos)
+                        {
+                            if (el == null || el.EhAbertura) continue;
+                            string grp = LayersWindow.ObterGrupoTipoIFC(el);
+                            if (mapa.TryGetValue(grp, out bool v)) el.Visivel = v;
+                        }
+                        Render2d.LimparViewport(this.viewPort3D);
+                        this.viewPort3D.Children.Add(Gera3d.Luz());
+                        RenderIFC.Renderizar(this.viewPort3D, _modeloIfcAtual, true);
+                        AtualizarUcsIcon3D();
+                    });
+                    win.Owner = Window.GetWindow(this);
+                    win.ShowDialog();
+                }
+                else if (this.DxfCarregado != null)
+                {
+                    var itens = LayersWindow.CriarItensDXF(this.DxfCarregado);
+                    if (itens.Count == 0) return;
+                    var win = new LayersWindow("Layers DXF", itens, lista =>
+                    {
+                        var mapa = lista.ToDictionary(x => x.Chave, x => x.Visivel, StringComparer.OrdinalIgnoreCase);
+                        foreach (var lay in this.DxfCarregado.Layers)
+                        {
+                            if (lay != null && mapa.TryGetValue(lay.Name, out bool v))
+                                lay.IsVisible = v;
+                        }
+                        Render2dLayouts.RenderizarLayout(this.DxfCarregado, this.viewPort2D, _layoutDxfAtivo);
+                    });
+                    win.Owner = Window.GetWindow(this);
+                    win.ShowDialog();
+                }
+            }
+            catch { }
+        }
+
         public void OcultarBotaoTelaCheia()
         {
             if (bt_tela_cheia_3d != null) bt_tela_cheia_3d.Visibility = Visibility.Collapsed;
@@ -1915,7 +1964,7 @@ namespace DLM.helix
             {
                 // Se houver modelo IFC carregado ou arquivo .IFC/.DWG 3D (sem DxfCarregado 2D), abre o Visualizador IFC completo
                 string extArq = !string.IsNullOrWhiteSpace(ArquivoCarregado) ? Path.GetExtension(ArquivoCarregado).ToUpperInvariant() : "";
-                bool ehCad2D = DxfCarregado != null || (tab_2d != null && tab_2d.IsSelected && _modeloIfcAtual == null);
+                bool ehCad2D = DxfCarregado != null || (grid_vista_2d != null && grid_vista_2d.Visibility == Visibility.Visible && _modeloIfcAtual == null);
                 if (!ehCad2D && (_modeloIfcAtual != null || extArq == ".IFC" || extArq == ".DWG"))
                 {
                     var winIfc = new IfcViewerWindow();
@@ -1945,7 +1994,7 @@ namespace DLM.helix
                     Height = 800
                 };
 
-                bool aba2DAtiva = this.tab_2d != null && this.tab_2d.IsSelected;
+                bool aba2DAtiva = this.Aba2DSelecionada;
                 bool modoPlan = _modoPlanificado;
                 string layoutAtual = _layoutDxfAtivo;
                 var camAtual = this.MVC.CAM;
@@ -1965,9 +2014,9 @@ namespace DLM.helix
                             viewer._zoomPendente = true;
                             viewer.Recarregar();
                         }
-                        if (aba2DAtiva && viewer.tab_2d != null)
+                        if (aba2DAtiva)
                         {
-                            viewer.tab_2d.IsSelected = true;
+                            viewer.SelecionarAba2D(true);
                         }
                     }
                     else if (ifcAtual != null)
@@ -2013,7 +2062,7 @@ namespace DLM.helix
             if (bd_layouts_dxf == null || painel_layouts_dxf == null) return;
             painel_layouts_dxf.Children.Clear();
 
-            if (layouts == null || layouts.Count == 0)
+            if (layouts == null || !layouts.Any(l => l.EhPaperSpace))
             {
                 bd_layouts_dxf.Visibility = Visibility.Collapsed;
                 return;
@@ -2105,7 +2154,7 @@ namespace DLM.helix
                 return;
             }
 
-            bool aba2D = this.tab_2d != null && this.tab_2d.IsSelected;
+            bool aba2D = this.Aba2DSelecionada;
             _medirViewport = aba2D ? this.viewPort2D : this.viewPort3D;
             _modoMedir = 1;
             if (bt_medir_3d != null) bt_medir_3d.IsChecked = true;

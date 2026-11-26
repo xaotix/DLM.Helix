@@ -277,12 +277,32 @@
                     </StackPanel>
                 </ToggleButton>
                 <StackPanel x:Name="spMedirOpcoes" Orientation="Horizontal" Visibility="Collapsed" Margin="2,0,0,0">
-                    <ToggleButton x:Name="tglSnapEnd" Style="{StaticResource TglBarra}" IsChecked="True" Padding="6,0" Content="End" Click="BtnSnapOpcao_Click" ToolTip="Snap Ponto Final (Endpoint)" />
-                    <ToggleButton x:Name="tglSnapMid" Style="{StaticResource TglBarra}" IsChecked="True" Padding="6,0" Content="Mid" Click="BtnSnapOpcao_Click" ToolTip="Snap Ponto Medio (Midpoint)" />
-                    <ToggleButton x:Name="tglSnapNear" Style="{StaticResource TglBarra}" IsChecked="False" Padding="6,0" Content="Near" Click="BtnSnapOpcao_Click" ToolTip="Snap Mais Proximo (Nearest)" />
-                    <ToggleButton x:Name="tglMedirOrtho" Style="{StaticResource TglBarra}" IsChecked="False" Padding="7,0" Content="L" FontWeight="Bold" ToolTip="Ortho (L): Travar cota em angulos retos a partir do 1o ponto" />
+                    <ToggleButton x:Name="tglSnapEnd" Style="{StaticResource TglBarra}" IsChecked="True" Padding="6,0" Click="BtnSnapOpcao_Click" ToolTip="Snap Ponto Final (Endpoint)">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" Stroke="#22C55E" StrokeThickness="1.7" Data="M2,2 L10,2 L10,10 L2,10 Z" />
+                            <TextBlock Text="End" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="tglSnapMid" Style="{StaticResource TglBarra}" IsChecked="True" Padding="6,0" Click="BtnSnapOpcao_Click" ToolTip="Snap Ponto Medio (Midpoint)">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" Stroke="#06B6D4" StrokeThickness="1.7" Data="M6,1.5 L11,10.5 L1,10.5 Z" />
+                            <TextBlock Text="Mid" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="tglSnapNear" Style="{StaticResource TglBarra}" IsChecked="False" Padding="6,0" Click="BtnSnapOpcao_Click" ToolTip="Snap Mais Proximo (Nearest)">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" Stroke="#EAB308" StrokeThickness="1.7" Data="M2,2 L10,2 L2,10 L10,10 Z" />
+                            <TextBlock Text="Near" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ToggleButton>
+                    <ToggleButton x:Name="tglMedirOrtho" Style="{StaticResource TglBarra}" IsChecked="False" Padding="7,0" ToolTip="Ortho (L): Travar cota em angulos retos a partir do 1o ponto">
+                        <StackPanel Orientation="Horizontal">
+                            <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" Stroke="#1E293B" StrokeThickness="1.8" Data="M2,2 L2,10 L10,10" />
+                            <TextBlock Text="L" FontWeight="Bold" VerticalAlignment="Center" />
+                        </StackPanel>
+                    </ToggleButton>
                     <Button Style="{StaticResource BtnBarra}" Padding="7,0" Click="BtnFecharMedir_Click" ToolTip="Fechar medicao e limpar todas as cotas (ESC)">
-                        <TextBlock Text="X" FontWeight="Bold" Foreground="#DC2626" />
+                        <Path Width="10" Height="10" Stretch="Uniform" Stroke="#DC2626" StrokeThickness="1.8" Data="M2,2 L10,10 M10,2 L2,10" />
                     </Button>
                 </StackPanel>
 

@@ -595,6 +595,8 @@ namespace DLM.helix
             this.viewPort3D.PreviewMouseWheel += ViewPort_PreviewMouseWheel;
             this.viewPort2D.PreviewMouseLeftButtonDown += ViewPort_PreviewMouseLeftButtonDown_Medir;
             this.viewPort3D.PreviewMouseLeftButtonDown += ViewPort_PreviewMouseLeftButtonDown_Medir;
+            this.viewPort2D.PreviewMouseMove += ViewPort_PreviewMouseMove_Medir;
+            this.viewPort3D.PreviewMouseMove += ViewPort_PreviewMouseMove_Medir;
             this.PreviewKeyDown += CAMViewer_PreviewKeyDown_Medir;
 
             this.viewPort2D.LostMouseCapture += ViewPort_LimparCursor;
@@ -2073,6 +2075,7 @@ namespace DLM.helix
         private void LimparMedicoes()
         {
             LimparVisuaisMedicao();
+            OcultarIndicadorSnap();
             _modoMedir = 0;
             _medirViewport = null;
             if (bt_medir_3d != null) bt_medir_3d.IsChecked = false;
@@ -2080,6 +2083,63 @@ namespace DLM.helix
             if (sp_medir_opcoes_3d != null) sp_medir_opcoes_3d.Visibility = Visibility.Collapsed;
             if (sp_medir_opcoes_2d != null) sp_medir_opcoes_2d.Visibility = Visibility.Collapsed;
             if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Collapsed;
+        }
+
+        private void OcultarIndicadorSnap()
+        {
+            if (marcador_snap != null) marcador_snap.Visibility = Visibility.Collapsed;
+            if (tag_snap != null) tag_snap.Visibility = Visibility.Collapsed;
+        }
+
+        private void ViewPort_PreviewMouseMove_Medir(object sender, MouseEventArgs e)
+        {
+            if (_modoMedir <= 0)
+            {
+                OcultarIndicadorSnap();
+                return;
+            }
+            var vp = sender as HelixViewport3D;
+            if (vp == null || vp.Viewport == null || canvas_snap_overlay == null) return;
+
+            var ptMouse = e.GetPosition(vp.Viewport);
+            Point3D ptSnap;
+            string tipo;
+            Point pt2D;
+            if (TentarCalcularSnap(vp, ptMouse, out ptSnap, out tipo, out pt2D))
+            {
+                var ptCanvas = vp.Viewport.TranslatePoint(pt2D, canvas_snap_overlay);
+                if (tipo == "END")
+                {
+                    marcador_snap.Stroke = new SolidColorBrush(Color.FromRgb(34, 197, 94));
+                    marcador_snap.Fill = new SolidColorBrush(Color.FromArgb(60, 34, 197, 94));
+                    marcador_snap.Data = Geometry.Parse("M 0,0 L 12,0 L 12,12 L 0,12 Z");
+                }
+                else if (tipo == "MID")
+                {
+                    marcador_snap.Stroke = new SolidColorBrush(Color.FromRgb(6, 182, 212));
+                    marcador_snap.Fill = new SolidColorBrush(Color.FromArgb(60, 6, 182, 212));
+                    marcador_snap.Data = Geometry.Parse("M 6,0 L 12,12 L 0,12 Z");
+                }
+                else
+                {
+                    marcador_snap.Stroke = new SolidColorBrush(Color.FromRgb(234, 179, 8));
+                    marcador_snap.Fill = new SolidColorBrush(Color.FromArgb(60, 234, 179, 8));
+                    marcador_snap.Data = Geometry.Parse("M 0,0 L 12,0 L 0,12 L 12,12 Z");
+                }
+
+                Canvas.SetLeft(marcador_snap, ptCanvas.X - 7);
+                Canvas.SetTop(marcador_snap, ptCanvas.Y - 7);
+                marcador_snap.Visibility = Visibility.Visible;
+
+                txt_tag_snap.Text = tipo;
+                Canvas.SetLeft(tag_snap, ptCanvas.X + 10);
+                Canvas.SetTop(tag_snap, ptCanvas.Y - 18);
+                tag_snap.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                OcultarIndicadorSnap();
+            }
         }
 
         private static Point3D AplicarOrtho(Point3D p1, Point3D p2, bool apenasXY)
@@ -2101,7 +2161,7 @@ namespace DLM.helix
             var vp = sender as HelixViewport3D;
             if (vp == null) return;
 
-            var ptMouse = e.GetPosition(vp);
+            var ptMouse = e.GetPosition(vp.Viewport);
             Point3D pt3d;
             if (!TentarObterPontoMedicao(vp, ptMouse, out pt3d)) return;
 
@@ -2171,84 +2231,12 @@ namespace DLM.helix
 
         private bool TentarObterPontoMedicao(HelixViewport3D vp, Point ptMouse, out Point3D ponto)
         {
-            ponto = new Point3D();
+            string tipo;
+            Point pt2D;
+            if (TentarCalcularSnap(vp, ptMouse, out ponto, out tipo, out pt2D))
+                return true;
 
-            // 1) Snaps (End / Mid / Near) em segmentos de linhas 2D/3D (até 12 px)
-            if (_snapEnd || _snapMid || _snapNear)
-            {
-                Point3D melhorSnap = new Point3D();
-                double melhorDistPx = 12.0;
-                bool achouSnap = false;
-
-                foreach (var child in vp.Children)
-                {
-                    if (_visuaisMedicao.Contains(child)) continue;
-                    Point3DCollection pts = null;
-                    if (child is LinhaVisual3D lv) pts = lv.Points;
-                    else if (child is LinesVisual3D lvs) pts = lvs.Points;
-                    if (pts == null || pts.Count < 2) continue;
-
-                    int step = pts.Count > 20000 ? 4 : 2;
-                    for (int i = 0; i + 1 < pts.Count; i += step)
-                    {
-                        var a3 = pts[i];
-                        var b3 = pts[i + 1];
-                        var a2 = Viewport3DHelper.Point3DtoPoint2D(vp.Viewport, a3);
-                        var b2 = Viewport3DHelper.Point3DtoPoint2D(vp.Viewport, b3);
-
-                        if (_snapEnd)
-                        {
-                            double da = (a2 - ptMouse).Length;
-                            if (da < melhorDistPx) { melhorDistPx = da; melhorSnap = a3; achouSnap = true; }
-                            double db = (b2 - ptMouse).Length;
-                            if (db < melhorDistPx) { melhorDistPx = db; melhorSnap = b3; achouSnap = true; }
-                        }
-
-                        if (_snapMid)
-                        {
-                            var m2 = new Point((a2.X + b2.X) * 0.5, (a2.Y + b2.Y) * 0.5);
-                            double dm = (m2 - ptMouse).Length;
-                            if (dm < melhorDistPx)
-                            {
-                                melhorDistPx = dm;
-                                melhorSnap = new Point3D((a3.X + b3.X) * 0.5, (a3.Y + b3.Y) * 0.5, (a3.Z + b3.Z) * 0.5);
-                                achouSnap = true;
-                            }
-                        }
-
-                        if (_snapNear && !achouSnap)
-                        {
-                            Vector seg = b2 - a2;
-                            double len2 = seg.LengthSquared;
-                            if (len2 > 1e-6)
-                            {
-                                double t = ((ptMouse - a2) * seg) / len2;
-                                if (t >= 0.0 && t <= 1.0)
-                                {
-                                    var proj2 = a2 + seg * t;
-                                    double dn = (proj2 - ptMouse).Length;
-                                    if (dn < melhorDistPx)
-                                    {
-                                        melhorDistPx = dn;
-                                        melhorSnap = new Point3D(
-                                            a3.X + (b3.X - a3.X) * t,
-                                            a3.Y + (b3.Y - a3.Y) * t,
-                                            a3.Z + (b3.Z - a3.Z) * t);
-                                        achouSnap = true;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if (achouSnap)
-                {
-                    ponto = melhorSnap;
-                    return true;
-                }
-            }
-
-            // 2) Hit-test em malhas 3D
+            // Hit-test em malhas 3D
             var hits = Viewport3DHelper.FindHits(vp.Viewport, ptMouse);
             if (hits != null && hits.Count > 0)
             {
@@ -2256,7 +2244,7 @@ namespace DLM.helix
                 return true;
             }
 
-            // 3) Projeção no plano Z = 0 para cliques em área livre 2D
+            // Projeção no plano Z = 0 para cliques em área livre 2D
             var pt3 = Viewport3DHelper.UnProject(vp.Viewport, ptMouse);
             if (pt3.HasValue)
             {
@@ -2264,6 +2252,126 @@ namespace DLM.helix
                 return true;
             }
             return false;
+        }
+
+        private bool TentarCalcularSnap(HelixViewport3D vp, Point ptMouse, out Point3D ponto, out string tipoSnap, out Point ponto2D)
+        {
+            ponto = new Point3D();
+            tipoSnap = "";
+            ponto2D = new Point();
+
+            if (!_snapEnd && !_snapMid && !_snapNear) return false;
+            if (vp == null || vp.Viewport == null) return false;
+
+            double melhorDistPx = 18.0;
+            bool achouSnap = false;
+            Point3D melhorPt = new Point3D();
+            string melhorTipo = "";
+            Point melhor2D = new Point();
+
+            Action<Point3D, Point3D> testarSegmento = (a3, b3) =>
+            {
+                var a2 = Viewport3DHelper.Point3DtoPoint2D(vp.Viewport, a3);
+                var b2 = Viewport3DHelper.Point3DtoPoint2D(vp.Viewport, b3);
+                if (double.IsNaN(a2.X) || double.IsNaN(b2.X)) return;
+
+                if (_snapEnd)
+                {
+                    double da = (a2 - ptMouse).Length;
+                    if (da < melhorDistPx) { melhorDistPx = da; melhorPt = a3; melhorTipo = "END"; melhor2D = a2; achouSnap = true; }
+                    double db = (b2 - ptMouse).Length;
+                    if (db < melhorDistPx) { melhorDistPx = db; melhorPt = b3; melhorTipo = "END"; melhor2D = b2; achouSnap = true; }
+                }
+
+                if (_snapMid)
+                {
+                    var m2 = new Point((a2.X + b2.X) * 0.5, (a2.Y + b2.Y) * 0.5);
+                    double dm = (m2 - ptMouse).Length;
+                    if (dm < melhorDistPx)
+                    {
+                        melhorDistPx = dm;
+                        melhorPt = new Point3D((a3.X + b3.X) * 0.5, (a3.Y + b3.Y) * 0.5, (a3.Z + b3.Z) * 0.5);
+                        melhorTipo = "MID";
+                        melhor2D = m2;
+                        achouSnap = true;
+                    }
+                }
+
+                if (_snapNear && !achouSnap)
+                {
+                    Vector seg = b2 - a2;
+                    double len2 = seg.LengthSquared;
+                    if (len2 > 1e-6)
+                    {
+                        double t = ((ptMouse - a2) * seg) / len2;
+                        if (t >= 0.0 && t <= 1.0)
+                        {
+                            var proj2 = a2 + seg * t;
+                            double dn = (proj2 - ptMouse).Length;
+                            if (dn < melhorDistPx)
+                            {
+                                melhorDistPx = dn;
+                                melhorPt = new Point3D(
+                                    a3.X + (b3.X - a3.X) * t,
+                                    a3.Y + (b3.Y - a3.Y) * t,
+                                    a3.Z + (b3.Z - a3.Z) * t);
+                                melhorTipo = "NEAR";
+                                melhor2D = proj2;
+                                achouSnap = true;
+                            }
+                        }
+                    }
+                }
+            };
+
+            // 1) Linhas 2D/3D (LinhaVisual3D / LinesVisual3D)
+            foreach (var child in vp.Children)
+            {
+                if (_visuaisMedicao.Contains(child)) continue;
+                Point3DCollection pts = null;
+                if (child is LinhaVisual3D lv) pts = lv.Points;
+                else if (child is LinesVisual3D lvs) pts = lvs.Points;
+                if (pts == null || pts.Count < 2) continue;
+
+                for (int i = 0; i + 1 < pts.Count; i += 2)
+                {
+                    testarSegmento(pts[i], pts[i + 1]);
+                }
+            }
+
+            // 2) Malhas 3D (IFC / DWG 3D / CAM 3D): testa arestas próximas do triângulo atingido
+            var hits = Viewport3DHelper.FindHits(vp.Viewport, ptMouse);
+            if (hits != null && hits.Count > 0)
+            {
+                var h = hits[0];
+                if (h.Mesh != null && h.Mesh.Positions != null && h.Mesh.TriangleIndices != null)
+                {
+                    var pos = h.Mesh.Positions;
+                    var idx = h.Mesh.TriangleIndices;
+                    int maxTris = Math.Min(idx.Count / 3, 200);
+                    // Testa o próprio triângulo do hit e vizinhos próximos
+                    var hitPt = h.Position;
+                    double maxDist3D = double.MaxValue;
+                    for (int t = 0; t < idx.Count - 2; t += 3)
+                    {
+                        var p0 = pos[idx[t]];
+                        if (t > maxTris * 3 && (p0 - hitPt).LengthSquared > maxDist3D) continue;
+                        var p1 = pos[idx[t + 1]];
+                        var p2 = pos[idx[t + 2]];
+                        if ((p0 - hitPt).LengthSquared < 4.0 || (p1 - hitPt).LengthSquared < 4.0 || (p2 - hitPt).LengthSquared < 4.0)
+                        {
+                            testarSegmento(p0, p1);
+                            testarSegmento(p1, p2);
+                            testarSegmento(p2, p0);
+                        }
+                    }
+                }
+            }
+
+            ponto = melhorPt;
+            tipoSnap = melhorTipo;
+            ponto2D = melhor2D;
+            return achouSnap;
         }
 
         #endregion

@@ -1193,8 +1193,16 @@ namespace DLM.helix
             double melhorDistPx = raioPx;
             bool achou = false;
 
-            // Identifica o elemento sob o cursor para priorizar suas arestas (muito rapido mesmo em modelos gigantes!)
+            // Identifica o elemento sob o cursor para priorizar suas arestas (com tolerancia de +/- 5px nas quinas)
             var elAlvo = HitTestElemento(mouseVp);
+            if (elAlvo == null)
+            {
+                var offsets = new[] { new Vector(5, 0), new Vector(-5, 0), new Vector(0, 5), new Vector(0, -5) };
+                for (int o = 0; o < offsets.Length && elAlvo == null; o++)
+                {
+                    elAlvo = HitTestElemento(mouseVp + offsets[o]);
+                }
+            }
             const double esc = RenderIFC.ESCALA_MM_PARA_M;
 
             if (elAlvo != null && elAlvo.Arestas != null && elAlvo.Arestas.Count > 0)

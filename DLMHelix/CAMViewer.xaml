@@ -244,14 +244,32 @@
                                 </StackPanel>
                             </ToggleButton>
                             <StackPanel x:Name="sp_medir_opcoes_3d" Orientation="Horizontal" Visibility="Collapsed" Margin="2,0,0,0">
-                                <ToggleButton x:Name="ck_snap_end_3d" Style="{StaticResource ToggleViewer3D}" IsChecked="True" Content="End" Click="snap_toggle_click" ToolTip="Snap Ponto Final (Endpoint)" />
-                                <ToggleButton x:Name="ck_snap_mid_3d" Style="{StaticResource ToggleViewer3D}" IsChecked="True" Content="Mid" Click="snap_toggle_click" ToolTip="Snap Ponto Médio (Midpoint)" />
-                                <ToggleButton x:Name="ck_snap_near_3d" Style="{StaticResource ToggleViewer3D}" IsChecked="False" Content="Near" Click="snap_toggle_click" ToolTip="Snap Mais Próximo (Nearest)" />
+                                <ToggleButton x:Name="ck_snap_end_3d" Style="{StaticResource ToggleViewer3D}" IsChecked="True" Click="snap_toggle_click" ToolTip="Snap Ponto Final (Endpoint)">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" Stroke="#22C55E" StrokeThickness="1.7" Data="M2,2 L10,2 L10,10 L2,10 Z" />
+                                        <TextBlock Text="End" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton x:Name="ck_snap_mid_3d" Style="{StaticResource ToggleViewer3D}" IsChecked="True" Click="snap_toggle_click" ToolTip="Snap Ponto Médio (Midpoint)">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" Stroke="#06B6D4" StrokeThickness="1.7" Data="M6,1.5 L11,10.5 L1,10.5 Z" />
+                                        <TextBlock Text="Mid" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
+                                <ToggleButton x:Name="ck_snap_near_3d" Style="{StaticResource ToggleViewer3D}" IsChecked="False" Click="snap_toggle_click" ToolTip="Snap Mais Próximo (Nearest)">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" Stroke="#EAB308" StrokeThickness="1.7" Data="M2,2 L10,2 L2,10 L10,10 Z" />
+                                        <TextBlock Text="Near" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </ToggleButton>
                                 <ToggleButton x:Name="ck_ortho_3d" Style="{StaticResource ToggleViewer3D}" IsChecked="False" Click="ortho_toggle_click" ToolTip="Ortho (L): Travar cota em ângulos retos a partir do 1º ponto">
-                                    <TextBlock Text="L" FontWeight="Bold" Foreground="White" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" Stroke="White" StrokeThickness="1.8" Data="M2,2 L2,10 L10,10" />
+                                        <TextBlock Text="L" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" />
+                                    </StackPanel>
                                 </ToggleButton>
                                 <Button Style="{StaticResource BotaoViewer3D}" Click="limpar_medir_click" ToolTip="Fechar medição e limpar todas as cotas (ESC)">
-                                    <TextBlock Text="X" FontWeight="Bold" Foreground="#FCA5A5" />
+                                    <Path Width="10" Height="10" Stretch="Uniform" Stroke="#FCA5A5" StrokeThickness="1.8" Data="M2,2 L10,10 M10,2 L2,10" />
                                 </Button>
                             </StackPanel>
                         </StackPanel>
@@ -459,14 +477,32 @@
                                     </StackPanel>
                                 </ToggleButton>
                                 <StackPanel x:Name="sp_medir_opcoes_2d" Orientation="Horizontal" Visibility="Collapsed" Margin="2,0,0,0">
-                                    <ToggleButton x:Name="ck_snap_end_2d" Style="{StaticResource ToggleViewer3D}" IsChecked="True" Content="End" Click="snap_toggle_click" ToolTip="Snap Ponto Final (Endpoint)" />
-                                    <ToggleButton x:Name="ck_snap_mid_2d" Style="{StaticResource ToggleViewer3D}" IsChecked="True" Content="Mid" Click="snap_toggle_click" ToolTip="Snap Ponto Médio (Midpoint)" />
-                                    <ToggleButton x:Name="ck_snap_near_2d" Style="{StaticResource ToggleViewer3D}" IsChecked="False" Content="Near" Click="snap_toggle_click" ToolTip="Snap Mais Próximo (Nearest)" />
+                                    <ToggleButton x:Name="ck_snap_end_2d" Style="{StaticResource ToggleViewer3D}" IsChecked="True" Click="snap_toggle_click" ToolTip="Snap Ponto Final (Endpoint)">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" Stroke="#22C55E" StrokeThickness="1.7" Data="M2,2 L10,2 L10,10 L2,10 Z" />
+                                            <TextBlock Text="End" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </ToggleButton>
+                                    <ToggleButton x:Name="ck_snap_mid_2d" Style="{StaticResource ToggleViewer3D}" IsChecked="True" Click="snap_toggle_click" ToolTip="Snap Ponto Médio (Midpoint)">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" Stroke="#06B6D4" StrokeThickness="1.7" Data="M6,1.5 L11,10.5 L1,10.5 Z" />
+                                            <TextBlock Text="Mid" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </ToggleButton>
+                                    <ToggleButton x:Name="ck_snap_near_2d" Style="{StaticResource ToggleViewer3D}" IsChecked="False" Click="snap_toggle_click" ToolTip="Snap Mais Próximo (Nearest)">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" Stroke="#EAB308" StrokeThickness="1.7" Data="M2,2 L10,2 L2,10 L10,10 Z" />
+                                            <TextBlock Text="Near" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </ToggleButton>
                                     <ToggleButton x:Name="ck_ortho_2d" Style="{StaticResource ToggleViewer3D}" IsChecked="False" Click="ortho_toggle_click" ToolTip="Ortho (L): Travar cota em ângulos retos a partir do 1º ponto">
-                                        <TextBlock Text="L" FontWeight="Bold" Foreground="White" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Width="10" Height="10" Stretch="Uniform" Margin="0,0,3,0" Stroke="White" StrokeThickness="1.8" Data="M2,2 L2,10 L10,10" />
+                                            <TextBlock Text="L" FontWeight="Bold" Foreground="White" VerticalAlignment="Center" />
+                                        </StackPanel>
                                     </ToggleButton>
                                     <Button Style="{StaticResource BotaoViewer3D}" Click="limpar_medir_click" ToolTip="Fechar medição e limpar todas as cotas (ESC)">
-                                        <TextBlock Text="X" FontWeight="Bold" Foreground="#FCA5A5" />
+                                        <Path Width="10" Height="10" Stretch="Uniform" Stroke="#FCA5A5" StrokeThickness="1.8" Data="M2,2 L10,10 M10,2 L2,10" />
                                     </Button>
                                 </StackPanel>
                             </StackPanel>
@@ -488,6 +524,24 @@
                 </Grid>
             </TabItem>
         </TabControl>
+        <!-- Canvas Overlay para marcador visual de Snap -->
+        <Canvas x:Name="canvas_snap_overlay" IsHitTestVisible="False" ClipToBounds="True">
+            <Path x:Name="marcador_snap"
+                  Visibility="Collapsed"
+                  StrokeThickness="2"
+                  Width="14" Height="14"
+                  Stretch="Fill"/>
+            <Border x:Name="tag_snap"
+                    Visibility="Collapsed"
+                    Background="#E60F172A"
+                    BorderBrush="#38BDF8"
+                    BorderThickness="1"
+                    CornerRadius="2"
+                    Padding="4,1">
+                <TextBlock x:Name="txt_tag_snap" FontSize="10" FontWeight="Bold" Foreground="White"/>
+            </Border>
+        </Canvas>
+
         <!-- Banner flutuante da ferramenta Medir / Cotar -->
         <Border x:Name="bd_medir_status"
                 Visibility="Collapsed"

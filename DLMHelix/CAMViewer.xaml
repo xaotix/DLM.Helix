@@ -191,6 +191,7 @@
 									   ZoomExtentsWhenLoaded="True"
 									   Name="viewPort3D"
 									   ShowCoordinateSystem="False"
+									   ShowViewCube="False"
 									   IsTouchZoomEnabled="True"
 									   Background="Transparent"
 									   IsHeadLightEnabled="False"

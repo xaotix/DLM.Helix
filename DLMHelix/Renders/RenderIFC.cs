@@ -8,12 +8,12 @@ using System.Windows.Media.Media3D;
 namespace DLM.helix
 {
     /// <summary>
-    /// Modos de renderizacao 3D suportados pelo visualizador (padrao: SombreadoXbim).
+    /// Modos de renderizacao 3D suportados pelo visualizador (padrao: SombreadoDLM).
     /// </summary>
     public enum ModoRenderizacao3D
     {
-        /// <summary>Padrao XbimWindowsUI: DiffuseMaterial congelado, chunking 20k/60k, sem linhas nos vertices.</summary>
-        SombreadoXbim = 0,
+        /// <summary>Padrao DLM (motor leve): DiffuseMaterial congelado, chunking 20k/60k, sem linhas nos vertices.</summary>
+        SombreadoDLM = 0,
         /// <summary>Sombreado com brilho especular metalico (Diffuse + Specular).</summary>
         SombreadoMetalico = 1,
         /// <summary>Sombreado com linhas de arestas nos vertices habilitadas.</summary>
@@ -22,22 +22,24 @@ namespace DLM.helix
         Wireframe = 3,
         /// <summary>Modo Raio-X / fantasma translucido para inspecao interna.</summary>
         RaioX = 4,
-        /// <summary>Caixas envolventes ultra-leves (inspirado no BoundingBoxStyler do Xbim).</summary>
+        /// <summary>Caixas envolventes ultra-leves.</summary>
         BoundingBox = 5
     }
 
     /// <summary>
-    /// Opcoes de renderizacao e performance do visualizador 3D (inspirado no XbimWindowsUI).
+    /// Opcoes de renderizacao e performance do visualizador 3D (Padrao DLM).
     /// </summary>
     public class OpcoesRenderizacao3D
     {
-        public ModoRenderizacao3D Modo { get; set; } = ModoRenderizacao3D.SombreadoXbim;
+        public ModoRenderizacao3D Modo { get; set; } = ModoRenderizacao3D.SombreadoDLM;
         public bool MostrarArestas { get; set; } = false;
         public double Opacidade { get; set; } = 1.0;
         public bool RenderizarDoisLados { get; set; } = true;
         public bool ModoAltaVelocidade { get; set; } = false;
         public bool CameraPerspectiva { get; set; } = false;
-        public bool MostrarUcs { get; set; } = true;
+        public bool MostrarUcs { get; set; } = false;
+        public bool MostrarUcsHelix { get; set; } = false;
+        public bool MostrarViewCube { get; set; } = false;
         public bool MostrarFps { get; set; } = false;
         public double EspessuraArestas { get; set; } = 1.15;
 
@@ -52,20 +54,24 @@ namespace DLM.helix
                 ModoAltaVelocidade = this.ModoAltaVelocidade,
                 CameraPerspectiva = this.CameraPerspectiva,
                 MostrarUcs = this.MostrarUcs,
+                MostrarUcsHelix = this.MostrarUcsHelix,
+                MostrarViewCube = this.MostrarViewCube,
                 MostrarFps = this.MostrarFps,
                 EspessuraArestas = this.EspessuraArestas
             };
         }
 
-        public void RestaurarPadraoXbim()
+        public void RestaurarPadraoDLM()
         {
-            Modo = ModoRenderizacao3D.SombreadoXbim;
+            Modo = ModoRenderizacao3D.SombreadoDLM;
             MostrarArestas = false;
             Opacidade = 1.0;
             RenderizarDoisLados = true;
             ModoAltaVelocidade = false;
             CameraPerspectiva = false;
-            MostrarUcs = true;
+            MostrarUcs = false;
+            MostrarUcsHelix = false;
+            MostrarViewCube = false;
             MostrarFps = false;
             EspessuraArestas = 1.15;
         }
@@ -121,7 +127,7 @@ namespace DLM.helix
         {
             var opcoes = new OpcoesRenderizacao3D
             {
-                Modo = adicionarArestas ? ModoRenderizacao3D.SombreadoComArestas : ModoRenderizacao3D.SombreadoXbim,
+                Modo = adicionarArestas ? ModoRenderizacao3D.SombreadoComArestas : ModoRenderizacao3D.SombreadoDLM,
                 MostrarArestas = adicionarArestas
             };
             Renderizar(vp, modelo, opcoes);

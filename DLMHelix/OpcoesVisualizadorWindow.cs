@@ -37,6 +37,8 @@ namespace DLM.helix
         private CheckBox _chkDoisLados;
         private CheckBox _chkPerspectiva;
         private CheckBox _chkUcs;
+        private CheckBox _chkUcsHelix;
+        private CheckBox _chkViewCube;
         private CheckBox _chkFps;
         private TextBox _txtFiltroLayers;
         private StackPanel _pnlLayers;
@@ -100,9 +102,9 @@ namespace DLM.helix
             var rodape = new DockPanel { Margin = new Thickness(0, 10, 0, 0) };
             if (temModelo3D)
             {
-                var btPadrao = CriarBotao("Padr\u00e3o Xbim", (s, e) =>
+                var btPadrao = CriarBotao("Padr\u00e3o DLM", (s, e) =>
                 {
-                    _opcoes.RestaurarPadraoXbim();
+                    _opcoes.RestaurarPadraoDLM();
                     SincronizarUiDasOpcoes();
                     NotificarOpcoes();
                 }, Color.FromRgb(51, 65, 85), Color.FromRgb(100, 116, 139));
@@ -144,7 +146,7 @@ namespace DLM.helix
                 FontSize = 12,
                 ItemsSource = new List<ItemModo>
                 {
-                    new ItemModo { Modo = ModoRenderizacao3D.SombreadoXbim, Nome = "Sombreado (Padr\u00e3o Xbim - Mais R\u00e1pido)" },
+                    new ItemModo { Modo = ModoRenderizacao3D.SombreadoDLM, Nome = "Sombreado (Padr\u00e3o DLM - Mais R\u00e1pido)" },
                     new ItemModo { Modo = ModoRenderizacao3D.SombreadoMetalico, Nome = "Sombreado Met\u00e1lico (Brilho Especular)" },
                     new ItemModo { Modo = ModoRenderizacao3D.SombreadoComArestas, Nome = "Sombreado + Linhas nos V\u00e9rtices" },
                     new ItemModo { Modo = ModoRenderizacao3D.Wireframe, Nome = "Wireframe (Somente Arame)" },
@@ -164,7 +166,7 @@ namespace DLM.helix
                     _opcoes.MostrarArestas = true;
                     _chkArestas.IsChecked = true;
                 }
-                else if (item.Modo == ModoRenderizacao3D.SombreadoXbim || item.Modo == ModoRenderizacao3D.BoundingBox)
+                else if (item.Modo == ModoRenderizacao3D.SombreadoDLM || item.Modo == ModoRenderizacao3D.BoundingBox)
                 {
                     _opcoes.MostrarArestas = false;
                     _chkArestas.IsChecked = false;
@@ -178,14 +180,14 @@ namespace DLM.helix
             _chkArestas = CriarCheck("Mostrar linhas nos v\u00e9rtices (Arestas)", (v) =>
             {
                 _opcoes.MostrarArestas = v;
-                if (v && _opcoes.Modo == ModoRenderizacao3D.SombreadoXbim)
+                if (v && _opcoes.Modo == ModoRenderizacao3D.SombreadoDLM)
                 {
                     _opcoes.Modo = ModoRenderizacao3D.SombreadoComArestas;
                     SelecionarModoNoCombo(_opcoes.Modo);
                 }
                 else if (!v && _opcoes.Modo == ModoRenderizacao3D.SombreadoComArestas)
                 {
-                    _opcoes.Modo = ModoRenderizacao3D.SombreadoXbim;
+                    _opcoes.Modo = ModoRenderizacao3D.SombreadoDLM;
                     SelecionarModoNoCombo(_opcoes.Modo);
                 }
                 NotificarOpcoes();
@@ -194,7 +196,7 @@ namespace DLM.helix
 
             sp.Children.Add(new TextBlock
             {
-                Text = "Desabilitado por padr\u00e3o (como no Xbim) para manter a navega\u00e7\u00e3o leve em modelos grandes.",
+                Text = "Desabilitado por padr\u00e3o (Padr\u00e3o DLM) para manter a navega\u00e7\u00e3o leve em modelos grandes.",
                 Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)),
                 FontSize = 10.5,
                 TextWrapping = TextWrapping.Wrap,
@@ -260,12 +262,26 @@ namespace DLM.helix
             });
             sp.Children.Add(_chkPerspectiva);
 
-            _chkUcs = CriarCheck("Mostrar \u00edcone UCS 3D", (v) =>
+            _chkUcs = CriarCheck("Mostrar \u00edcone UCS 3D (DLM)", (v) =>
             {
                 _opcoes.MostrarUcs = v;
                 NotificarOpcoes();
             });
             sp.Children.Add(_chkUcs);
+
+            _chkUcsHelix = CriarCheck("Mostrar eixos do Helix (CoordinateSystem)", (v) =>
+            {
+                _opcoes.MostrarUcsHelix = v;
+                NotificarOpcoes();
+            });
+            sp.Children.Add(_chkUcsHelix);
+
+            _chkViewCube = CriarCheck("Mostrar ViewCube 3D (Helix)", (v) =>
+            {
+                _opcoes.MostrarViewCube = v;
+                NotificarOpcoes();
+            });
+            sp.Children.Add(_chkViewCube);
 
             _chkFps = CriarCheck("Mostrar contador de FPS", (v) =>
             {
@@ -403,6 +419,8 @@ namespace DLM.helix
             if (_chkDoisLados != null) _chkDoisLados.IsChecked = _opcoes.RenderizarDoisLados;
             if (_chkPerspectiva != null) _chkPerspectiva.IsChecked = _opcoes.CameraPerspectiva;
             if (_chkUcs != null) _chkUcs.IsChecked = _opcoes.MostrarUcs;
+            if (_chkUcsHelix != null) _chkUcsHelix.IsChecked = _opcoes.MostrarUcsHelix;
+            if (_chkViewCube != null) _chkViewCube.IsChecked = _opcoes.MostrarViewCube;
             if (_chkFps != null) _chkFps.IsChecked = _opcoes.MostrarFps;
             _carregandoUi = false;
         }

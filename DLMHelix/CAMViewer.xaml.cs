@@ -1147,10 +1147,10 @@ namespace DLM.helix
                 AplicarAbaPreferida(true, false);
                 viewPort3D.Children.Add(Gera3d.Luz());
                 RenderACadSharp.AplicarNoViewport(viewPort3D, res);
-                this.viewPort3D.ShowCoordinateSystem = false;
+                this.viewPort3D.ShowCoordinateSystem = _opcoesRender3D.MostrarUcsHelix;
                 AtualizarUcsIcon3D();
                 this.viewPort3D.ShowFieldOfView = false;
-                this.viewPort3D.ShowViewCube = true;
+                this.viewPort3D.ShowViewCube = _opcoesRender3D.MostrarViewCube;
                 this.viewPort3D.ShowCameraTarget = false;
                 this.viewPort3D.ShowCameraInfo = false;
                 AtualizarBounds();
@@ -1205,9 +1205,9 @@ AtualizarBotaoPlanificado();
             RenderIFC.Renderizar(viewPort3D, modelo, _opcoesRender3D);
             RenderizarGrid3D(viewPort3D, modelo);
 
-            this.viewPort3D.ShowCoordinateSystem = true;
+            this.viewPort3D.ShowCoordinateSystem = _opcoesRender3D.MostrarUcsHelix;
             this.viewPort3D.ShowFieldOfView = false;
-            this.viewPort3D.ShowViewCube = true;
+            this.viewPort3D.ShowViewCube = _opcoesRender3D.MostrarViewCube;
             this.viewPort3D.ShowCameraTarget = false;
             this.viewPort3D.ShowCameraInfo = false;
 
@@ -1397,10 +1397,10 @@ AtualizarBotaoPlanificado();
             RenderIFC.Renderizar(viewPort3D, modelo, _opcoesRender3D);
             RenderizarGrid3D(viewPort3D, modelo);
 
-                this.viewPort3D.ShowCoordinateSystem = false;
+                this.viewPort3D.ShowCoordinateSystem = _opcoesRender3D.MostrarUcsHelix;
                 AtualizarUcsIcon3D();
                 this.viewPort3D.ShowFieldOfView = false;
-                this.viewPort3D.ShowViewCube = true;
+                this.viewPort3D.ShowViewCube = _opcoesRender3D.MostrarViewCube;
                 this.viewPort3D.ShowCameraTarget = false;
                 this.viewPort3D.ShowCameraInfo = false;
 
@@ -1655,10 +1655,10 @@ AtualizarBotaoPlanificado();
                     }));
                 }
 
-                this.viewPort3D.ShowCoordinateSystem = false;
+                this.viewPort3D.ShowCoordinateSystem = _opcoesRender3D.MostrarUcsHelix;
                 AtualizarUcsIcon3D();
                 this.viewPort3D.ShowFieldOfView = false;
-                this.viewPort3D.ShowViewCube = true;
+                this.viewPort3D.ShowViewCube = _opcoesRender3D.MostrarViewCube;
                 this.viewPort3D.ShowCameraTarget = false;
                 this.viewPort3D.ShowCameraInfo = false;
 
@@ -1925,6 +1925,8 @@ AtualizarBotaoPlanificado();
         {
             if (this.viewPort3D == null) return;
             this.viewPort3D.ShowFrameRate = _opcoesRender3D.MostrarFps;
+            this.viewPort3D.ShowCoordinateSystem = _opcoesRender3D.MostrarUcsHelix;
+            this.viewPort3D.ShowViewCube = _opcoesRender3D.MostrarViewCube;
             RenderOptions.SetEdgeMode(this.viewPort3D, _opcoesRender3D.ModoAltaVelocidade ? EdgeMode.Aliased : EdgeMode.Unspecified);
 
             bool ehPerspAtual = this.viewPort3D.Camera is PerspectiveCamera;
@@ -2050,6 +2052,8 @@ AtualizarBotaoPlanificado();
                         _opcoesRender3D.ModoAltaVelocidade = novas.ModoAltaVelocidade;
                         _opcoesRender3D.CameraPerspectiva = novas.CameraPerspectiva;
                         _opcoesRender3D.MostrarUcs = novas.MostrarUcs;
+                        _opcoesRender3D.MostrarUcsHelix = novas.MostrarUcsHelix;
+                        _opcoesRender3D.MostrarViewCube = novas.MostrarViewCube;
                         _opcoesRender3D.MostrarFps = novas.MostrarFps;
                         _opcoesRender3D.EspessuraArestas = novas.EspessuraArestas;
 

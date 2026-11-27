@@ -213,13 +213,23 @@ namespace DLM.helix
         private void AplicarConfiguracoesVisuais(bool reconstruirCena)
         {
             var cfg = IfcConfiguracao.Atual;
-            if (tglArestas != null) tglArestas.IsChecked = cfg.MostrarArestasPadrao;
+            if (!reconstruirCena)
+            {
+                _opcoesRender3D.RestaurarPadraoDLM();
+            }
+            else
+            {
+                _opcoesRender3D.MostrarArestas = cfg.MostrarArestasPadrao;
+            }
+
+            if (tglArestas != null) tglArestas.IsChecked = _opcoesRender3D.MostrarArestas;
             if (tglGrid != null) tglGrid.IsChecked = cfg.MostrarGridPadrao;
             if (tglPerspectiva != null && tglPerspectiva.IsChecked != cfg.CameraPerspectivaPadrao)
             {
                 tglPerspectiva.IsChecked = cfg.CameraPerspectivaPadrao;
                 TglPerspectiva_Click(null, null);
             }
+            AplicarOpcoesViewportEditor();
 
             IfcCor cTopo, cBase;
             Color colTopo = IfcConfiguracao.TentarParseHex(cfg.CorFundoTopo, out cTopo)
@@ -596,9 +606,8 @@ namespace DLM.helix
                 }
             }
 
-            // Separa Opacos primeiro e Transparentes depois (pratica Xbim para evitar artefatos de Z-buffer)
-            bool usarSpecular = (_opcoesRender3D.Modo == ModoRenderizacao3D.SombreadoMetalico) ||
-                                (_opcoesRender3D.Modo == ModoRenderizacao3D.SombreadoXbim && IfcConfiguracao.Atual.UsarSpecular && totalTris < 150000);
+            // Separa Opacos primeiro e Transparentes depois (padrao DLM para evitar artefatos de Z-buffer)
+            bool usarSpecular = (_opcoesRender3D.Modo == ModoRenderizacao3D.SombreadoMetalico);
             var grupoOpacos = new Model3DGroup();
             var grupoTransp = new Model3DGroup();
 
@@ -750,6 +759,8 @@ namespace DLM.helix
         {
             if (vp3D == null) return;
             vp3D.ShowFrameRate = _opcoesRender3D.MostrarFps;
+            vp3D.ShowCoordinateSystem = _opcoesRender3D.MostrarUcsHelix;
+            vp3D.ShowViewCube = _opcoesRender3D.MostrarViewCube;
             RenderOptions.SetEdgeMode(vp3D, _opcoesRender3D.ModoAltaVelocidade ? EdgeMode.Aliased : EdgeMode.Unspecified);
         }
 
@@ -1884,6 +1895,14 @@ namespace DLM.helix
             vp3D.ZoomExtents(200);
         }
 
+        private void BtnRecarregar_Click(object sender, RoutedEventArgs e)
+        {
+            if (!string.IsNullOrWhiteSpace(_arquivoAtual) && File.Exists(_arquivoAtual))
+                Abrir(_arquivoAtual);
+            else if (_modelo != null)
+                ReconstruirCena3D(true);
+        }
+
         private void BtnVistasMenu_Click(object sender, RoutedEventArgs e)
         {
             var bt = sender as Button;
@@ -1928,6 +1947,8 @@ namespace DLM.helix
                         _opcoesRender3D.ModoAltaVelocidade = novas.ModoAltaVelocidade;
                         _opcoesRender3D.CameraPerspectiva = novas.CameraPerspectiva;
                         _opcoesRender3D.MostrarUcs = novas.MostrarUcs;
+                        _opcoesRender3D.MostrarUcsHelix = novas.MostrarUcsHelix;
+                        _opcoesRender3D.MostrarViewCube = novas.MostrarViewCube;
                         _opcoesRender3D.MostrarFps = novas.MostrarFps;
                         _opcoesRender3D.EspessuraArestas = novas.EspessuraArestas;
 
@@ -1976,10 +1997,10 @@ namespace DLM.helix
         private void TglArestas_Click(object sender, RoutedEventArgs e)
         {
             _opcoesRender3D.MostrarArestas = tglArestas != null && tglArestas.IsChecked == true;
-            if (_opcoesRender3D.MostrarArestas && _opcoesRender3D.Modo == ModoRenderizacao3D.SombreadoXbim)
+            if (_opcoesRender3D.MostrarArestas && _opcoesRender3D.Modo == ModoRenderizacao3D.SombreadoDLM)
                 _opcoesRender3D.Modo = ModoRenderizacao3D.SombreadoComArestas;
             else if (!_opcoesRender3D.MostrarArestas && _opcoesRender3D.Modo == ModoRenderizacao3D.SombreadoComArestas)
-                _opcoesRender3D.Modo = ModoRenderizacao3D.SombreadoXbim;
+                _opcoesRender3D.Modo = ModoRenderizacao3D.SombreadoDLM;
             ReconstruirCena3D(false);
         }
 
@@ -2024,7 +2045,7 @@ namespace DLM.helix
             if (rx)
                 _opcoesRender3D.Modo = ModoRenderizacao3D.RaioX;
             else if (_opcoesRender3D.Modo == ModoRenderizacao3D.RaioX)
-                _opcoesRender3D.Modo = _opcoesRender3D.MostrarArestas ? ModoRenderizacao3D.SombreadoComArestas : ModoRenderizacao3D.SombreadoXbim;
+                _opcoesRender3D.Modo = _opcoesRender3D.MostrarArestas ? ModoRenderizacao3D.SombreadoComArestas : ModoRenderizacao3D.SombreadoDLM;
             ReconstruirCena3D(false);
             txtStatus.Text = rx
                 ? "Modo Raio-X ativado: pecas nao selecionadas em transparencia."

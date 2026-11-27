@@ -102,6 +102,75 @@
             <Setter Property="Background" Value="#CBD5E1" />
             <Setter Property="Margin" Value="5,0" />
         </Style>
+
+        <!-- Estilo de submenus (Vistas / Exportar) no padrao visual da barra do Editor IFC -->
+        <Style x:Key="ItemMenuBarraEditor" TargetType="MenuItem">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Foreground" Value="#1E293B" />
+            <Setter Property="FontSize" Value="11.5" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="MenuItem">
+                        <Border x:Name="bd"
+                                Background="Transparent"
+                                CornerRadius="3"
+                                Padding="{TemplateBinding Padding}"
+                                Margin="1"
+                                SnapsToDevicePixels="True">
+                            <StackPanel Orientation="Horizontal">
+                                <ContentPresenter ContentSource="Icon" VerticalAlignment="Center" Margin="0,0,7,0" />
+                                <ContentPresenter ContentSource="Header" RecognizesAccessKey="True" VerticalAlignment="Center" />
+                            </StackPanel>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter TargetName="bd" Property="Background" Value="#EFF6FF" />
+                                <Setter Property="Foreground" Value="#1D4ED8" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="bd" Property="Opacity" Value="0.45" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SepMenuBarraEditor" TargetType="Separator">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="Margin" Value="6,3" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Separator">
+                        <Border Height="1" Background="#E2E8F0" />
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="MenuBarraEditor" TargetType="ContextMenu">
+            <Setter Property="OverridesDefaultStyle" Value="True" />
+            <Setter Property="HasDropShadow" Value="True" />
+            <Setter Property="ItemContainerStyle" Value="{StaticResource ItemMenuBarraEditor}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ContextMenu">
+                        <Border Background="#FFFFFF"
+                                BorderBrush="#CBD5E1"
+                                BorderThickness="1"
+                                CornerRadius="4"
+                                Padding="3"
+                                MinWidth="170"
+                                SnapsToDevicePixels="True">
+                            <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -131,7 +200,7 @@
 
             <MenuItem Header="_Editar">
                 <MenuItem x:Name="miMover" Header="Mover Selecao / IFC Importado..." Click="BtnMover_Click" Tag="M7,1 L7,13 M1,7 L13,7|#1E293B" />
-                <MenuItem x:Name="miDefinirEtapa" Header="Definir / Editar Etapa (aba DLM)..." Click="BtnDefinirEtapa_Click" Tag="M2,2 L12,2 L12,6 L2,6 Z M2,8 L12,8 L12,12 L2,12 Z|#7C3AED" />
+                <MenuItem x:Name="miDefinirEtapa" Header="Definir / Editar Etapa e PEP (aba DLM)..." Click="BtnDefinirEtapa_Click" Tag="M2,2 L12,2 L12,6 L2,6 Z M2,8 L12,8 L12,12 L2,12 Z|#7C3AED" />
                 <MenuItem x:Name="miAdicionarAtributo" Header="Adicionar Atributo nas Pecas..." Click="BtnAdicionarAtributo_Click" Tag="M2,2 L8,2 L13,7 L7,13 L2,8 Z|#0284C7" />
                 <MenuItem x:Name="miAgrupar" Header="Agrupar Pecas por Propriedade..." Click="BtnAgrupar_Click" Tag="M2,2 L6,2 L6,6 L2,6 Z M8,2 L12,2 L12,6 L8,6 Z M8,8 L12,8 L12,12 L8,12 Z|#7C3AED" />
                 <Separator />
@@ -155,6 +224,8 @@
                 <MenuItem Header="Isolar Selecao" Click="BtnIsolar_Click" Tag="M7,2 A5,5 0 1 0 7,12 A5,5 0 1 0 7,2|#0284C7" />
                 <MenuItem Header="Ocultar Selecao" Click="BtnOcultar_Click" Tag="M2,2 L12,12 M12,2 L2,12|#DC2626" />
                 <MenuItem Header="Mostrar Tudo" Click="BtnMostrarTudo_Click" Tag="M1,7 Q7,1 13,7 Q7,13 1,7 Z|#16A34A" />
+                <Separator />
+                <MenuItem x:Name="miMostrarUcs" Header="Mostrar Ícone UCS 3D" IsCheckable="True" IsChecked="True" Click="MiMostrarUcs_Click" />
             </MenuItem>
 
             <MenuItem Header="Ei_xos e Grid">
@@ -208,17 +279,65 @@
                 <Button Style="{StaticResource BtnBarra}" Click="BtnZoomExtents_Click" ToolTip="Enquadrar Tudo (Zoom Extents)">
                     <Path Width="13" Height="13" Stretch="Uniform" Stroke="#1E293B" StrokeThickness="1.6" Data="M2,5 L2,2 L5,2 M9,2 L12,2 L12,5 M12,9 L12,12 L9,12 M5,12 L2,12 L2,9" />
                 </Button>
-                <Button Style="{StaticResource BtnBarra}" Click="BtnVistaIso_Click" ToolTip="Vista Isometrica">
-                    <Path Width="13" Height="13" Stretch="Uniform" Stroke="#1E293B" StrokeThickness="1.5" Data="M7,1.5 L12.5,4.5 L12.5,10.5 L7,13.5 L1.5,10.5 L1.5,4.5 Z M1.5,4.5 L7,7.5 L12.5,4.5 M7,7.5 L7,13.5" />
+                <Button x:Name="btnVistasMenu" Style="{StaticResource BtnBarra}" Click="BtnVistasMenu_Click" ToolTip="Escolher vista 3D">
+                    <Button.ContextMenu>
+                        <ContextMenu Style="{StaticResource MenuBarraEditor}">
+                            <MenuItem Header="Isométrica" Click="BtnVistaIso_Click">
+                                <MenuItem.Icon>
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#0284C7" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M7,1.5 L12.5,4.5 L12.5,10.5 L7,13.5 L1.5,10.5 L1.5,4.5 Z M1.5,4.5 L7,7.5 L12.5,4.5 M7,7.5 L7,13.5" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator Style="{StaticResource SepMenuBarraEditor}" />
+                            <MenuItem Header="Superior (Top)" Click="BtnVistaSuperior_Click">
+                                <MenuItem.Icon>
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#1E293B" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M2,2 L12,2 L12,12 L2,12 Z M2,5 L12,5" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Inferior (Bottom)" Click="BtnVistaInferior_Click">
+                                <MenuItem.Icon>
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#475569" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M2,2 L12,2 L12,12 L2,12 Z M2,9 L12,9" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Frontal (Front)" Click="BtnVistaFrontal_Click">
+                                <MenuItem.Icon>
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#1E293B" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M2,3 L12,3 L12,11 L2,11 Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Posterior (Back)" Click="BtnVistaPosterior_Click">
+                                <MenuItem.Icon>
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#475569" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M2,3 L12,3 L12,11 L2,11 Z M2,3 L12,11" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Esquerda (Left)" Click="BtnVistaEsquerda_Click">
+                                <MenuItem.Icon>
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#1E293B" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M2,2 L12,2 L12,12 L2,12 Z M5,2 L5,12" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Direita (Right)" Click="BtnVistaDireita_Click">
+                                <MenuItem.Icon>
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#1E293B" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M2,2 L12,2 L12,12 L2,12 Z M9,2 L9,12" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </ContextMenu>
+                    </Button.ContextMenu>
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#1E293B" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M7,1.5 L12.5,4.5 L12.5,10.5 L7,13.5 L1.5,10.5 L1.5,4.5 Z M1.5,4.5 L7,7.5 L12.5,4.5 M7,7.5 L7,13.5" />
+                        <TextBlock Text="Vistas" VerticalAlignment="Center" />
+                        <Path Width="7" Height="5" Stretch="Uniform" Margin="4,1,0,0" Stroke="#64748B" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M1,1 L4,4 L7,1" />
+                    </StackPanel>
                 </Button>
-                <Button Style="{StaticResource BtnBarra}" Content="F" Width="28" Padding="0" Click="BtnVistaFrontal_Click" ToolTip="Vista Frontal" />
-                <Button Style="{StaticResource BtnBarra}" Content="S" Width="28" Padding="0" Click="BtnVistaSuperior_Click" ToolTip="Vista Superior" />
-                <Button Style="{StaticResource BtnBarra}" Content="L" Width="28" Padding="0" Click="BtnVistaEsquerda_Click" ToolTip="Vista Lateral Esquerda" />
 
                 <Border Style="{StaticResource SepBarra}" />
 
                 <!-- Visualizacao -->
-                <ToggleButton x:Name="tglArestas" Style="{StaticResource TglBarra}" IsChecked="True" Click="TglArestas_Click" ToolTip="Mostrar/Ocultar arestas">
+                <Button x:Name="btnOpcoesVisuais" Style="{StaticResource BtnBarra}" Click="BtnOpcoesVisuais_Click" ToolTip="Opções de renderização 3D (Xbim, Wireframe, Raio-X, Opacidade, Alta Velocidade) e Layers">
+                    <StackPanel Orientation="Horizontal">
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#0284C7" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              Data="M7,4.5 A2.5,2.5 0 1 0 7,9.5 A2.5,2.5 0 1 0 7,4.5 M7,1 L7,2.8 M7,11.2 L7,13 M1,7 L2.8,7 M11.2,7 L13,7 M2.7,2.7 L4,4 M10,10 L11.3,11.3 M11.3,2.7 L10,4 M4,10 L2.7,11.3" />
+                        <TextBlock Text="Visual / Layers" VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <ToggleButton x:Name="tglArestas" Style="{StaticResource TglBarra}" IsChecked="False" Click="TglArestas_Click" ToolTip="Mostrar/Ocultar arestas nos vertices">
                     <StackPanel Orientation="Horizontal">
                         <Path Width="12" Height="12" Stretch="Uniform" Margin="0,0,4,0" Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}" StrokeThickness="1.5" Data="M2,2 L12,2 L12,12 L2,12 Z M2,2 L12,12" />
                         <TextBlock Text="Arestas" VerticalAlignment="Center" />
@@ -321,10 +440,42 @@
                         <TextBlock Text="Eixos" VerticalAlignment="Center" />
                     </StackPanel>
                 </Button>
-                <Button Style="{StaticResource BtnBarra}" Click="BtnExportarVistas2D_Click" ToolTip="Exportar vistas 2D (DXF) pelos eixos escolhidos com profundidade">
+                <Button x:Name="btnExportarMenu" Style="{StaticResource BtnBarra}" Click="BtnVistasMenu_Click" ToolTip="Exportar modelo (IFC, DXF 3D, Vistas 2D)">
+                    <Button.ContextMenu>
+                        <ContextMenu Style="{StaticResource MenuBarraEditor}">
+                            <MenuItem Header="Exportar IFC Completo..." Click="BtnSalvarIfc_Click">
+                                <MenuItem.Icon>
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#1E293B" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M2,1 L10,1 L13,4 L13,13 L2,13 Z M4,1 L4,5 L9,5 L9,1" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Exportar Seleção para IFC..." Click="BtnExportarIfcSelecao_Click">
+                                <MenuItem.Icon>
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#0284C7" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M7,2 L7,10 M4,7 L7,10 L10,7 M2,12 L12,12" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator Style="{StaticResource SepMenuBarraEditor}" />
+                            <MenuItem Header="Exportar DXF 3D (Tudo)..." Click="BtnExportarDxfTudo_Click">
+                                <MenuItem.Icon>
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#16A34A" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M7,1.5 L12.5,4.5 L12.5,10.5 L7,13.5 L1.5,10.5 L1.5,4.5 Z" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Exportar DXF 3D (Seleção)..." Click="BtnExportarDxfSelecao_Click">
+                                <MenuItem.Icon>
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#16A34A" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M2,2 L12,2 L12,12 L2,12 Z M5,5 L9,9" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <Separator Style="{StaticResource SepMenuBarraEditor}" />
+                            <MenuItem Header="Exportar Vistas 2D pelos Eixos..." Click="BtnExportarVistas2D_Click">
+                                <MenuItem.Icon>
+                                    <Path Width="12" Height="12" Stretch="Uniform" Stroke="#0284C7" StrokeThickness="1.5" StrokeLineJoin="Round" Data="M2,2 L12,2 L12,12 L2,12 Z M2,6 L12,6 M6,6 L6,12" />
+                                </MenuItem.Icon>
+                            </MenuItem>
+                        </ContextMenu>
+                    </Button.ContextMenu>
                     <StackPanel Orientation="Horizontal">
-                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#0284C7" StrokeThickness="1.5" Data="M2,2 L12,2 L12,12 L2,12 Z M2,6 L12,6 M6,6 L6,12" />
-                        <TextBlock Text="Vistas 2D" VerticalAlignment="Center" />
+                        <Path Width="13" Height="13" Stretch="Uniform" Margin="0,0,4,0" Stroke="#0284C7" StrokeThickness="1.5" StrokeLineJoin="Round" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M7,2 L7,9.5 M4,7 L7,10 L10,7 M2,12 L12,12" />
+                        <TextBlock Text="Exportar" VerticalAlignment="Center" />
+                        <Path Width="7" Height="5" Stretch="Uniform" Margin="4,1,0,0" Stroke="#64748B" StrokeThickness="1.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Data="M1,1 L4,4 L7,1" />
                     </StackPanel>
                 </Button>
                 <Button Style="{StaticResource BtnBarra}" Click="BtnQuebrarPorEixos_Click" ToolTip="Quebrar IFC em arquivos separados pelos eixos">
@@ -504,7 +655,8 @@
 
                 <h:HelixViewport3D x:Name="vp3D"
                                    Background="Transparent"
-                                   IsHeadLightEnabled="True"
+                                   CameraChanged="Vp3D_CameraChanged"
+                                   IsHeadLightEnabled="False"
                                    ShowCoordinateSystem="False"
                                    ShowViewCube="True"
                                    ZoomExtentsWhenLoaded="True"
@@ -515,16 +667,7 @@
                                    PreviewMouseLeftButtonUp="Vp3D_PreviewMouseLeftButtonUp"
                                    PreviewMouseRightButtonDown="Vp3D_PreviewMouseRightButtonDown"
                                    PreviewMouseRightButtonUp="Vp3D_PreviewMouseRightButtonUp">
-                    <h:SunLight Brightness="0.9" />
-                    <ModelVisual3D>
-                        <ModelVisual3D.Content>
-                            <Model3DGroup>
-                                <AmbientLight Color="#969696" />
-                                <DirectionalLight Color="#B0B0B0" Direction="1,-1,-1.2" />
-                                <DirectionalLight Color="#787878" Direction="-1,1,-0.6" />
-                            </Model3DGroup>
-                        </ModelVisual3D.Content>
-                    </ModelVisual3D>
+                    <h:DefaultLights ShowLights="False" />
                     <h:HelixViewport3D.Camera>
                         <OrthographicCamera NearPlaneDistance="-10000" FarPlaneDistance="10000" Width="10" />
                     </h:HelixViewport3D.Camera>

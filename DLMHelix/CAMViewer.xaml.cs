@@ -1199,11 +1199,10 @@ namespace DLM.helix
             double tamUcs = modelo.TemGeometria
                 ? Math.Max(0.1, (modelo.Max - modelo.Min).Comprimento * RenderIFC.ESCALA_MM_PARA_M * 0.08)
                 : 0.25;
-            viewPort3D.AddUCSIcon(tamUcs);
-            AtualizarBotaoPlanificado();
+AtualizarBotaoPlanificado();
 
             _modeloIfcAtual = modelo;
-            RenderIFC.Renderizar(viewPort3D, modelo, true);
+            RenderIFC.Renderizar(viewPort3D, modelo, _opcoesRender3D);
             RenderizarGrid3D(viewPort3D, modelo);
 
             this.viewPort3D.ShowCoordinateSystem = true;
@@ -1215,14 +1214,7 @@ namespace DLM.helix
             AtualizarBounds();
             if (extend)
             {
-                if (vistaCad != null && vistaCad.Valida)
-                {
-                    AplicarVistaCad3D(vistaCad);
-                }
-                else
-                {
-                    Isometric();
-                }
+                Isometric();
                 ZoomExtend();
             }
         }
@@ -1399,11 +1391,10 @@ namespace DLM.helix
                 double tamUcs = modelo.TemGeometria
                     ? Math.Max(0.1, (modelo.Max - modelo.Min).Comprimento * RenderIFC.ESCALA_MM_PARA_M * 0.08)
                     : 0.25;
-                viewPort3D.AddUCSIcon(tamUcs);
-                AtualizarBotaoPlanificado();
+AtualizarBotaoPlanificado();
 
                 _modeloIfcAtual = modelo;
-            RenderIFC.Renderizar(viewPort3D, modelo, true);
+            RenderIFC.Renderizar(viewPort3D, modelo, _opcoesRender3D);
             RenderizarGrid3D(viewPort3D, modelo);
 
                 this.viewPort3D.ShowCoordinateSystem = false;
@@ -1648,7 +1639,7 @@ namespace DLM.helix
                 AtualizarBotaoPlanificado();
 
                 _modeloIfcAtual = modeloIfc;
-                RenderIFC.Renderizar(viewPort3D, modeloIfc, true);
+                RenderIFC.Renderizar(viewPort3D, modeloIfc, _opcoesRender3D);
 
                 // Aba 2D para CAMs: detalhamento t?cnico visual rico fora de escala
                 if (bd_layouts_dxf != null) bd_layouts_dxf.Visibility = Visibility.Collapsed;
@@ -1678,6 +1669,7 @@ namespace DLM.helix
                 this.viewPort2D.ShowCameraInfo = false;
                 this.viewPort2D.IsRotationEnabled = false;
 
+                if (_modoPlanificado) Top(); else Isometric();
                 SetView2D();
                 AtualizarBounds();
 
@@ -1843,10 +1835,21 @@ namespace DLM.helix
             }
         }
 
+        private void bt_vistas_3d_click(object sender, RoutedEventArgs e)
+        {
+            var bt = sender as Button;
+            if (bt?.ContextMenu != null)
+            {
+                bt.ContextMenu.PlacementTarget = bt;
+                bt.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Top;
+                bt.ContextMenu.IsOpen = true;
+            }
+        }
+
         private void iso(object sender, RoutedEventArgs e)
         {
             Isometric();
-            SetView2D();
+            ZoomExtend();
         }
 
         public void Isometric()
@@ -1874,12 +1877,34 @@ namespace DLM.helix
             ControleCamera.Setar(this.viewPort3D, ControleCamera.eCameraViews.Right, 0);
         }
 
+        public void Back()
+        {
+            ControleCamera.Setar(this.viewPort3D, ControleCamera.eCameraViews.Back, 0);
+        }
+
         private void top_click(object sender, RoutedEventArgs e) { Top(); ZoomExtend(); }
         private void bottom_click(object sender, RoutedEventArgs e) { Bottom(); ZoomExtend(); }
+        private void front_click(object sender, RoutedEventArgs e)
+        {
+            if (this.viewPort3D.Camera is ProjectionCamera cam)
+            {
+                cam.LookDirection = new Vector3D(0, 1, 0);
+                cam.UpDirection = new Vector3D(0, 0, 1);
+            }
+            ZoomExtend();
+        }
+        private void back_click(object sender, RoutedEventArgs e) { Back(); ZoomExtend(); }
         private void left_click(object sender, RoutedEventArgs e) { Left(); ZoomExtend(); }
         private void right_click(object sender, RoutedEventArgs e) { Right(); ZoomExtend(); }
 
+        private readonly OpcoesRenderizacao3D _opcoesRender3D = new OpcoesRenderizacao3D();
         private System.Windows.Media.Media3D.ModelVisual3D _ucsIconVisual3D;
+
+        private void viewPort3D_CameraChanged(object sender, RoutedEventArgs e)
+        {
+            if (_ucsIconVisual3D != null && this.viewPort3D != null)
+                UcsIcon3D.AtualizarEscala(_ucsIconVisual3D, this.viewPort3D.Camera as ProjectionCamera);
+        }
 
         private void AtualizarUcsIcon3D()
         {
@@ -1889,33 +1914,94 @@ namespace DLM.helix
                 try { this.viewPort3D.Children.Remove(_ucsIconVisual3D); } catch { }
                 _ucsIconVisual3D = null;
             }
-            if (chk_ucs_3d != null && chk_ucs_3d.IsChecked == false) return;
+            if (!_opcoesRender3D.MostrarUcs) return;
 
-            double tam = 0.6;
-            if (_est3D != null && !_est3D.Bounds.IsEmpty)
-            {
-                var bnd = _est3D.Bounds;
-                double diag = Math.Sqrt(bnd.SizeX * bnd.SizeX + bnd.SizeY * bnd.SizeY + bnd.SizeZ * bnd.SizeZ);
-                if (diag > 0.1) tam = Math.Max(0.25, Math.Min(2.0, diag * 0.045));
-            }
-            _ucsIconVisual3D = UcsIcon3D.Criar(tam);
+            _ucsIconVisual3D = UcsIcon3D.Criar(1.0);
+            UcsIcon3D.AtualizarEscala(_ucsIconVisual3D, this.viewPort3D.Camera as ProjectionCamera);
             this.viewPort3D.Children.Add(_ucsIconVisual3D);
         }
 
-        private void chk_ucs_3d_Changed(object sender, RoutedEventArgs e)
+        private void AplicarOpcoesViewport3D()
         {
-            AtualizarUcsIcon3D();
+            if (this.viewPort3D == null) return;
+            this.viewPort3D.ShowFrameRate = _opcoesRender3D.MostrarFps;
+            RenderOptions.SetEdgeMode(this.viewPort3D, _opcoesRender3D.ModoAltaVelocidade ? EdgeMode.Aliased : EdgeMode.Unspecified);
+
+            bool ehPerspAtual = this.viewPort3D.Camera is PerspectiveCamera;
+            if (_opcoesRender3D.CameraPerspectiva != ehPerspAtual)
+            {
+                var camAtual = this.viewPort3D.Camera as ProjectionCamera;
+                if (_opcoesRender3D.CameraPerspectiva)
+                {
+                    var pcam = new PerspectiveCamera
+                    {
+                        FieldOfView = 45,
+                        NearPlaneDistance = 0.05,
+                        FarPlaneDistance = 100000
+                    };
+                    if (camAtual != null)
+                    {
+                        pcam.Position = camAtual.Position;
+                        pcam.LookDirection = camAtual.LookDirection;
+                        pcam.UpDirection = camAtual.UpDirection;
+                    }
+                    this.viewPort3D.Camera = pcam;
+                }
+                else
+                {
+                    var ocam = new OrthographicCamera
+                    {
+                        NearPlaneDistance = -10000,
+                        FarPlaneDistance = 10000,
+                        Width = 10
+                    };
+                    if (camAtual != null)
+                    {
+                        ocam.Position = camAtual.Position;
+                        ocam.LookDirection = camAtual.LookDirection;
+                        ocam.UpDirection = camAtual.UpDirection;
+                    }
+                    this.viewPort3D.Camera = ocam;
+                }
+                ZoomExtend();
+            }
         }
 
-        private void layers_click(object sender, RoutedEventArgs e)
+        private void ReRenderizarModelo3D()
+        {
+            if (_modeloIfcAtual == null || this.viewPort3D == null) return;
+            Render2d.LimparViewport(this.viewPort3D);
+            this.viewPort3D.Children.Add(Gera3d.Luz());
+            RenderIFC.Renderizar(this.viewPort3D, _modeloIfcAtual, _opcoesRender3D);
+            RenderizarGrid3D(this.viewPort3D, _modeloIfcAtual);
+            AtualizarUcsIcon3D();
+            AplicarOpcoesViewport3D();
+        }
+
+        private void opcoes_click(object sender, RoutedEventArgs e)
+        {
+            AbrirOpcoesVisualizador(false);
+        }
+
+        private void opcoes_2d_click(object sender, RoutedEventArgs e)
+        {
+            AbrirOpcoesVisualizador(true);
+        }
+
+        private void AbrirOpcoesVisualizador(bool abrirNaAbaLayers)
         {
             try
             {
+                bool temModelo3D = _modeloIfcAtual != null;
+                List<LayersWindow.ItemLayer> itensLayers = null;
+                string tituloLayers = "Layers";
+                Action<List<LayersWindow.ItemLayer>> aoAplicarLayers = null;
+
                 if (_modeloIfcAtual != null)
                 {
-                    var itens = LayersWindow.CriarItensIFC(_modeloIfcAtual);
-                    if (itens.Count == 0) return;
-                    var win = new LayersWindow("Layers (Por Tipo)", itens, lista =>
+                    itensLayers = LayersWindow.CriarItensIFC(_modeloIfcAtual);
+                    tituloLayers = "Layers (Por Tipo)";
+                    aoAplicarLayers = lista =>
                     {
                         var mapa = lista.ToDictionary(x => x.Chave, x => x.Visivel, StringComparer.OrdinalIgnoreCase);
                         foreach (var el in _modeloIfcAtual.Elementos)
@@ -1924,19 +2010,14 @@ namespace DLM.helix
                             string grp = LayersWindow.ObterGrupoTipoIFC(el);
                             if (mapa.TryGetValue(grp, out bool v)) el.Visivel = v;
                         }
-                        Render2d.LimparViewport(this.viewPort3D);
-                        this.viewPort3D.Children.Add(Gera3d.Luz());
-                        RenderIFC.Renderizar(this.viewPort3D, _modeloIfcAtual, true);
-                        AtualizarUcsIcon3D();
-                    });
-                    win.Owner = Window.GetWindow(this);
-                    win.ShowDialog();
+                        ReRenderizarModelo3D();
+                    };
                 }
                 else if (this.DxfCarregado != null)
                 {
-                    var itens = LayersWindow.CriarItensDXF(this.DxfCarregado);
-                    if (itens.Count == 0) return;
-                    var win = new LayersWindow("Layers DXF", itens, lista =>
+                    itensLayers = LayersWindow.CriarItensDXF(this.DxfCarregado);
+                    tituloLayers = "Layers DXF";
+                    aoAplicarLayers = lista =>
                     {
                         var mapa = lista.ToDictionary(x => x.Chave, x => x.Visivel, StringComparer.OrdinalIgnoreCase);
                         foreach (var lay in this.DxfCarregado.Layers)
@@ -1945,12 +2026,53 @@ namespace DLM.helix
                                 lay.IsVisible = v;
                         }
                         Render2dLayouts.RenderizarLayout(this.DxfCarregado, this.viewPort2D, _layoutDxfAtivo);
-                    });
-                    win.Owner = Window.GetWindow(this);
-                    win.ShowDialog();
+                    };
                 }
+
+                var win = new OpcoesVisualizadorWindow(
+                    _opcoesRender3D,
+                    temModelo3D,
+                    itensLayers,
+                    tituloLayers,
+                    novas =>
+                    {
+                        bool mudouMalha =
+                            _opcoesRender3D.Modo != novas.Modo ||
+                            _opcoesRender3D.MostrarArestas != novas.MostrarArestas ||
+                            Math.Abs(_opcoesRender3D.Opacidade - novas.Opacidade) > 0.001 ||
+                            _opcoesRender3D.RenderizarDoisLados != novas.RenderizarDoisLados ||
+                            Math.Abs(_opcoesRender3D.EspessuraArestas - novas.EspessuraArestas) > 0.001;
+
+                        _opcoesRender3D.Modo = novas.Modo;
+                        _opcoesRender3D.MostrarArestas = novas.MostrarArestas;
+                        _opcoesRender3D.Opacidade = novas.Opacidade;
+                        _opcoesRender3D.RenderizarDoisLados = novas.RenderizarDoisLados;
+                        _opcoesRender3D.ModoAltaVelocidade = novas.ModoAltaVelocidade;
+                        _opcoesRender3D.CameraPerspectiva = novas.CameraPerspectiva;
+                        _opcoesRender3D.MostrarUcs = novas.MostrarUcs;
+                        _opcoesRender3D.MostrarFps = novas.MostrarFps;
+                        _opcoesRender3D.EspessuraArestas = novas.EspessuraArestas;
+
+                        if (mudouMalha)
+                        {
+                            ReRenderizarModelo3D();
+                        }
+                        else
+                        {
+                            AtualizarUcsIcon3D();
+                            AplicarOpcoesViewport3D();
+                        }
+                    },
+                    aoAplicarLayers,
+                    abrirNaAbaLayers);
+
+                win.Owner = Window.GetWindow(this);
+                win.ShowDialog();
             }
-            catch { }
+            catch (Exception ex)
+            {
+                ex.Alerta();
+            }
         }
 
         public void OcultarBotaoTelaCheia()

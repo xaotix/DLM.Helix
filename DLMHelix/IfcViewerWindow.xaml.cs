@@ -34,13 +34,32 @@ namespace DLM.helix
             public IfcMalhaElemento Elemento;
         }
 
+        private class ChunkLote
+        {
+            public List<Point3D> Posicoes = new List<Point3D>(1024);
+            public List<int> Indices = new List<int>(3072);
+            public List<FragmentoMalha> Fragmentos = new List<FragmentoMalha>(64);
+        }
+
         private class LoteMaterial
         {
             public Color Cor;
             public bool Transparente;
-            public Point3DCollection Posicoes = new Point3DCollection();
-            public Int32Collection Indices = new Int32Collection();
-            public List<FragmentoMalha> Fragmentos = new List<FragmentoMalha>();
+            public List<ChunkLote> Chunks = new List<ChunkLote>();
+
+            public ChunkLote ObterChunkDisponivel(int qtdVerts, int qtdIndices)
+            {
+                if (Chunks.Count > 0)
+                {
+                    var ultimo = Chunks[Chunks.Count - 1];
+                    if (ultimo.Posicoes.Count + qtdVerts <= RenderIFC.MAX_VERTICES_CHUNK &&
+                        ultimo.Indices.Count + qtdIndices <= RenderIFC.MAX_INDICES_CHUNK)
+                        return ultimo;
+                }
+                var novo = new ChunkLote();
+                Chunks.Add(novo);
+                return novo;
+            }
         }
 
         private enum ModoInterativo
@@ -105,6 +124,8 @@ namespace DLM.helix
         private bool _suprimirEventoMapear;
         private List<PropItem> _todasPropsAtual = new List<PropItem>();
         private ModelVisual3D _destaqueVisual;
+        private readonly OpcoesRenderizacao3D _opcoesRender3D = new OpcoesRenderizacao3D();
+        private ModelVisual3D _ucsIconVisual3D;
 
         // Modo interativo (Juntar IFC / Mover 2 pontos / Medir 2 pontos)
         private ModoInterativo _modoInterativo = ModoInterativo.Nenhum;
@@ -300,7 +321,10 @@ namespace DLM.helix
                         if (dwgRes != null)
                         {
                             RenderACadSharp.AplicarNoViewport(vp3D, dwgRes);
-                            AplicarVistaIsometrica();
+                            if (dwgRes.Eh3D)
+                                AplicarVistaIsometrica();
+                            else
+                                DefinirVista(new Vector3D(0, 0, -1), new Vector3D(0, 1, 0));
                             txtStatus.Text = "DWG direto carregado via ACadSharp.";
                             txtContadores.Text = string.Format("Entidades: {0:N0} | Triangulos: {1:N0}", dwgRes.TotalEntidades, dwgRes.TotalTriangulos);
                         }
@@ -332,11 +356,8 @@ namespace DLM.helix
             }
             finally
             {
-                if (seq == Volatile.Read(ref _seqCarregamento))
-                {
-                    Interlocked.Increment(ref _seqCarregamento);
-                    MostrarCarregando(false, 0, "");
-                }
+                Interlocked.Increment(ref _seqCarregamento);
+                MostrarCarregando(false, 0, "");
             }
         }
 
@@ -425,105 +446,136 @@ namespace DLM.helix
             LimparViewport();
             if (_modelo == null || _modelo.Elementos.Count == 0) return;
 
-            bool mostrarArestas = tglArestas != null && tglArestas.IsChecked == true;
-            bool modoRaioX = tglRaioX != null && tglRaioX.IsChecked == true;
+            bool modoWireframe = _opcoesRender3D.Modo == ModoRenderizacao3D.Wireframe;
+            bool modoBBox = _opcoesRender3D.Modo == ModoRenderizacao3D.BoundingBox;
+            bool modoRaioX = _opcoesRender3D.Modo == ModoRenderizacao3D.RaioX || (tglRaioX != null && tglRaioX.IsChecked == true);
+            bool mostrarArestas = modoWireframe || _opcoesRender3D.MostrarArestas || _opcoesRender3D.Modo == ModoRenderizacao3D.SombreadoComArestas || (tglArestas != null && tglArestas.IsChecked == true);
+            double fatorOpacidade = Math.Max(0.10, Math.Min(1.0, _opcoesRender3D.Opacidade));
             const double esc = RenderIFC.ESCALA_MM_PARA_M;
 
-            // Batching por cor/opacidade (pratica xBimXplorer): reduz milhares de ModelVisual3D para ~10 GeometryModel3D congelados
+            // Batching por cor/opacidade + Chunking 20k/60k (pratica Xbim SurfaceLayerStyler)
             var lotes = new Dictionary<string, LoteMaterial>();
-            var pontosArestas = new Point3DCollection();
-            var pontosFuros = new Point3DCollection();
-            var pontosRecortes = new Point3DCollection();
-            var pontosSoldas = new Point3DCollection();
+            var pontosArestas = mostrarArestas ? new List<Point3D>(2048) : null;
+            var pontosFuros = mostrarArestas ? new List<Point3D>(512) : null;
+            var pontosRecortes = mostrarArestas ? new List<Point3D>(512) : null;
+            var pontosSoldas = mostrarArestas ? new List<Point3D>(256) : null;
 
             int totalTris = 0;
             for (int i = 0; i < _modelo.Elementos.Count; i++)
             {
                 var el = _modelo.Elementos[i];
                 if (el.EhAbertura || !el.Visivel) continue;
-                if (el.Vertices.Count == 0 || el.Triangulos.Count == 0) continue;
+                if (el.Vertices.Count == 0 || (!modoBBox && el.Triangulos.Count == 0)) continue;
                 if (!PassaNoPlanoDeCorte(el)) continue;
 
                 totalTris += el.Triangulos.Count;
-
-                byte r, g, b, a;
                 bool fantasma = modoRaioX && !_selecionados.Contains(el);
-                if (fantasma)
+
+                if (!modoWireframe)
                 {
-                    r = 160; g = 175; b = 192; a = 52;
-                }
-                else
-                {
-                    Color corEfetiva;
-                    if (TentarObterCorModoVisual(el, out corEfetiva))
+                    byte r, g, b, a;
+                    if (fantasma)
                     {
-                        r = corEfetiva.R;
-                        g = corEfetiva.G;
-                        b = corEfetiva.B;
-                        a = ClampByte((1.0 - Math.Max(0.0, Math.Min(0.92, el.Transparencia))) * 255.0);
+                        r = 160; g = 175; b = 192; a = ClampByte(Math.Min(0.26, fatorOpacidade * 0.26) * 255.0);
                     }
                     else
                     {
-                        r = ClampByte(el.Cor.R * 255.0);
-                        g = ClampByte(el.Cor.G * 255.0);
-                        b = ClampByte(el.Cor.B * 255.0);
-                        a = ClampByte((1.0 - Math.Max(0.0, Math.Min(0.92, el.Transparencia))) * 255.0);
+                        Color corEfetiva;
+                        if (TentarObterCorModoVisual(el, out corEfetiva))
+                        {
+                            r = corEfetiva.R;
+                            g = corEfetiva.G;
+                            b = corEfetiva.B;
+                        }
+                        else
+                        {
+                            r = ClampByte(el.Cor.R * 255.0);
+                            g = ClampByte(el.Cor.G * 255.0);
+                            b = ClampByte(el.Cor.B * 255.0);
+                        }
+                        double opEl = (1.0 - Math.Max(0.0, Math.Min(0.92, el.Transparencia))) * fatorOpacidade;
+                        a = ClampByte(opEl * 255.0);
+                    }
+
+                    string chave = a + "_" + r + "_" + g + "_" + b;
+                    LoteMaterial lote;
+                    if (!lotes.TryGetValue(chave, out lote))
+                    {
+                        lote = new LoteMaterial
+                        {
+                            Cor = Color.FromArgb(a, r, g, b),
+                            Transparente = a < 250
+                        };
+                        lotes[chave] = lote;
+                    }
+
+                    if (modoBBox)
+                    {
+                        AdicionarBoundingBoxLote(lote, el, esc);
+                    }
+                    else
+                    {
+                        var chunk = lote.ObterChunkDisponivel(el.Vertices.Count, el.Triangulos.Count * 3);
+                        int inicioVert = chunk.Posicoes.Count;
+                        for (int v = 0; v < el.Vertices.Count; v++)
+                        {
+                            var p = el.Vertices[v];
+                            chunk.Posicoes.Add(new Point3D(p.X * esc, p.Y * esc, p.Z * esc));
+                        }
+                        int fimVert = chunk.Posicoes.Count - 1;
+
+                        for (int t = 0; t < el.Triangulos.Count; t++)
+                        {
+                            var tr = el.Triangulos[t];
+                            chunk.Indices.Add(inicioVert + tr.A);
+                            chunk.Indices.Add(inicioVert + tr.B);
+                            chunk.Indices.Add(inicioVert + tr.C);
+                        }
+
+                        chunk.Fragmentos.Add(new FragmentoMalha
+                        {
+                            InicioVertice = inicioVert,
+                            FimVertice = fimVert,
+                            Elemento = el
+                        });
                     }
                 }
 
-                string chave = a + "_" + r + "_" + g + "_" + b;
-                LoteMaterial lote;
-                if (!lotes.TryGetValue(chave, out lote))
+                if (mostrarArestas && !modoBBox && !fantasma)
                 {
-                    lote = new LoteMaterial
-                    {
-                        Cor = Color.FromArgb(a, r, g, b),
-                        Transparente = a < 250
-                    };
-                    lotes[chave] = lote;
-                }
-
-                int inicioVert = lote.Posicoes.Count;
-                for (int v = 0; v < el.Vertices.Count; v++)
-                {
-                    var p = el.Vertices[v];
-                    lote.Posicoes.Add(new Point3D(p.X * esc, p.Y * esc, p.Z * esc));
-                }
-                int fimVert = lote.Posicoes.Count - 1;
-
-                for (int t = 0; t < el.Triangulos.Count; t++)
-                {
-                    var tr = el.Triangulos[t];
-                    lote.Indices.Add(inicioVert + tr.A);
-                    lote.Indices.Add(inicioVert + tr.B);
-                    lote.Indices.Add(inicioVert + tr.C);
-                }
-
-                lote.Fragmentos.Add(new FragmentoMalha
-                {
-                    InicioVertice = inicioVert,
-                    FimVertice = fimVert,
-                    Elemento = el
-                });
-
-                if (mostrarArestas && !fantasma)
-                {
-                    if (el.Arestas != null && el.Arestas.Count > 0 && pontosArestas.Count < 500000)
+                    if (el.Arestas != null && el.Arestas.Count > 0 && pontosArestas.Count < 240000)
                     {
                         string nomeEl = el.Nome ?? "";
-                        Point3DCollection dest = pontosArestas;
+                        List<Point3D> dest = pontosArestas;
                         if (nomeEl.StartsWith("CONTORNO_FURO", StringComparison.OrdinalIgnoreCase)) dest = pontosFuros;
                         else if (nomeEl.StartsWith("CONTORNO_RECORTE", StringComparison.OrdinalIgnoreCase)) dest = pontosRecortes;
                         else if (nomeEl.StartsWith("SOLDA_", StringComparison.OrdinalIgnoreCase)) dest = pontosSoldas;
 
-                        for (int k = 0; k < el.Arestas.Count; k++)
+                        for (int k = 0; k < el.Arestas.Count && pontosArestas.Count < 240000; k++)
                         {
                             var ar = el.Arestas[k];
                             dest.Add(new Point3D(ar.P1.X * esc, ar.P1.Y * esc, ar.P1.Z * esc));
                             dest.Add(new Point3D(ar.P2.X * esc, ar.P2.Y * esc, ar.P2.Z * esc));
                         }
                     }
-                    if (el.ArestasFuros != null)
+                    else if (modoWireframe && el.Triangulos != null && el.Triangulos.Count > 0 && pontosArestas.Count < 240000)
+                    {
+                        for (int k = 0; k < el.Triangulos.Count && pontosArestas.Count < 240000; k++)
+                        {
+                            var tr = el.Triangulos[k];
+                            if (tr.A < 0 || tr.B < 0 || tr.C < 0 || tr.A >= el.Vertices.Count || tr.B >= el.Vertices.Count || tr.C >= el.Vertices.Count) continue;
+                            var pa = el.Vertices[tr.A];
+                            var pb = el.Vertices[tr.B];
+                            var pc = el.Vertices[tr.C];
+                            var p1 = new Point3D(pa.X * esc, pa.Y * esc, pa.Z * esc);
+                            var p2 = new Point3D(pb.X * esc, pb.Y * esc, pb.Z * esc);
+                            var p3 = new Point3D(pc.X * esc, pc.Y * esc, pc.Z * esc);
+                            pontosArestas.Add(p1); pontosArestas.Add(p2);
+                            pontosArestas.Add(p2); pontosArestas.Add(p3);
+                            pontosArestas.Add(p3); pontosArestas.Add(p1);
+                        }
+                    }
+                    if (el.ArestasFuros != null && pontosFuros.Count < 240000)
                     {
                         for (int k = 0; k < el.ArestasFuros.Count; k++)
                         {
@@ -532,7 +584,7 @@ namespace DLM.helix
                             pontosFuros.Add(new Point3D(ar.P2.X * esc, ar.P2.Y * esc, ar.P2.Z * esc));
                         }
                     }
-                    if (el.ArestasRecortes != null)
+                    if (el.ArestasRecortes != null && pontosRecortes.Count < 240000)
                     {
                         for (int k = 0; k < el.ArestasRecortes.Count; k++)
                         {
@@ -544,24 +596,14 @@ namespace DLM.helix
                 }
             }
 
-            // Separa Opacos primeiro e Transparentes depois (pratica xBimXplorer para evitar artefatos de Z-buffer)
-            bool usarSpecular = totalTris < 150000;
+            // Separa Opacos primeiro e Transparentes depois (pratica Xbim para evitar artefatos de Z-buffer)
+            bool usarSpecular = (_opcoesRender3D.Modo == ModoRenderizacao3D.SombreadoMetalico) ||
+                                (_opcoesRender3D.Modo == ModoRenderizacao3D.SombreadoXbim && IfcConfiguracao.Atual.UsarSpecular && totalTris < 150000);
             var grupoOpacos = new Model3DGroup();
             var grupoTransp = new Model3DGroup();
 
             foreach (var lote in lotes.Values)
             {
-                if (lote.Indices.Count == 0) continue;
-                lote.Posicoes.Freeze();
-                lote.Indices.Freeze();
-
-                var mesh = new MeshGeometry3D
-                {
-                    Positions = lote.Posicoes,
-                    TriangleIndices = lote.Indices
-                };
-                mesh.Freeze();
-
                 var brush = new SolidColorBrush(lote.Cor);
                 brush.Freeze();
 
@@ -570,7 +612,9 @@ namespace DLM.helix
                 {
                     var mg = new MaterialGroup();
                     mg.Children.Add(new DiffuseMaterial(brush));
-                    mg.Children.Add(new SpecularMaterial(new SolidColorBrush(Color.FromArgb(55, 255, 255, 255)), 24));
+                    var specBrush = new SolidColorBrush(Color.FromArgb(55, 255, 255, 255));
+                    specBrush.Freeze();
+                    mg.Children.Add(new SpecularMaterial(specBrush, 24));
                     mg.Freeze();
                     mat = mg;
                 }
@@ -581,12 +625,32 @@ namespace DLM.helix
                     mat = dm;
                 }
 
-                var gm = new GeometryModel3D(mesh, mat) { BackMaterial = mat };
-                gm.Freeze();
-                _fragmentosPorMalha[gm] = lote.Fragmentos;
+                for (int c = 0; c < lote.Chunks.Count; c++)
+                {
+                    var chunk = lote.Chunks[c];
+                    if (chunk.Indices.Count == 0) continue;
 
-                if (lote.Transparente) grupoTransp.Children.Add(gm);
-                else grupoOpacos.Children.Add(gm);
+                    var pos = new Point3DCollection(chunk.Posicoes);
+                    var idx = new Int32Collection(chunk.Indices);
+                    pos.Freeze();
+                    idx.Freeze();
+
+                    var mesh = new MeshGeometry3D
+                    {
+                        Positions = pos,
+                        TriangleIndices = idx
+                    };
+                    mesh.Freeze();
+
+                    var gm = new GeometryModel3D(mesh, mat);
+                    if (_opcoesRender3D.RenderizarDoisLados || lote.Transparente)
+                        gm.BackMaterial = mat;
+                    gm.Freeze();
+                    _fragmentosPorMalha[gm] = chunk.Fragmentos;
+
+                    if (lote.Transparente) grupoTransp.Children.Add(gm);
+                    else grupoOpacos.Children.Add(gm);
+                }
             }
 
             if (grupoOpacos.Children.Count > 0)
@@ -600,30 +664,121 @@ namespace DLM.helix
                 vp3D.Children.Add(new ModelVisual3D { Content = grupoTransp });
             }
 
-            if (mostrarArestas && pontosArestas.Count > 0)
+            if (mostrarArestas && !modoBBox)
             {
-                pontosArestas.Freeze();
-                vp3D.Children.Add(new LinesVisual3D { Points = pontosArestas, Color = Color.FromRgb(15, 23, 42), Thickness = 1.2 });
-            }
-            if (mostrarArestas && pontosFuros.Count > 0)
-            {
-                pontosFuros.Freeze();
-                vp3D.Children.Add(new LinesVisual3D { Points = pontosFuros, Color = Color.FromRgb(220, 38, 38), Thickness = 2.0 });
-            }
-            if (mostrarArestas && pontosRecortes.Count > 0)
-            {
-                pontosRecortes.Freeze();
-                vp3D.Children.Add(new LinesVisual3D { Points = pontosRecortes, Color = Color.FromRgb(234, 88, 12), Thickness = 2.0 });
-            }
-            if (mostrarArestas && pontosSoldas.Count > 0)
-            {
-                pontosSoldas.Freeze();
-                vp3D.Children.Add(new LinesVisual3D { Points = pontosSoldas, Color = Color.FromRgb(180, 83, 9), Thickness = 1.8 });
+                double esp = Math.Max(0.4, _opcoesRender3D.EspessuraArestas);
+                if (pontosArestas != null && pontosArestas.Count > 0)
+                {
+                    var col = new Point3DCollection(pontosArestas); col.Freeze();
+                    vp3D.Children.Add(new LinesVisual3D { Points = col, Color = Color.FromRgb(15, 23, 42), Thickness = esp });
+                }
+                if (pontosFuros != null && pontosFuros.Count > 0)
+                {
+                    var col = new Point3DCollection(pontosFuros); col.Freeze();
+                    vp3D.Children.Add(new LinesVisual3D { Points = col, Color = Color.FromRgb(220, 38, 38), Thickness = Math.Max(1.6, esp + 0.5) });
+                }
+                if (pontosRecortes != null && pontosRecortes.Count > 0)
+                {
+                    var col = new Point3DCollection(pontosRecortes); col.Freeze();
+                    vp3D.Children.Add(new LinesVisual3D { Points = col, Color = Color.FromRgb(234, 88, 12), Thickness = Math.Max(1.6, esp + 0.5) });
+                }
+                if (pontosSoldas != null && pontosSoldas.Count > 0)
+                {
+                    var col = new Point3DCollection(pontosSoldas); col.Freeze();
+                    vp3D.Children.Add(new LinesVisual3D { Points = col, Color = Color.FromRgb(180, 83, 9), Thickness = Math.Max(1.4, esp + 0.3) });
+                }
             }
 
+            AplicarOpcoesViewportEditor();
             RenderizarGrid3D();
+            AtualizarUcsIcon3D();
             AtualizarDestaqueSelecao();
             if (enquadrar) AplicarVistaIsometrica();
+        }
+
+        private static void AdicionarBoundingBoxLote(LoteMaterial lote, IfcMalhaElemento el, double esc)
+        {
+            double minX = double.MaxValue, minY = double.MaxValue, minZ = double.MaxValue;
+            double maxX = double.MinValue, maxY = double.MinValue, maxZ = double.MinValue;
+            for (int i = 0; i < el.Vertices.Count; i++)
+            {
+                var v = el.Vertices[i];
+                if (v.X < minX) minX = v.X;
+                if (v.Y < minY) minY = v.Y;
+                if (v.Z < minZ) minZ = v.Z;
+                if (v.X > maxX) maxX = v.X;
+                if (v.Y > maxY) maxY = v.Y;
+                if (v.Z > maxZ) maxZ = v.Z;
+            }
+            if (maxX < minX) return;
+
+            minX *= esc; minY *= esc; minZ *= esc;
+            maxX *= esc; maxY *= esc; maxZ *= esc;
+
+            var chunk = lote.ObterChunkDisponivel(8, 36);
+            int b = chunk.Posicoes.Count;
+            chunk.Posicoes.Add(new Point3D(minX, minY, minZ));
+            chunk.Posicoes.Add(new Point3D(maxX, minY, minZ));
+            chunk.Posicoes.Add(new Point3D(maxX, maxY, minZ));
+            chunk.Posicoes.Add(new Point3D(minX, maxY, minZ));
+            chunk.Posicoes.Add(new Point3D(minX, minY, maxZ));
+            chunk.Posicoes.Add(new Point3D(maxX, minY, maxZ));
+            chunk.Posicoes.Add(new Point3D(maxX, maxY, maxZ));
+            chunk.Posicoes.Add(new Point3D(minX, maxY, maxZ));
+
+            int[] tris =
+            {
+                0,2,1, 0,3,2,
+                4,5,6, 4,6,7,
+                0,1,5, 0,5,4,
+                2,3,7, 2,7,6,
+                0,4,7, 0,7,3,
+                1,2,6, 1,6,5
+            };
+            for (int i = 0; i < tris.Length; i++)
+                chunk.Indices.Add(b + tris[i]);
+
+            chunk.Fragmentos.Add(new FragmentoMalha
+            {
+                InicioVertice = b,
+                FimVertice = b + 7,
+                Elemento = el
+            });
+        }
+
+        private void AplicarOpcoesViewportEditor()
+        {
+            if (vp3D == null) return;
+            vp3D.ShowFrameRate = _opcoesRender3D.MostrarFps;
+            RenderOptions.SetEdgeMode(vp3D, _opcoesRender3D.ModoAltaVelocidade ? EdgeMode.Aliased : EdgeMode.Unspecified);
+        }
+
+        private void Vp3D_CameraChanged(object sender, RoutedEventArgs e)
+        {
+            if (_ucsIconVisual3D != null && vp3D != null)
+                UcsIcon3D.AtualizarEscala(_ucsIconVisual3D, vp3D.Camera as ProjectionCamera);
+        }
+
+        private void MiMostrarUcs_Click(object sender, RoutedEventArgs e)
+        {
+            if (miMostrarUcs != null)
+                _opcoesRender3D.MostrarUcs = miMostrarUcs.IsChecked;
+            AtualizarUcsIcon3D();
+        }
+
+        private void AtualizarUcsIcon3D()
+        {
+            if (vp3D == null) return;
+            if (miMostrarUcs != null) miMostrarUcs.IsChecked = _opcoesRender3D.MostrarUcs;
+            if (_ucsIconVisual3D != null)
+            {
+                try { vp3D.Children.Remove(_ucsIconVisual3D); } catch { }
+                _ucsIconVisual3D = null;
+            }
+            if (!_opcoesRender3D.MostrarUcs) return;
+            _ucsIconVisual3D = UcsIcon3D.Criar(1.0);
+            UcsIcon3D.AtualizarEscala(_ucsIconVisual3D, vp3D.Camera as ProjectionCamera);
+            vp3D.Children.Add(_ucsIconVisual3D);
         }
 
         private void RenderizarGrid3D()
@@ -1667,11 +1822,8 @@ namespace DLM.helix
             }
             finally
             {
-                if (seq == Volatile.Read(ref _seqCarregamento))
-                {
-                    Interlocked.Increment(ref _seqCarregamento);
-                    MostrarCarregando(false, 0, "");
-                }
+                Interlocked.Increment(ref _seqCarregamento);
+                MostrarCarregando(false, 0, "");
             }
         }
 
@@ -1706,11 +1858,8 @@ namespace DLM.helix
             }
             finally
             {
-                if (seq == Volatile.Read(ref _seqCarregamento))
-                {
-                    Interlocked.Increment(ref _seqCarregamento);
-                    MostrarCarregando(false, 0, "");
-                }
+                Interlocked.Increment(ref _seqCarregamento);
+                MostrarCarregando(false, 0, "");
             }
         }
 
@@ -1735,10 +1884,108 @@ namespace DLM.helix
             vp3D.ZoomExtents(200);
         }
 
-        private void TglArestas_Click(object sender, RoutedEventArgs e) => ReconstruirCena3D(false);
+        private void BtnVistasMenu_Click(object sender, RoutedEventArgs e)
+        {
+            var bt = sender as Button;
+            if (bt?.ContextMenu != null)
+            {
+                bt.ContextMenu.PlacementTarget = bt;
+                bt.ContextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+                bt.ContextMenu.IsOpen = true;
+            }
+        }
+
+        private void BtnOpcoesVisuais_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                _opcoesRender3D.MostrarArestas = tglArestas != null && tglArestas.IsChecked == true;
+                _opcoesRender3D.CameraPerspectiva = tglPerspectiva != null && tglPerspectiva.IsChecked == true;
+                if (tglRaioX != null && tglRaioX.IsChecked == true && _opcoesRender3D.Modo != ModoRenderizacao3D.RaioX)
+                    _opcoesRender3D.Modo = ModoRenderizacao3D.RaioX;
+
+                var itensLayers = _modelo != null ? LayersWindow.CriarItensIFC(_modelo) : new List<LayersWindow.ItemLayer>();
+
+                var win = new OpcoesVisualizadorWindow(
+                    _opcoesRender3D,
+                    true,
+                    itensLayers,
+                    "Layers (Por Tipo)",
+                    novas =>
+                    {
+                        bool mudouMalha =
+                            _opcoesRender3D.Modo != novas.Modo ||
+                            _opcoesRender3D.MostrarArestas != novas.MostrarArestas ||
+                            Math.Abs(_opcoesRender3D.Opacidade - novas.Opacidade) > 0.001 ||
+                            _opcoesRender3D.RenderizarDoisLados != novas.RenderizarDoisLados ||
+                            Math.Abs(_opcoesRender3D.EspessuraArestas - novas.EspessuraArestas) > 0.001;
+                        bool mudouCamera = _opcoesRender3D.CameraPerspectiva != novas.CameraPerspectiva;
+
+                        _opcoesRender3D.Modo = novas.Modo;
+                        _opcoesRender3D.MostrarArestas = novas.MostrarArestas;
+                        _opcoesRender3D.Opacidade = novas.Opacidade;
+                        _opcoesRender3D.RenderizarDoisLados = novas.RenderizarDoisLados;
+                        _opcoesRender3D.ModoAltaVelocidade = novas.ModoAltaVelocidade;
+                        _opcoesRender3D.CameraPerspectiva = novas.CameraPerspectiva;
+                        _opcoesRender3D.MostrarUcs = novas.MostrarUcs;
+                        _opcoesRender3D.MostrarFps = novas.MostrarFps;
+                        _opcoesRender3D.EspessuraArestas = novas.EspessuraArestas;
+
+                        if (tglArestas != null) tglArestas.IsChecked = _opcoesRender3D.MostrarArestas;
+                        if (tglRaioX != null) tglRaioX.IsChecked = _opcoesRender3D.Modo == ModoRenderizacao3D.RaioX;
+                        if (mudouCamera && tglPerspectiva != null)
+                        {
+                            tglPerspectiva.IsChecked = _opcoesRender3D.CameraPerspectiva;
+                            TglPerspectiva_Click(null, null);
+                        }
+
+                        if (mudouMalha)
+                        {
+                            ReconstruirCena3D(false);
+                        }
+                        else
+                        {
+                            AplicarOpcoesViewportEditor();
+                            AtualizarUcsIcon3D();
+                        }
+                    },
+                    lista =>
+                    {
+                        if (_modelo == null) return;
+                        var mapa = lista.ToDictionary(x => x.Chave, x => x.Visivel, StringComparer.OrdinalIgnoreCase);
+                        foreach (var el in _modelo.Elementos)
+                        {
+                            if (el == null || el.EhAbertura) continue;
+                            string grp = LayersWindow.ObterGrupoTipoIFC(el);
+                            if (mapa.TryGetValue(grp, out bool v)) el.Visivel = v;
+                        }
+                        ReconstruirCena3D(false);
+                        ReconstruirArvore();
+                    },
+                    false);
+
+                win.Owner = this;
+                win.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Erro ao abrir opcoes visuais: " + ex.Message, "Visual / Layers", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void TglArestas_Click(object sender, RoutedEventArgs e)
+        {
+            _opcoesRender3D.MostrarArestas = tglArestas != null && tglArestas.IsChecked == true;
+            if (_opcoesRender3D.MostrarArestas && _opcoesRender3D.Modo == ModoRenderizacao3D.SombreadoXbim)
+                _opcoesRender3D.Modo = ModoRenderizacao3D.SombreadoComArestas;
+            else if (!_opcoesRender3D.MostrarArestas && _opcoesRender3D.Modo == ModoRenderizacao3D.SombreadoComArestas)
+                _opcoesRender3D.Modo = ModoRenderizacao3D.SombreadoXbim;
+            ReconstruirCena3D(false);
+        }
 
         private void TglPerspectiva_Click(object sender, RoutedEventArgs e)
         {
+            _opcoesRender3D.CameraPerspectiva = tglPerspectiva != null && tglPerspectiva.IsChecked == true;
             var camAtual = vp3D.Camera as ProjectionCamera;
             if (camAtual == null) return;
             var pos = camAtual.Position;
@@ -1773,8 +2020,13 @@ namespace DLM.helix
 
         private void TglRaioX_Click(object sender, RoutedEventArgs e)
         {
+            bool rx = tglRaioX != null && tglRaioX.IsChecked == true;
+            if (rx)
+                _opcoesRender3D.Modo = ModoRenderizacao3D.RaioX;
+            else if (_opcoesRender3D.Modo == ModoRenderizacao3D.RaioX)
+                _opcoesRender3D.Modo = _opcoesRender3D.MostrarArestas ? ModoRenderizacao3D.SombreadoComArestas : ModoRenderizacao3D.SombreadoXbim;
             ReconstruirCena3D(false);
-            txtStatus.Text = tglRaioX.IsChecked == true
+            txtStatus.Text = rx
                 ? "Modo Raio-X ativado: pecas nao selecionadas em transparencia."
                 : "Modo Raio-X desativado.";
         }
@@ -1939,8 +2191,9 @@ namespace DLM.helix
             var dlg = new Window
             {
                 Title = "Mover Elementos / IFC Importado",
-                Width = 420,
-                Height = 320,
+                Width = 440,
+                SizeToContent = SizeToContent.Height,
+                MinHeight = 320,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 ResizeMode = ResizeMode.NoResize,
@@ -2061,11 +2314,8 @@ namespace DLM.helix
             }
             finally
             {
-                if (seq == Volatile.Read(ref _seqCarregamento))
-                {
-                    Interlocked.Increment(ref _seqCarregamento);
-                    MostrarCarregando(false, 0, "");
-                }
+                Interlocked.Increment(ref _seqCarregamento);
+                MostrarCarregando(false, 0, "");
             }
         }
 
@@ -2207,8 +2457,9 @@ namespace DLM.helix
             var dlg = new Window
             {
                 Title = "Adicionar / Editar Atributo nas Pecas",
-                Width = 420,
-                Height = 310,
+                Width = 440,
+                SizeToContent = SizeToContent.Height,
+                MinHeight = 310,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 ResizeMode = ResizeMode.NoResize,
@@ -2272,8 +2523,9 @@ namespace DLM.helix
             var dlg = new Window
             {
                 Title = "Agrupar Pecas por Propriedade",
-                Width = 390,
-                Height = 235,
+                Width = 410,
+                SizeToContent = SizeToContent.Height,
+                MinHeight = 240,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 ResizeMode = ResizeMode.NoResize,
@@ -2326,8 +2578,9 @@ namespace DLM.helix
             var dlg = new Window
             {
                 Title = "Quebrar IFC pelos Eixos do Grid",
-                Width = 400,
-                Height = 240,
+                Width = 420,
+                SizeToContent = SizeToContent.Height,
+                MinHeight = 240,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 ResizeMode = ResizeMode.NoResize,
@@ -2389,11 +2642,8 @@ namespace DLM.helix
             }
             finally
             {
-                if (seq == Volatile.Read(ref _seqCarregamento))
-                {
-                    Interlocked.Increment(ref _seqCarregamento);
-                    MostrarCarregando(false, 0, "");
-                }
+                Interlocked.Increment(ref _seqCarregamento);
+                MostrarCarregando(false, 0, "");
             }
         }
 
@@ -2448,11 +2698,8 @@ namespace DLM.helix
             }
             finally
             {
-                if (seq == Volatile.Read(ref _seqCarregamento))
-                {
-                    Interlocked.Increment(ref _seqCarregamento);
-                    MostrarCarregando(false, 0, "");
-                }
+                Interlocked.Increment(ref _seqCarregamento);
+                MostrarCarregando(false, 0, "");
             }
         }
 
@@ -2782,7 +3029,8 @@ namespace DLM.helix
             {
                 Title = titulo,
                 Width = w,
-                Height = h,
+                SizeToContent = SizeToContent.Height,
+                MinHeight = h,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 ResizeMode = ResizeMode.NoResize,
@@ -3105,24 +3353,28 @@ namespace DLM.helix
 
             if (alvos.Count == 0) return;
 
-            // Monta lista de etapas existentes + sugeridas
-            var sugestoes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            // Monta lista de etapas e PEPs existentes + sugeridos
+            var sugestoesEtapa = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var sugestoesPep = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if (EtapasSugeridas != null)
             {
                 foreach (var s in EtapasSugeridas)
-                    if (!string.IsNullOrWhiteSpace(s)) sugestoes.Add(s.Trim());
+                    if (!string.IsNullOrWhiteSpace(s)) sugestoesEtapa.Add(s.Trim());
             }
             foreach (var el in _modelo.Elementos)
             {
                 string et = el.ObterPropriedade("DLM", "ETAPA");
-                if (!string.IsNullOrWhiteSpace(et)) sugestoes.Add(et.Trim());
+                if (!string.IsNullOrWhiteSpace(et)) sugestoesEtapa.Add(et.Trim());
+                string pep = el.ObterPropriedade("DLM", "PEP");
+                if (!string.IsNullOrWhiteSpace(pep)) sugestoesPep.Add(pep.Trim());
             }
 
             var dlg = new Window
             {
-                Title = "Definir / Editar Etapa (aba DLM)",
-                Width = 420,
-                Height = 195,
+                Title = "Definir / Editar Etapa e PEP (aba DLM)",
+                Width = 440,
+                SizeToContent = SizeToContent.Height,
+                MinHeight = 240,
                 WindowStartupLocation = WindowStartupLocation.CenterOwner,
                 Owner = this,
                 ResizeMode = ResizeMode.NoResize,
@@ -3132,23 +3384,52 @@ namespace DLM.helix
             var root = new StackPanel { Margin = new Thickness(16) };
             root.Children.Add(new TextBlock
             {
-                Text = string.Format("Atribuir ETAPA (aba DLM) em {0} elemento(s) ({1}):",
+                Text = string.Format("Atribuir propriedades (aba DLM) em {0} elemento(s) ({1}):",
                     alvos.Count, _selecionados.Count > 0 ? "selecionados" : "todos visiveis"),
                 FontWeight = FontWeights.SemiBold,
                 Foreground = new SolidColorBrush(Color.FromRgb(15, 23, 42)),
-                Margin = new Thickness(0, 0, 0, 10)
+                Margin = new Thickness(0, 0, 0, 12),
+                TextWrapping = TextWrapping.Wrap
             });
 
-            var cmb = new ComboBox
+            root.Children.Add(new TextBlock
+            {
+                Text = "ETAPA:",
+                FontWeight = FontWeights.SemiBold,
+                Foreground = new SolidColorBrush(Color.FromRgb(51, 65, 85)),
+                FontSize = 11.5,
+                Margin = new Thickness(0, 0, 0, 4)
+            });
+            var cmbEtapa = new ComboBox
             {
                 IsEditable = true,
                 Height = 28,
                 FontSize = 12,
-                ItemsSource = sugestoes.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList()
+                Margin = new Thickness(0, 0, 0, 10),
+                ItemsSource = sugestoesEtapa.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList()
             };
-            string atual = alvos[0].ObterPropriedade("DLM", "ETAPA");
-            if (!string.IsNullOrWhiteSpace(atual)) cmb.Text = atual;
-            root.Children.Add(cmb);
+            string atualEtapa = alvos[0].ObterPropriedade("DLM", "ETAPA");
+            if (!string.IsNullOrWhiteSpace(atualEtapa)) cmbEtapa.Text = atualEtapa;
+            root.Children.Add(cmbEtapa);
+
+            root.Children.Add(new TextBlock
+            {
+                Text = "PEP:",
+                FontWeight = FontWeights.SemiBold,
+                Foreground = new SolidColorBrush(Color.FromRgb(51, 65, 85)),
+                FontSize = 11.5,
+                Margin = new Thickness(0, 0, 0, 4)
+            });
+            var cmbPep = new ComboBox
+            {
+                IsEditable = true,
+                Height = 28,
+                FontSize = 12,
+                ItemsSource = sugestoesPep.OrderBy(x => x, StringComparer.OrdinalIgnoreCase).ToList()
+            };
+            string atualPep = alvos[0].ObterPropriedade("DLM", "PEP");
+            if (!string.IsNullOrWhiteSpace(atualPep)) cmbPep.Text = atualPep;
+            root.Children.Add(cmbPep);
 
             var botoes = new StackPanel
             {
@@ -3157,7 +3438,7 @@ namespace DLM.helix
                 Margin = new Thickness(0, 16, 0, 0)
             };
             var btnCancel = new Button { Content = "Cancelar", Width = 86, Height = 28, Margin = new Thickness(0, 0, 8, 0), Style = (Style)FindResource("BtnBarra") };
-            var btnOk = new Button { Content = "Aplicar Etapa", Width = 110, Height = 28, Style = (Style)FindResource("BtnDestaque") };
+            var btnOk = new Button { Content = "Aplicar", Width = 100, Height = 28, Style = (Style)FindResource("BtnDestaque") };
             btnCancel.Click += (s2, e2) => { dlg.DialogResult = false; dlg.Close(); };
             btnOk.Click += (s2, e2) => { dlg.DialogResult = true; dlg.Close(); };
             botoes.Children.Add(btnCancel);
@@ -3167,16 +3448,25 @@ namespace DLM.helix
 
             if (dlg.ShowDialog() != true) return;
 
-            string novaEtapa = (cmb.Text ?? "").Trim();
-            if (string.IsNullOrWhiteSpace(novaEtapa)) return;
+            string novaEtapa = (cmbEtapa.Text ?? "").Trim();
+            string novoPep = (cmbPep.Text ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(novaEtapa) && string.IsNullOrWhiteSpace(novoPep)) return;
 
-            int qtd = IfcEditor.DefinirAtributo(alvos, "DLM", "ETAPA", novaEtapa);
+            int qtd = 0;
+            if (!string.IsNullOrWhiteSpace(novaEtapa))
+                qtd = IfcEditor.DefinirAtributo(alvos, "DLM", "ETAPA", novaEtapa);
+            if (!string.IsNullOrWhiteSpace(novoPep))
+                qtd = IfcEditor.DefinirAtributo(alvos, "DLM", "PEP", novoPep);
+
             AtualizarPainelPropriedades();
             AtualizarPainelEtapasCores();
             if (_modoCorVisual == ModoCorVisual.Etapa)
                 ReconstruirCena3D(false);
 
-            txtStatus.Text = string.Format("Etapa \"{0}\" gravada na aba DLM de {1} elemento(s).", novaEtapa, qtd);
+            var partes = new List<string>();
+            if (!string.IsNullOrWhiteSpace(novaEtapa)) partes.Add("Etapa \"" + novaEtapa + "\"");
+            if (!string.IsNullOrWhiteSpace(novoPep)) partes.Add("PEP \"" + novoPep + "\"");
+            txtStatus.Text = string.Format("{0} gravado(s) na aba DLM de {1} elemento(s).", string.Join(" e ", partes), qtd);
         }
 
         #endregion

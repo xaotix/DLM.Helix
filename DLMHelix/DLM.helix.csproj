@@ -121,6 +121,7 @@
     <Compile Include="Renders\Gera3D.cs" />
     <Compile Include="Renders\UcsIcon3D.cs" />
     <Compile Include="LayersWindow.cs" />
+    <Compile Include="OpcoesVisualizadorWindow.cs" />
     <Compile Include="Renders\RenderIFC.cs" />
     <Compile Include="Renders\RenderACadSharp.cs" />
     <Compile Include="Renders\DwgLoader.cs" />

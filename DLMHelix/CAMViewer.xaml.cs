@@ -1,4 +1,4 @@
-ï»¿using Conexoes;
+using Conexoes;
 using Conexoes.WPF;
 using DLM.cam;
 using DLM.desenho;
@@ -103,7 +103,7 @@ namespace DLM.helix
         // CONTROLE DE ZOOM
         // ==========================================
         /// <summary>
-        /// Quantas vezes (passos de scroll) o usuï¿½rio pode aproximar (Zoom In) a partir da base.
+        /// Quantas vezes (passos de scroll) o usu?rio pode aproximar (Zoom In) a partir da base.
         /// </summary>
         /// <summary>
         /// Escala de distanciamento para tipos de linha no Helix (DashDot, Hidden, Dashed, etc.). Padrao: 50.0.
@@ -121,36 +121,36 @@ namespace DLM.helix
         public double FatorAproximacao { get; set; } = 0.5;
 
         /// <summary>
-        /// Quantas vezes (passos de scroll) o usuï¿½rio pode afastar (Zoom Out) a partir da base.
+        /// Quantas vezes (passos de scroll) o usu?rio pode afastar (Zoom Out) a partir da base.
         /// </summary>
         public int PassosZoomOut { get; set; } = 5;
 
         /// <summary>
-        /// Quando verdadeiro, o zoom ï¿½ animado (interpolado a cada frame) em vez de saltar de uma vez.
+        /// Quando verdadeiro, o zoom ? animado (interpolado a cada frame) em vez de saltar de uma vez.
         /// </summary>
         public bool ZoomSuave { get; set; } = true;
 
         /// <summary>
-        /// Quando verdadeiro, o zoom aproxima/afasta em direï¿½ï¿½o ao ponteiro do mouse
-        /// (o ponto sob o mouse permanece fixo). Falso mantï¿½m o zoom centrado na tela.
+        /// Quando verdadeiro, o zoom aproxima/afasta em dire??o ao ponteiro do mouse
+        /// (o ponto sob o mouse permanece fixo). Falso mant?m o zoom centrado na tela.
         /// </summary>
         public bool ZoomNoCursor { get; set; } = true;
 
         // Fator aplicado por passo de scroll (120 unidades de Delta)
         private const double FATOR_ZOOM = 1.08;
 
-        // Constante de tempo da suavizaï¿½ï¿½o do zoom, em segundos. Menor = mais responsivo.
+        // Constante de tempo da suaviza??o do zoom, em segundos. Menor = mais responsivo.
         private const double TAU_ZOOM = 0.06;
         // ==========================================
 
         // ==========================================
-        // INï¿½RCIA DA Cï¿½MERA (PAN)
+        // IN?RCIA DA C?MERA (PAN)
         // ==========================================
         private double _inercia = 0.80;
 
         /// <summary>
-        /// Fator de inï¿½rcia da cï¿½mera. A inï¿½rcia padrï¿½o do Helix (0.93) dï¿½ sensaï¿½ï¿½o de arrasto.
-        /// Valores menores deixam o pan mais "colado" ao mouse. 0 desativa a inï¿½rcia.
+        /// Fator de in?rcia da c?mera. A in?rcia padr?o do Helix (0.93) d? sensa??o de arrasto.
+        /// Valores menores deixam o pan mais "colado" ao mouse. 0 desativa a in?rcia.
         /// </summary>
         public double InerciaCamera
         {
@@ -180,8 +180,8 @@ namespace DLM.helix
         private double _fracaoVisivelMinima = 0.25;
 
         /// <summary>
-        /// Fraï¿½ï¿½o mï¿½nima da largura/altura da vista que deve continuar coberta pelos objetos.
-        /// 0.25 = o usuï¿½rio nunca consegue arrastar atï¿½ sobrar menos de 25% da tela com objeto.
+        /// Fra??o m?nima da largura/altura da vista que deve continuar coberta pelos objetos.
+        /// 0.25 = o usu?rio nunca consegue arrastar at? sobrar menos de 25% da tela com objeto.
         /// Use 0 para desativar o limite.
         /// </summary>
         public double FracaoVisivelMinima
@@ -197,8 +197,8 @@ namespace DLM.helix
         // ==========================================
 
         /// <summary>
-        /// Estado por viewport: base de zoom, zoom alvo da animaï¿½ï¿½o, limites dos objetos
-        /// e cache do ï¿½ltimo estado da cï¿½mera (para evitar recalcular o limite quando nada mudou).
+        /// Estado por viewport: base de zoom, zoom alvo da anima??o, limites dos objetos
+        /// e cache do ?ltimo estado da c?mera (para evitar recalcular o limite quando nada mudou).
         /// </summary>
         private class EstadoViewport
         {
@@ -258,8 +258,8 @@ namespace DLM.helix
         private double _ultimoTick = 0;
 
         /// <summary>
-        /// Procura uma linha prï¿½xima ao ponto no View2D.
-        /// Com cï¿½mera ortogrï¿½fica, calcula diretamente a distï¿½ncia ponto-segmento em 2D usando Bounds
+        /// Procura uma linha pr?xima ao ponto no View2D.
+        /// Com c?mera ortogr?fica, calcula diretamente a dist?ncia ponto-segmento em 2D usando Bounds
         /// para filtrar rapidamente, evitando centenas de chamadas custosas ao VisualTreeHelper.HitTest.
         /// </summary>
         public LinhaVisual3D GetLinhaSelecao(Point center, int radius = 10, int step = 1)
@@ -594,8 +594,8 @@ namespace DLM.helix
         }
 
         /// <summary>
-        /// Executa a cada frame: avanï¿½a a animaï¿½ï¿½o de zoom e aplica o limite de pan.
-        /// Sï¿½ trabalha nos viewports visï¿½veis e sï¿½ recalcula o limite quando a cï¿½mera mudou.
+        /// Executa a cada frame: avan?a a anima??o de zoom e aplica o limite de pan.
+        /// S? trabalha nos viewports vis?veis e s? recalcula o limite quando a c?mera mudou.
         /// </summary>
         private void OnRendering(object sender, EventArgs e)
         {
@@ -625,7 +625,7 @@ namespace DLM.helix
 
             if (_fracaoVisivelMinima <= 0) return;
 
-            // Nada mudou desde o ï¿½ltimo frame: nï¿½o hï¿½ o que limitar
+            // Nada mudou desde o ?ltimo frame: n?o h? o que limitar
             if (est.CacheIgual(cam, vp)) return;
 
             AplicarLimitePan(vp, cam, est.Bounds);
@@ -718,7 +718,7 @@ namespace DLM.helix
                 if (baseWidth > 10.0) fatorPasso = 1.15;
             }
 
-            // Parte do alvo atual (se estiver animando) para que vï¿½rios cliques seguidos acumulem
+            // Parte do alvo atual (se estiver animando) para que v?rios cliques seguidos acumulem
             double referencia = est.Animando ? est.LarguraAlvo : orthoCam.Width;
 
             // Delta positivo = aproximar. Touchpads enviam deltas menores que 120 e geram passos proporcionais.
@@ -740,7 +740,7 @@ namespace DLM.helix
         }
 
         /// <summary>
-        /// Dï¿½ um passo da animaï¿½ï¿½o de zoom em direï¿½ï¿½o ï¿½ largura alvo.
+        /// D? um passo da anima??o de zoom em dire??o ? largura alvo.
         /// </summary>
         private void AvancarZoom(HelixViewport3D vp, OrthographicCamera cam, EstadoViewport est, double dt)
         {
@@ -753,7 +753,7 @@ namespace DLM.helix
                 return;
             }
 
-            // Interpolaï¿½ï¿½o exponencial no espaï¿½o logarï¿½tmico: velocidade percebida constante em qualquer escala
+            // Interpola??o exponencial no espa?o logar?tmico: velocidade percebida constante em qualquer escala
             double k = 1.0 - Math.Exp(-dt / TAU_ZOOM);
             double w1 = w0 * Math.Pow(alvo / w0, k);
 
@@ -767,7 +767,7 @@ namespace DLM.helix
         }
 
         /// <summary>
-        /// Aplica a nova largura da cï¿½mera ortogrï¿½fica. Com ZoomNoCursor, desloca a cï¿½mera
+        /// Aplica a nova largura da c?mera ortogr?fica. Com ZoomNoCursor, desloca a c?mera
         /// para que o ponto sob o mouse continue no mesmo lugar da tela.
         /// </summary>
         private void AplicarLargura(HelixViewport3D vp, OrthographicCamera cam, EstadoViewport est, double novaLargura)
@@ -793,7 +793,7 @@ namespace DLM.helix
         }
 
         /// <summary>
-        /// Obtï¿½m os eixos "direita" e "cima" da tela, no espaï¿½o do mundo.
+        /// Obt?m os eixos "direita" e "cima" da tela, no espa?o do mundo.
         /// </summary>
         private static bool ObterEixosTela(OrthographicCamera cam, out Vector3D right, out Vector3D up)
         {
@@ -817,8 +817,8 @@ namespace DLM.helix
         }
 
         /// <summary>
-        /// Limita o pan no plano da tela (direita/cima da cï¿½mera), independente da orientaï¿½ï¿½o da vista.
-        /// A profundidade da cï¿½mera nunca ï¿½ alterada.
+        /// Limita o pan no plano da tela (direita/cima da c?mera), independente da orienta??o da vista.
+        /// A profundidade da c?mera nunca ? alterada.
         /// </summary>
         private void AplicarLimitePan(HelixViewport3D viewport, OrthographicCamera orthoCam, Rect3D bounds)
         {
@@ -838,20 +838,20 @@ namespace DLM.helix
                 bounds.Y + bounds.SizeY / 2.0,
                 bounds.Z + bounds.SizeZ / 2.0);
 
-            // Meia-extensï¿½o da caixa projetada em cada eixo da tela
+            // Meia-extens?o da caixa projetada em cada eixo da tela
             double halfObjX = 0.5 * (Math.Abs(right.X) * bounds.SizeX + Math.Abs(right.Y) * bounds.SizeY + Math.Abs(right.Z) * bounds.SizeZ);
             double halfObjY = 0.5 * (Math.Abs(up.X) * bounds.SizeX + Math.Abs(up.Y) * bounds.SizeY + Math.Abs(up.Z) * bounds.SizeZ);
 
-            // Deslocamento do centro dos objetos em relaï¿½ï¿½o ao centro da vista (no plano da tela)
+            // Deslocamento do centro dos objetos em rela??o ao centro da vista (no plano da tela)
             Vector3D delta = centro - orthoCam.Position;
             double dx = Vector3D.DotProduct(delta, right);
             double dy = Vector3D.DotProduct(delta, up);
 
-            // Faixa mï¿½nima que precisa continuar visï¿½vel (nunca maior que o prï¿½prio objeto)
+            // Faixa m?nima que precisa continuar vis?vel (nunca maior que o pr?prio objeto)
             double minVisX = Math.Min(2.0 * halfObjX, camWidth * _fracaoVisivelMinima);
             double minVisY = Math.Min(2.0 * halfObjY, camHeight * _fracaoVisivelMinima);
 
-            // Deslocamento mï¿½ximo permitido do centro do objeto em relaï¿½ï¿½o ao centro da vista
+            // Deslocamento m?ximo permitido do centro do objeto em rela??o ao centro da vista
             double maxDx = halfObjX + (camWidth / 2.0) - minVisX;
             double maxDy = halfObjY + (camHeight / 2.0) - minVisY;
 
@@ -863,7 +863,7 @@ namespace DLM.helix
 
             if (Math.Abs(corrigirX) > 1e-9 || Math.Abs(corrigirY) > 1e-9)
             {
-                // Move a cï¿½mera apenas no plano da tela, sem alterar a profundidade
+                // Move a c?mera apenas no plano da tela, sem alterar a profundidade
                 orthoCam.Position += (right * corrigirX) + (up * corrigirY);
             }
         }
@@ -873,7 +873,7 @@ namespace DLM.helix
             CancelarCarregamento();
             LimparViewports();
 
-            if (!arq.Exists()) return;
+            if (string.IsNullOrWhiteSpace(arq)) return;
 
             var ext = (arq.getExtensao() ?? "").ToUpperInvariant();
             if (ext == "CAM")
@@ -901,7 +901,7 @@ namespace DLM.helix
 
         public async void AbrirCAMAsync(string caminho, bool extend = true)
         {
-            if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho)) return;
+            if (string.IsNullOrWhiteSpace(caminho)) return;
 
             CancelarCarregamento();
             int seq = Interlocked.Increment(ref _carregamentoSeq);
@@ -923,10 +923,11 @@ namespace DLM.helix
                 var rcam = await Task.Run(() =>
                 {
                     token.ThrowIfCancellationRequested();
+                    if (!File.Exists(caminho)) return null;
                     return new ReadCAM(caminho);
                 }, token);
 
-                if (token.IsCancellationRequested || rcam == null) return;
+                if (token.IsCancellationRequested || seq != Volatile.Read(ref _carregamentoSeq) || rcam == null) return;
                 this.MVC.CAM = rcam;
                 _isInitializedZoom = false;
                 _zoomPendente = extend;
@@ -947,7 +948,7 @@ namespace DLM.helix
 
         private async void AbrirDwgOuDxfAsync(string caminho, bool extend = true)
         {
-            if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho)) return;
+            if (string.IsNullOrWhiteSpace(caminho)) return;
 
             CancelarCarregamento();
             int seq = Interlocked.Increment(ref _carregamentoSeq);
@@ -977,7 +978,8 @@ namespace DLM.helix
                 {
                     var resultadoTecno = await Task.Run(() =>
                     {
-                        if (!TecnoMetalDwgLeitor.ContemEntidadesTecnoMetal(caminho))
+                        token.ThrowIfCancellationRequested();
+                        if (!File.Exists(caminho) || !TecnoMetalDwgLeitor.ContemEntidadesTecnoMetal(caminho))
                             return null;
 
                         var modeloTecno = TecnoMetalDwgLeitor.LerArquivo(caminho, true, (atual, total, msg) =>
@@ -993,8 +995,8 @@ namespace DLM.helix
                         if (token.IsCancellationRequested || modeloTecno == null || (modeloTecno.Pecas.Count == 0 && modeloTecno.Parafusos.Count == 0))
                             return null;
 
-                        // Em modelos TecnoMetal muito grandes (>3000 peï¿½as), desativa furos (e parafusos >8000) no PREVIEW 3D
-                        // para manter carregamento rï¿½pido e navegaï¿½ï¿½o leve (a exportaï¿½ï¿½o IFC continua 100% completa).
+                        // Em modelos TecnoMetal muito grandes (>3000 pe?as), desativa furos (e parafusos >8000) no PREVIEW 3D
+                        // para manter carregamento r?pido e navega??o leve (a exporta??o IFC continua 100% completa).
                         bool modeloGrande = modeloTecno.Pecas.Count > 3000;
                         var opcoes = new OpcoesExportacaoIfc
                         {
@@ -1048,7 +1050,7 @@ namespace DLM.helix
                         return;
                     }
                 }
-                // Para arquivos .DWG comuns (nï¿½o TecnoMetal), renderiza diretamente via ACadSharp (sem converter para DXF!)
+                // Para arquivos .DWG comuns (n?o TecnoMetal), renderiza diretamente via ACadSharp (sem converter para DXF!)
                 if (caminho.EndsWith(".dwg", StringComparison.OrdinalIgnoreCase))
                 {
                     var resDwg = await Task.Run(() =>
@@ -1064,17 +1066,17 @@ namespace DLM.helix
                         }, token);
                     }, token);
 
-                    if (token.IsCancellationRequested)
-                    {
-                        MostrarProgressoIFC(false, 0, "");
-                        return;
-                    }
+                    if (token.IsCancellationRequested || seq != Volatile.Read(ref _carregamentoSeq)) return;
 
                     if (resDwg != null)
                     {
                         MostrarProgressoIFC(true, 98, resDwg.ModoLeve ? "Renderizando DWG (modo leve)..." : "Renderizando DWG...");
-                        AbrirDwgDireto(resDwg, caminho, extend);
-                        AtualizarBotoesDXF(File.Exists(caminho));
+                        await Dispatcher.InvokeAsync(() =>
+                        {
+                            if (token.IsCancellationRequested || seq != Volatile.Read(ref _carregamentoSeq)) return;
+                            AbrirDwgDireto(resDwg, caminho, extend);
+                            AtualizarBotoesDXF(true);
+                        }, DispatcherPriority.Background);
                         return;
                     }
                 }
@@ -1092,19 +1094,19 @@ namespace DLM.helix
                     }, token);
                 }, token);
 
-                if (token.IsCancellationRequested || dxf == null)
-                {
-                    MostrarProgressoIFC(false, 0, "");
-                    return;
-                }
+                if (token.IsCancellationRequested || seq != Volatile.Read(ref _carregamentoSeq) || dxf == null) return;
 
                 MostrarProgressoIFC(true, 95, "Renderizando desenho...");
-                Abrir(dxf, extend);
-                AtualizarBotoesDXF(File.Exists(caminho));
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    if (token.IsCancellationRequested || seq != Volatile.Read(ref _carregamentoSeq)) return;
+                    Abrir(dxf, extend);
+                    AtualizarBotoesDXF(true);
+                }, DispatcherPriority.Background);
             }
             catch (OperationCanceledException)
             {
-                LimparViewports();
+                if (seq == Volatile.Read(ref _carregamentoSeq)) LimparViewports();
             }
             catch (Exception ex)
             {
@@ -1112,8 +1114,8 @@ namespace DLM.helix
             }
             finally
             {
-                Interlocked.Increment(ref _carregamentoSeq);
-                MostrarProgressoIFC(false, 0, "");
+                if (seq == Volatile.Read(ref _carregamentoSeq))
+                    MostrarProgressoIFC(false, 0, "");
             }
         }
 
@@ -1126,10 +1128,10 @@ namespace DLM.helix
         private string _textoIfcAtual;
 
         /// <summary>
-        /// Carrega qualquer arquivo .IFC de forma assï¿½ncrona no View3D, exibindo barra de progresso e opï¿½ï¿½o de cancelar.
+        /// Carrega qualquer arquivo .IFC de forma ass?ncrona no View3D, exibindo barra de progresso e op??o de cancelar.
         /// </summary>
         /// <summary>
-        /// Renderiza um IfcModeloLido jï¿½ carregado em background (evitando leitura duplicada).
+        /// Renderiza um IfcModeloLido j? carregado em background (evitando leitura duplicada).
         /// </summary>
         private void AbrirDwgDireto(ResultadoDwgDireto res, string caminho, bool extend)
         {
@@ -1243,7 +1245,7 @@ namespace DLM.helix
             double z = grid.CotaZMm * esc;
 
             var ptsGrid = new Point3DCollection();
-            var corEixo = Color.FromRgb(217, 70, 239); // Roxo/Magenta padrÃ£o global de eixos
+            var corEixo = Color.FromRgb(217, 70, 239); // Roxo/Magenta padrão global de eixos
             var bgRotulo = new SolidColorBrush(Color.FromRgb(134, 25, 143));
 
             Action<string, Point3D> addRotulo = (texto, pos) =>
@@ -1522,8 +1524,8 @@ namespace DLM.helix
             _modoPlanificado = false;
             _isInitializedZoom = false;
 
-            // O zoom extend ï¿½ feito dentro do Recarregar, depois que os objetos jï¿½ estï¿½o nos viewports.
-            // Antes ele rodava com os viewports ainda vazios (o Recarregar ï¿½ assï¿½ncrono) e era refeito depois.
+            // O zoom extend ? feito dentro do Recarregar, depois que os objetos j? est?o nos viewports.
+            // Antes ele rodava com os viewports ainda vazios (o Recarregar ? ass?ncrono) e era refeito depois.
             _zoomPendente = extend;
             Recarregar();
         }
@@ -1648,7 +1650,7 @@ namespace DLM.helix
                 _modeloIfcAtual = modeloIfc;
                 RenderIFC.Renderizar(viewPort3D, modeloIfc, true);
 
-                // Aba 2D para CAMs: detalhamento tï¿½cnico visual rico fora de escala
+                // Aba 2D para CAMs: detalhamento t?cnico visual rico fora de escala
                 if (bd_layouts_dxf != null) bd_layouts_dxf.Visibility = Visibility.Collapsed;
                 if (grid_dxf_2d_helix != null) grid_dxf_2d_helix.Visibility = Visibility.Collapsed;
                 if (grid_cam_2d_visual != null) grid_cam_2d_visual.Visibility = Visibility.Visible;
@@ -1747,7 +1749,7 @@ namespace DLM.helix
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Nï¿½o foi possï¿½vel abrir o arquivo externamente:\n" + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show("N?o foi poss?vel abrir o arquivo externamente:\n" + ex.Message, "Erro", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -1794,11 +1796,11 @@ namespace DLM.helix
             GarantirCameraOrtografica(this.viewPort2D);
             SetView2D();
 
-            // Cancela qualquer animaï¿½ï¿½o de zoom em andamento
+            // Cancela qualquer anima??o de zoom em andamento
             _est2D.Resetar();
             _est3D.Resetar();
 
-            // FindBounds percorre todos os filhos: calcula uma ï¿½nica vez e reaproveita no ZoomExtents
+            // FindBounds percorre todos os filhos: calcula uma ?nica vez e reaproveita no ZoomExtents
             AtualizarBounds();
 
             if (!_est3D.Bounds.IsEmpty)
@@ -2135,7 +2137,7 @@ namespace DLM.helix
         private void viewport2D_SizeChanged(object sender, SizeChangedEventArgs e) { }
         private void viewport_SizeChanged(object sender, SizeChangedEventArgs e) { }
 
-        #region Medir / Cotar (PadrÃ£o IfcViewerWindow)
+        #region Medir / Cotar (Padrão IfcViewerWindow)
 
         private int _modoMedir = 0; // 0 = inativo, 1 = aguardando P1, 2 = aguardando P2
         private HelixViewport3D _medirViewport;
@@ -2159,7 +2161,7 @@ namespace DLM.helix
             _modoMedir = 1;
             if (bt_medir_3d != null) bt_medir_3d.IsChecked = true;
             if (bt_medir_2d != null) bt_medir_2d.IsChecked = true;
-            if (txt_medir_status != null) txt_medir_status.Text = "Medir 1/2 Â· 1Âº ponto";
+            if (txt_medir_status != null) txt_medir_status.Text = "Medir 1/2 · 1º ponto";
             if (bd_medir_status != null) bd_medir_status.Visibility = Visibility.Visible;
         }
 
@@ -2358,7 +2360,7 @@ namespace DLM.helix
                 _modoMedir = 2;
                 if (txt_medir_status != null)
                 {
-                    txt_medir_status.Text = "Medir 2/2 Â· 2Âº ponto";
+                    txt_medir_status.Text = "Medir 2/2 · 2º ponto";
                 }
                 return;
             }
@@ -2366,7 +2368,7 @@ namespace DLM.helix
             var p1 = _pontoMedir1;
             var p2 = _medirOrtho ? AplicarOrtho(p1, pt3d, eh2D) : pt3d;
 
-            // MantÃ©m ativo para adicionar mÃºltiplas cotas continuamente
+            // Mantém ativo para adicionar múltiplas cotas continuamente
             _modoMedir = 1;
             OcultarPreviewCota();
 
@@ -2410,7 +2412,7 @@ namespace DLM.helix
                 double tickHalf = setaLen * 0.85;
                 double setaHalf = setaLen * 0.35;
 
-                // TraÃ§os perpendiculares nas extremidades (estilo cota)
+                // Traços perpendiculares nas extremidades (estilo cota)
                 pts.Add(p1 - n * tickHalf); pts.Add(p1 + n * tickHalf);
                 pts.Add(p2 - n * tickHalf); pts.Add(p2 + n * tickHalf);
 
@@ -2558,7 +2560,7 @@ namespace DLM.helix
                 }
             }
 
-            // 2) Malhas 3D (IFC / DWG 3D / CAM 3D): testa arestas prÃ³ximas do triÃ¢ngulo atingido
+            // 2) Malhas 3D (IFC / DWG 3D / CAM 3D): testa arestas próximas do triângulo atingido
             var hits = Viewport3DHelper.FindHits(vp.Viewport, ptMouse);
             if (hits != null && hits.Count > 0)
             {
@@ -2568,7 +2570,7 @@ namespace DLM.helix
                     var pos = h.Mesh.Positions;
                     var idx = h.Mesh.TriangleIndices;
                     int maxTris = Math.Min(idx.Count / 3, 200);
-                    // Testa o prÃ³prio triÃ¢ngulo do hit e vizinhos prÃ³ximos
+                    // Testa o próprio triângulo do hit e vizinhos próximos
                     var hitPt = h.Position;
                     double maxDist3D = double.MaxValue;
                     for (int t = 0; t < idx.Count - 2; t += 3)
@@ -2624,6 +2626,7 @@ namespace DLM.helix
                 if (sfd.ShowDialog() != true) return;
 
                 string destino = sfd.FileName;
+                string motivoFalha = null;
                 MostrarProgressoIFC(true, -1, "Exportando arquivo IFC...");
 
                 if (_modeloTecnoAtual != null)
@@ -2653,11 +2656,31 @@ namespace DLM.helix
                     string textoCamIfc = this.MVC.CAM.GerarTextoIFC(_modoPlanificado);
                     if (!string.IsNullOrEmpty(textoCamIfc))
                         File.WriteAllText(destino, textoCamIfc, System.Text.Encoding.UTF8);
+                    else
+                        motivoFalha = "O CAM nao gerou geometria IFC.";
+                }
+                else if (!string.IsNullOrEmpty(ArquivoCarregado) && ArquivoCarregado.EndsWith(".dwg", StringComparison.OrdinalIgnoreCase) && File.Exists(ArquivoCarregado))
+                {
+                    // DWG generico (sem TecnoMetal): converte as malhas 3D (3DFACE / PolyfaceMesh / Mesh)
+                    string arqDwg = ArquivoCarregado;
+                    var resMalha = await Task.Run(() => DwgMalhaIfcExportador.ExportarParaIfc(arqDwg, destino, (atual, total, msg) =>
+                    {
+                        Dispatcher.BeginInvoke(new Action(() => MostrarProgressoIFC(true, atual, msg)));
+                    }));
+                    if (resMalha == null || !resMalha.Sucesso)
+                        motivoFalha = "O DWG nao possui pecas TecnoMetal nem malhas 3D (3DFACE / PolyfaceMesh / Mesh) para converter em IFC."
+                            + (resMalha != null && resMalha.Erros.Count > 0 ? "\n\n" + string.Join("\n", resMalha.Erros) : "");
+                }
+                else
+                {
+                    motivoFalha = "Nenhum modelo 3D carregado para exportar.";
                 }
 
                 MostrarProgressoIFC(false, 0, "");
-                if (File.Exists(destino))
+                if (motivoFalha == null && File.Exists(destino))
                     AbrirArquivoSeguro(destino);
+                else
+                    MessageBox.Show(motivoFalha ?? "O arquivo IFC nao foi gerado.", "Exportar IFC", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
             catch (Exception ex)
             {

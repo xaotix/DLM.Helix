@@ -1,4 +1,4 @@
-using DLM.IFCEngine;
+﻿using DLM.IFCEngine;
 using DLM.TecnoMetalDecoder;
 using HelixToolkit.Wpf;
 using Microsoft.Win32;
@@ -222,6 +222,8 @@ namespace DLM.helix
         /// <summary>
         /// Funcao publica principal: carrega um arquivo DWG ou IFC e renderiza no visualizador.
         /// </summary>
+        private int _seqCarregamento = 0;
+
         public async void Abrir(string caminho)
         {
             if (string.IsNullOrWhiteSpace(caminho) || !File.Exists(caminho))
@@ -231,6 +233,7 @@ namespace DLM.helix
             }
 
             CancelarCarregamento();
+            int seq = Interlocked.Increment(ref _seqCarregamento);
             _cts = new CancellationTokenSource();
             var ct = _cts.Token;
 
@@ -245,8 +248,13 @@ namespace DLM.helix
                 string ext = Path.GetExtension(caminho).ToUpperInvariant();
                 Action<int, int, string> prog = (atual, total, msg) =>
                 {
+                    if (ct.IsCancellationRequested || seq != Volatile.Read(ref _seqCarregamento)) return;
                     int pct = total > 0 ? Math.Max(0, Math.Min(100, (int)(atual * 100.0 / total))) : 0;
-                    Dispatcher.BeginInvoke(new Action(() => MostrarCarregando(true, pct, msg)));
+                    Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.Background, new Action(() =>
+                    {
+                        if (!ct.IsCancellationRequested && seq == Volatile.Read(ref _seqCarregamento))
+                            MostrarCarregando(true, pct, msg);
+                    }));
                 };
 
                 if (ext == ".IFC")
@@ -324,7 +332,11 @@ namespace DLM.helix
             }
             finally
             {
-                MostrarCarregando(false, 0, "");
+                if (seq == Volatile.Read(ref _seqCarregamento))
+                {
+                    Interlocked.Increment(ref _seqCarregamento);
+                    MostrarCarregando(false, 0, "");
+                }
             }
         }
 
@@ -1655,7 +1667,11 @@ namespace DLM.helix
             }
             finally
             {
-                MostrarCarregando(false, 0, "");
+                if (seq == Volatile.Read(ref _seqCarregamento))
+                {
+                    Interlocked.Increment(ref _seqCarregamento);
+                    MostrarCarregando(false, 0, "");
+                }
             }
         }
 
@@ -1690,7 +1706,11 @@ namespace DLM.helix
             }
             finally
             {
-                MostrarCarregando(false, 0, "");
+                if (seq == Volatile.Read(ref _seqCarregamento))
+                {
+                    Interlocked.Increment(ref _seqCarregamento);
+                    MostrarCarregando(false, 0, "");
+                }
             }
         }
 
@@ -2011,33 +2031,15 @@ namespace DLM.helix
                 string ext = Path.GetExtension(arq).ToUpperInvariant();
                 IfcModeloLido modImport;
 
-                if (ext == ".IFC")
-                {
-                    modImport = await Task.Run(() => IfcLeitor.LerArquivo(arq));
-                }
-                else
-                {
-                    var modTecno = await Task.Run(() => TecnoMetalDwgLeitor.LerArquivo(arq, true));
-                    if (modTecno == null || (modTecno.Pecas.Count == 0 && modTecno.Parafusos.Count == 0))
-                    {
-                        MessageBox.Show("O DWG selecionado nao possui pecas TecnoMetal para juntar como IFC.", "Juntar IFC", MessageBoxButton.OK, MessageBoxImage.Warning);
-                        return;
-                    }
-                    string txtIfc = await Task.Run(() => TecnoMetalIfcExportador.GerarIfcTexto(modTecno, new OpcoesExportacaoIfc
-                    {
-                        IncluirChapas = true,
-                        IncluirPerfis = true,
-                        IncluirParafusos = true,
-                        IncluirFuros = true,
-                        CentralizarNaOrigem = false
-                    }));
-                    modImport = await Task.Run(() => IfcLeitor.LerTexto(txtIfc));
-                    if (modImport != null) modImport.Arquivo = arq;
-                }
+                // IFC, DWG TecnoMetal ou DWG generico com malhas 3D (3DFACE / PolyfaceMesh / Mesh)
+                modImport = await Task.Run(() => CarregarOuConverterArquivo(arq));
 
                 if (modImport == null || modImport.Elementos.Count == 0)
                 {
-                    MessageBox.Show("Nenhuma geometria valida encontrada no arquivo selecionado.", "Juntar IFC", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    string msg = ext == ".DWG"
+                        ? "O DWG selecionado nao possui pecas TecnoMetal nem malhas 3D (3DFACE / PolyfaceMesh / Mesh) para juntar como IFC."
+                        : "Nenhuma geometria valida encontrada no arquivo selecionado.";
+                    MessageBox.Show(msg, "Juntar IFC", MessageBoxButton.OK, MessageBoxImage.Warning);
                     return;
                 }
 
@@ -2059,7 +2061,11 @@ namespace DLM.helix
             }
             finally
             {
-                MostrarCarregando(false, 0, "");
+                if (seq == Volatile.Read(ref _seqCarregamento))
+                {
+                    Interlocked.Increment(ref _seqCarregamento);
+                    MostrarCarregando(false, 0, "");
+                }
             }
         }
 
@@ -2383,7 +2389,11 @@ namespace DLM.helix
             }
             finally
             {
-                MostrarCarregando(false, 0, "");
+                if (seq == Volatile.Read(ref _seqCarregamento))
+                {
+                    Interlocked.Increment(ref _seqCarregamento);
+                    MostrarCarregando(false, 0, "");
+                }
             }
         }
 
@@ -2438,7 +2448,11 @@ namespace DLM.helix
             }
             finally
             {
-                MostrarCarregando(false, 0, "");
+                if (seq == Volatile.Read(ref _seqCarregamento))
+                {
+                    Interlocked.Increment(ref _seqCarregamento);
+                    MostrarCarregando(false, 0, "");
+                }
             }
         }
 
@@ -2890,7 +2904,7 @@ namespace DLM.helix
         #region Edicao de Etapa (aba DLM) e Range de Cores por Etapa / Status SAP
 
         /// <summary>
-        /// Carrega um arquivo IFC ou converte um DWG TecnoMetal para IfcModeloLido em memoria.
+        /// Carrega um arquivo IFC ou converte um DWG (TecnoMetal ou malhas 3D genericas) para IfcModeloLido em memoria.
         /// </summary>
         public static IfcModeloLido CarregarOuConverterArquivo(string caminho)
         {
@@ -2902,7 +2916,14 @@ namespace DLM.helix
             }
             var modTecno = TecnoMetalDwgLeitor.LerArquivo(caminho, true);
             if (modTecno == null || (modTecno.Pecas.Count == 0 && modTecno.Parafusos.Count == 0))
-                return null;
+            {
+                // DWG sem TecnoMetal: tenta converter as malhas 3D (3DFACE / PolyfaceMesh / Mesh)
+                string txtMalha = DwgMalhaIfcExportador.GerarIfcTexto(caminho, false);
+                if (string.IsNullOrEmpty(txtMalha)) return null;
+                var modMalha = IfcLeitor.LerTexto(txtMalha);
+                if (modMalha != null) modMalha.Arquivo = caminho;
+                return modMalha;
+            }
             string txtIfc = TecnoMetalIfcExportador.GerarIfcTexto(modTecno, new OpcoesExportacaoIfc
             {
                 IncluirChapas = true,
